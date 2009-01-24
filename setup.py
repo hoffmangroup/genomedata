@@ -5,7 +5,7 @@
 LONG_DESCRIPTION
 """
 
-__version__ = "0.1.0a1"
+__version__ = "0.1.0"
 
 # Copyright 2009 Michael M. Hoffman <mmh1@washington.edu>
 
@@ -29,20 +29,21 @@ classifiers = ["Natural Language :: English",
 
 install_requires = ["numpy", "path", "tables>2.0.4"]
 
-setup(name=name,
-      version=__version__,
-      description=short_description,
-      author="Michael Hoffman",
-      author_email="mmh1@washington.edu",
-      url=url,
-      download_url=download_url,
-      classifiers=classifiers,
-      long_description=long_description,
-      dependency_links=dependency_links,
-      install_requires=install_requires,
-      zip_safe=True,
+if __name__ == "__main__":
+    setup(name=name,
+          version=__version__,
+          description=short_description,
+          author="Michael Hoffman",
+          author_email="mmh1@washington.edu",
+          url=url,
+          download_url=download_url,
+          classifiers=classifiers,
+          long_description=long_description,
+          dependency_links=dependency_links,
+          install_requires=install_requires,
+          zip_safe=True,
 
-      # XXX: this should be based off of __file__ instead
-      packages=find_packages("."),
-      ext_package="XXX"
-      )
+          # XXX: this should be based off of __file__ instead
+          packages=find_packages("."),
+          ext_package="XXX"
+          )
