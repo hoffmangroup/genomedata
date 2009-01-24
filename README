@@ -1,15 +1,30 @@
-======
- NAME
-======
+============
+ genomedata
+============
 by Michael Hoffman <mmh1@washington.edu>
 
 Description
 ===========
-DESCRIPTION
+The genomedata package provides access to genome-scale data, using an
+HDF5_ container.
+
+.. _HDF5: http://www.hdfgroup.org/
 
 Prerequisites
 =============
-- Python
+- Python_ 2.5.1
+- HDF5 1.8
+
+Additionally, the genomedata setup script will automatically install
+the following packages or newer versions:
+
+- NumPy_
+- PyTables_ 2.1
+- path.py 2.2
+
+.. _NumPy: http://numpy.scipy.org/
+.. _Python: http://www.python.org/
+.. _PyTables: http://www.pytables.org/
 
 Installation
 ============
@@ -17,6 +32,6 @@ python setup.py install
 
 License
 =======
-NAME is distributed in the hope that it will be useful, but WITHOUT
+genomedata is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.

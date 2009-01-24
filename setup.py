@@ -27,7 +27,7 @@ dependency_links = ["http://pypi.python.org/packages/source/p/path.py/path-2.2.z
 classifiers = ["Natural Language :: English",
                "Programming Language :: Python"]
 
-install_requires = ["path", "tables>2.0.4"]
+install_requires = ["numpy", "path", "tables>2.0.4"]
 
 setup(name=name,
       version=__version__,
