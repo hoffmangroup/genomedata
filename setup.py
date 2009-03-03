@@ -7,7 +7,7 @@ LONG_DESCRIPTION
 
 __version__ = "0.1.0"
 
-# Copyright 2009 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2009 Michael M. Hoffman <mmh1@washington.edu>
 
 from ez_setup import use_setuptools
 use_setuptools()

@@ -7,7 +7,7 @@ save_metadata: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2008 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2009 Michael M. Hoffman <mmh1@washington.edu>
 
 import sys
 
