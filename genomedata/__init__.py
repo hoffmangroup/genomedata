@@ -135,6 +135,11 @@ class Supercontig(object):
     def name(self):
         return self.h5group._v_name
 
+    # added by Mirela
+    @property
+    def seq(self):
+        return self.h5group.seq
+
     @property
     def start(self):
         return self.attrs.start
