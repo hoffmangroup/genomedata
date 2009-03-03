@@ -51,5 +51,6 @@ if __name__ == "__main__":
 
           # XXX: this should be based off of __file__ instead
           packages=find_packages("."),
-          ext_package="XXX"
+          include_package_data=True,
+          entry_points=entry_points
           )
