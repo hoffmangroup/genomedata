@@ -27,6 +27,12 @@ dependency_links = ["http://pypi.python.org/packages/source/p/path.py/path-2.2.z
 classifiers = ["Natural Language :: English",
                "Programming Language :: Python"]
 
+entry_points = """
+genomedata-name-tracks = genomedata.name_tracks:main
+genomedata-load-data = genomedata.load_data:main
+genomedata-save-metadata = genomedata.save_metadata:main
+"""
+
 install_requires = ["numpy", "path", "tables>2.0.4"]
 
 if __name__ == "__main__":

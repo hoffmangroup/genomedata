@@ -16,24 +16,36 @@ FORMAT_VERSION = 0
 EXT = "h5" # XXX: change to .genomedata
 SUFFIX = extsep + EXT
 
+class InactiveSet(set):
+    """
+    fake set that can't be added to
+    """
+    def add(self, item):
+        return
+
 class Genome(object):
     """
     implemented via a file system directory
+
+    if you use this as a context manager, it will keep track of open
+    Chromosomes and close them for you later when the context is left
     """
     def __init__(self, dirname):
         self.dirpath = path(dirname)
-        self.open_chromosomes = None
+        self.open_chromosomes = InactiveSet()
 
     def __iter__(self):
         for filepath in self.dirpath.files():
             chromosome = Chromosome(filepath)
-            if self.open_chromosomes is not None:
-                self.open_chromosomes.add(chromosome)
 
+            self.open_chromosomes.add(chromosome)
             yield chromosome
 
-    def __getitem__(self):
-        raise NotImplementedError
+    def __getitem__(self, name):
+        res = Chromosome(self.dirpath / (name + SUFFIX))
+
+        self.open_chromosomes.add(res)
+        return res
 
     def __enter__(self):
         self.open_chromosomes = set()
@@ -46,12 +58,13 @@ class Chromosome(object):
     """
     implemented via an HDF5 File
     """
+    # XXX: I need to handle the dirty case better, to allow "+" in mode
     def __init__(self, filename, mode="r", *args, **kwargs):
         h5file = openFile(filename, mode, *args, **kwargs)
         attrs = h5file.root._v_attrs
 
         # set or check file format version and dirty flag
-        if mode == "w":
+        if "w" in mode:
             attrs.genomedata_format_version = FORMAT_VERSION
             attrs.dirty = True
         else:
