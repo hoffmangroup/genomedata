@@ -28,6 +28,7 @@ classifiers = ["Natural Language :: English",
                "Programming Language :: Python"]
 
 entry_points = """
+[console_scripts]
 genomedata-name-tracks = genomedata.name_tracks:main
 genomedata-load-data = genomedata.load_data:main
 genomedata-save-metadata = genomedata.save_metadata:main
