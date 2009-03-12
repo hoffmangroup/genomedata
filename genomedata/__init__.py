@@ -8,6 +8,7 @@ __version__ = "$Revision$"
 from os import extsep
 import sys
 
+from numpy import amin, amax
 from path import path
 from tables import openFile, NoSuchNodeError
 
@@ -34,13 +35,16 @@ class Genome(object):
         self.dirpath = path(dirname)
         self.open_chromosomes = InactiveSet()
 
+    # XXX: if it's run multiple times, it should return via memoization
     def __iter__(self):
-        for filepath in self.dirpath.files():
+        # sorted so that the order is always the same
+        for filepath in sorted(self.dirpath.files()):
             chromosome = Chromosome(filepath)
 
             self.open_chromosomes.add(chromosome)
             yield chromosome
 
+    # XXX: memoization necessary
     def __getitem__(self, name):
         res = Chromosome(self.dirpath / (name + SUFFIX))
 
@@ -53,6 +57,42 @@ class Genome(object):
     def __exit__(self, exc_type, exc_value, exc_tb):
         for chromosome in self.open_chromosomes:
             chromosome.close()
+
+    def _accum_extrema(self, name, accumulator):
+        self.tracknames_continuous # for assertion check
+
+        res = None
+
+        for chromosome in self:
+            new_extrema = getattr(chromosome, name)
+
+            if res is None:
+                res = new_extrema
+            else:
+                res = accumulator([res, new_extrema], 0)
+
+        return res
+
+    @property
+    def tracknames_continuous(self):
+        res = None
+
+        for chromosome in self:
+            if res is None:
+                res = chromosome.tracknames_continuous
+            else:
+                assert res == chromosome.tracknames_continuous
+
+        return res
+
+    # XXX: should memoize these
+    @property
+    def mins(self):
+        return self._accum_extrema("mins", amin)
+
+    @property
+    def maxs(self):
+        return self._accum_extrema("maxs]", amax)
 
 class Chromosome(object):
     """
@@ -124,6 +164,18 @@ class Chromosome(object):
     @property
     def maxs(self):
         return self.attrs.maxs
+
+    @property
+    def sums(self):
+        return self.attrs.sums
+
+    @property
+    def sums_squares(self):
+        return self.attrs.sums_squares
+
+    @property
+    def num_datapoints(self):
+        return self.attrs.num_datapoints
 
     @property
     def end(self):
