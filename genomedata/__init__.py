@@ -54,6 +54,8 @@ class Genome(object):
     def __enter__(self):
         self.open_chromosomes = set()
 
+        return self
+
     def __exit__(self, exc_type, exc_value, exc_tb):
         for chromosome in self.open_chromosomes:
             chromosome.close()
