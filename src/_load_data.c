@@ -28,7 +28,11 @@
 
 #define ID_WIGVAR "variableStep "
 #define ID_WIGFIX "fixedStep "
+
+/* XXX: should allow "type=bedGraph" anywhere on line */
+#define ID_BEDGRAPH "track type=bedGraph"
 #define DELIM_WIG " "
+#define DELIM_BED " \t"
 
 #define KEY_CHROM "chrom"
 #define KEY_START "start"
@@ -51,12 +55,14 @@
    a dataset */
 #define CHUNK_NROWS 10000
 
+#define MAX_CHROM_LEN 1024
+
 const float nan_float = NAN;
 
 /** typedefs **/
 
 typedef enum {
-  FMT_BED, FMT_WIGFIX, FMT_WIGVAR
+  FMT_BED, FMT_WIGFIX, FMT_WIGVAR, FMT_BEDGRAPH
 } file_format;
 
 typedef struct {
@@ -440,9 +446,11 @@ file_format sniff_header_line(const char *line) {
     return FMT_WIGFIX;
   } else if (!strncmp(ID_WIGVAR, line, strlen(ID_WIGVAR))) {
     return FMT_WIGVAR;
+  } else if (!strncmp(ID_BEDGRAPH, line, strlen(ID_BEDGRAPH))) {
+    return FMT_BEDGRAPH;
   }
 
-  fatal("only fixedStep and variableStep formats supported");
+  fatal("only fixedStep, variableStep, and bedGraph formats supported");
   /* return FMT_BED; */
 
   return -1;
@@ -480,6 +488,8 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
   /* strip trailing newline */
   *strchr(line, '\n') = '\0';
 
+  /* I think this is necessary because I reuse this buffer (through
+     the chrom pointer, for example) after line is replaced */
   save_ptr = strdupa(line);
   assert(save_ptr);
 
@@ -494,6 +504,7 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
     *step = 1;
   }
 
+  /* extra set of parentheses avoids compiler warning */
   while ((token = strtok_r(newstring, DELIM_WIG, &save_ptr))) {
     loc_eq = strchr(token, '=');
     key = strndupa(token, loc_eq - token);
@@ -567,7 +578,7 @@ void write_buf(chromosome_t *chromosome, char *trackname,
   }
 
   /* correct for overshoot */
-  if (*buf_filled_end > *buf_end) {
+  if (*buf_filled_end > *buf_end) { /* XXX: valgrind complains about this because *buf_filled_end points to something unallocated */
     *buf_filled_end = *buf_end;
   }
 
@@ -643,7 +654,7 @@ void write_buf(chromosome_t *chromosome, char *trackname,
   }
 }
 
-void seek_chromosome(char *chrom, char *h5dirname, chromosome_t *chromosome) {
+int seek_chromosome(char *chrom, char *h5dirname, chromosome_t *chromosome) {
   char *h5filename = NULL;
   char *h5filename_suffix;
 
@@ -662,8 +673,9 @@ void seek_chromosome(char *chrom, char *h5dirname, chromosome_t *chromosome) {
 
   close_chromosome(chromosome);
 
-  open_chromosome(chromosome, h5filename);
   chromosome->chrom = chrom;
+
+  return open_chromosome(chromosome, h5filename);
 }
 
 void malloc_chromosome_buf(chromosome_t *chromosome,
@@ -693,6 +705,88 @@ void malloc_chromosome_buf(chromosome_t *chromosome,
   }
 }
 
+/* returns true if valid/success */
+/* false otherwise */
+bool load_chromosome(char *chrom, char *h5dirname, chromosome_t *chromosome,
+                     char *trackname, float **buf_start, float **buf_end) {
+  hsize_t num_cols, col;
+
+  hid_t mem_dataspace, file_dataspace;
+  hid_t dataset;
+
+  hsize_t mem_dataspace_dims[CARDINALITY] = {-1, 1};
+  hsize_t select_start[CARDINALITY];
+
+  /* seek chromosome and test validity */
+  if (seek_chromosome(chrom, h5dirname, chromosome) != 0) {
+    return false;
+  }
+
+  /* allocate data buffer */
+  malloc_chromosome_buf(chromosome, buf_start, buf_end);
+
+  /* calc dimensions */
+  get_cols(chromosome, trackname, &num_cols, &col);
+
+  for (supercontig_t *supercontig = chromosome->supercontigs;
+       supercontig <= last_supercontig(chromosome); supercontig++) {
+    /* set mem dataspace */
+    mem_dataspace_dims[0] = supercontig->end - supercontig->start;
+    mem_dataspace = get_col_dataspace(mem_dataspace_dims);
+
+    /* open or create dataset */
+    dataset = open_supercontig_dataset(supercontig, num_cols);
+
+    /* get file dataspace */
+    file_dataspace = get_file_dataspace(dataset);
+
+    /* select file hyperslab */
+    select_start[0] = 0;
+    select_start[1] = col;
+
+    /* count has same dims as mem_dataspace */
+    assert(H5Sselect_hyperslab(file_dataspace, H5S_SELECT_SET, select_start,
+                               NULL, mem_dataspace_dims, NULL) >= 0);
+
+    /* read */
+    fprintf(stderr, " reading %lld floats...", mem_dataspace_dims[0]);
+    assert(H5Dread(dataset, DTYPE, mem_dataspace, file_dataspace,
+                   H5P_DEFAULT, (*buf_start) + supercontig->start) >= 0);
+    fprintf(stderr, " done\n");
+
+    /* close all */
+    close_dataset(dataset);
+    close_dataspace(file_dataspace);
+    close_dataspace(mem_dataspace);
+  }
+
+  return true;
+}
+
+void fill_buffer(float *buf_start, float *buf_end, long start, long end,
+                 float datum) {
+  float *fill_start, *fill_end;
+
+  fill_start = buf_start + start;
+  if (fill_start >= buf_end) {
+    /* XXX: use of %ld here is not portable to 32-bit systems */
+    fprintf(stderr, " ignoring some data at %ld\n", start);
+    return;
+  }
+
+  fill_end = buf_start + end;
+  if (fill_end > buf_end) {
+    fprintf(stderr, " ignoring some data at %ld:%ld\n", start, end);
+    fill_end = buf_end;
+  }
+
+  /* write into buffer */
+  for (float *buf_ptr = fill_start; buf_ptr < fill_end; buf_ptr++) {
+    *buf_ptr = datum;
+  }
+
+}
+
 /** wigFix **/
 
 void proc_wigfix_header(char *line, char *h5dirname, chromosome_t *chromosome,
@@ -710,7 +804,13 @@ void proc_wigfix_header(char *line, char *h5dirname, chromosome_t *chromosome,
      chrom is never NULL */
   if (strcmp(chrom, chromosome->chrom)) {
     /* only reseek and malloc if it is different */
-    seek_chromosome(chrom, h5dirname, chromosome);
+    /* don't have to read in chromosome because step is asserted to 1 */
+    /* XXX: need to read in with load_chromosome() once that invariant
+       is abandoned */
+
+    /* XXX: this wasn't checked before, so I'm worried it might cause
+       problems */
+    assert(seek_chromosome(chrom, h5dirname, chromosome) == 0);
     malloc_chromosome_buf(chromosome, buf_start, buf_end);
   }
 
@@ -751,7 +851,7 @@ void proc_wigfix(char *h5dirname, char *trackname, char *line,
       if (fill_start < buf_end) {
         fill_end = fill_start + span;
         if (fill_end > buf_end) {
-          fprintf(stderr, " ignoring data at %s:%ld+%ld\n",
+          fprintf(stderr, " ignoring data at %s:%zd+%zd\n",
                   chromosome.chrom, fill_start - buf_start, span);
           fill_end = buf_end;
         }
@@ -764,7 +864,7 @@ void proc_wigfix(char *h5dirname, char *trackname, char *line,
         fill_start += step;
       } else {
         /* else: ignore data until we get to another header line */
-        fprintf(stderr, " ignoring data at %s:%ld\n",
+        fprintf(stderr, " ignoring data at %s:%zd\n",
                 chromosome.chrom, fill_start - buf_start);
       }
     } else {
@@ -790,67 +890,22 @@ void proc_wigvar_header(char *line, char *h5dirname, chromosome_t *chromosome,
                         long *span) {
   char *chrom = NULL;
 
-  hid_t mem_dataspace, file_dataspace;
-  hid_t dataset;
-
-  hsize_t num_cols, col;
-
-  hsize_t mem_dataspace_dims[CARDINALITY] = {-1, 1};
-  hsize_t select_start[CARDINALITY];
-
   /* do writing if buf_len > 0 */
   parse_wiggle_header(line, FMT_WIGVAR, &chrom, NULL, NULL, span);
   assert(chrom && *span >= 1);
 
   /* chromosome->chrom is always initialized, at least to NULL, and
      chrom is never NULL */
+  /* XXX: should probably be an assertion that it is not equal rather
+     than an if */
   if (strcmp(chrom, chromosome->chrom)) {
     /* only reseek and malloc if it is different */
-    /* XXX: should probably be an assertion rather than an if */
-    seek_chromosome(chrom, h5dirname, chromosome);
-
-    if (!is_valid_chromosome(chromosome)) {
-      return;
-    }
-
-    malloc_chromosome_buf(chromosome, buf_start, buf_end);
-
-    /* calc dimensions */
-    get_cols(chromosome, trackname, &num_cols, &col);
-
-    for (supercontig_t *supercontig = chromosome->supercontigs;
-         supercontig <= last_supercontig(chromosome); supercontig++) {
-      /* set mem dataspace */
-      mem_dataspace_dims[0] = supercontig->end - supercontig->start;
-      mem_dataspace = get_col_dataspace(mem_dataspace_dims);
-
-      /* open or create dataset */
-      dataset = open_supercontig_dataset(supercontig, num_cols);
-
-      /* get file dataspace */
-      file_dataspace = get_file_dataspace(dataset);
-
-      /* select file hyperslab */
-      select_start[0] = 0;
-      select_start[1] = col;
-
-      /* count has same dims as mem_dataspace */
-      assert(H5Sselect_hyperslab(file_dataspace, H5S_SELECT_SET, select_start,
-                                 NULL, mem_dataspace_dims, NULL) >= 0);
-
-      /* read */
-      fprintf(stderr, " reading %lld floats...", mem_dataspace_dims[0]);
-      assert(H5Dread(dataset, DTYPE, mem_dataspace, file_dataspace,
-                     H5P_DEFAULT, (*buf_start) + supercontig->start) >= 0);
-      fprintf(stderr, " done\n");
-
-      /* close all */
-      close_dataset(dataset);
-      close_dataspace(file_dataspace);
-      close_dataspace(mem_dataspace);
-    }
+    /* XXX: this might fail if there is an unused chromosome in data input */
+    assert(load_chromosome(chrom, h5dirname, chromosome, trackname,
+                           buf_start, buf_end));
   }
 }
+
 
 void proc_wigvar(char *h5dirname, char *trackname, char *line,
                  size_t *size_line) {
@@ -858,12 +913,11 @@ void proc_wigvar(char *h5dirname, char *trackname, char *line,
 
   float *buf_start = NULL;
   float *buf_end;
-  float *fill_start, *fill_end;
   float datum;
 
   chromosome_t chromosome;
 
-  long start;
+  long start, end;
   long span = 1;
 
   init_chromosome(&chromosome);
@@ -892,23 +946,8 @@ void proc_wigvar(char *h5dirname, char *trackname, char *line,
       /* must be EOL */
       assert(*tailptr == '\n');
 
-      fill_start = buf_start + start;
-      if (fill_start > buf_end) {
-        fprintf(stderr, " ignoring data at %s:%ld\n", chromosome.chrom, start);
-        continue;
-      }
-
-      fill_end = fill_start + span;
-      if (fill_end > buf_end) {
-        fprintf(stderr, " ignoring data at %s:%ld+%ld\n",
-                chromosome.chrom, start, span);
-        fill_end = buf_end;
-      }
-
-      /* write into buffer */
-      for (float *buf_ptr = fill_start; buf_ptr < fill_end; buf_ptr++) {
-        *buf_ptr = datum;
-      }
+      end = start + span;
+      fill_buffer(buf_start, buf_end, start, end, datum);
 
     } else {
       write_buf(&chromosome, trackname, buf_start, buf_end,
@@ -922,6 +961,64 @@ void proc_wigvar(char *h5dirname, char *trackname, char *line,
 
   close_chromosome(&chromosome);
   free(buf_start);
+}
+
+/** bedGraph **/
+
+void proc_bedgraph(char *h5dirname, char *trackname) {
+  char *line = NULL;
+  size_t size_line = 0;
+  size_t chrom_len;
+
+  char *tailptr;
+  char chrom[MAX_CHROM_LEN+1] = "";
+
+  long start, end;
+  float datum;
+
+  float *buf_start = NULL;
+  float *buf_end = NULL;
+
+  chromosome_t chromosome;
+  init_chromosome(&chromosome);
+
+  while (getline(&line, &size_line, stdin) >= 0) {
+    chrom_len = strcspn(line, DELIM_BED);
+    assert(chrom_len > 0 && chrom_len <= MAX_CHROM_LEN);
+
+    memcpy(chrom, line, chrom_len);
+    chrom[chrom_len+1] = '\0';
+
+    errno = 0;
+
+    start = strtol(line + chrom_len + 1, &tailptr, BASE); /* 0-based */
+    assert(!errno && isblank(*tailptr));
+
+    end = strtol(tailptr, &tailptr, BASE); /* 0-based */
+    assert(!errno && isblank(*tailptr));
+
+    /* printf("%s[%ld:%ld]\n", chrom, start, end); */
+
+    datum = strtof(tailptr, &tailptr);
+    assert(!errno && *tailptr == '\n');
+
+    if (strcmp(chrom, chromosome.chrom)) {
+      write_buf(&chromosome, trackname, buf_start, buf_end,
+                buf_start, buf_end);
+
+      /* strdup(chrom) will be freed by close_chromosome */
+      assert(load_chromosome(strdup(chrom), h5dirname, &chromosome, trackname,
+                             &buf_start, &buf_end));
+    }
+
+    fill_buffer(buf_start, buf_end, start, end, datum);
+  }
+
+  write_buf(&chromosome, trackname, buf_start, buf_end, buf_start, buf_end);
+
+  close_chromosome(&chromosome);
+  free(buf_start);
+  free(line);
 }
 
 /** programmatic interface **/
@@ -942,14 +1039,19 @@ void load_data(char *h5dirname, char *trackname) {
 
   fmt = sniff_header_line(line);
 
-  /* XXX: allow mixing and matching later on. for now, once you pick a
-     format, you are stuck */
+  /* XXX: allow mixing and matching later on, if that is what UCSC
+     intends (check with them first). for now, once you pick a format,
+     you are stuck */
   switch (fmt) {
   case FMT_WIGFIX:
     proc_wigfix(h5dirname, trackname, line, &size_line);
     break;
   case FMT_WIGVAR:
     proc_wigvar(h5dirname, trackname, line, &size_line);
+    break;
+  case FMT_BEDGRAPH:
+    /* don't need to pass line because the first line is unimportant */
+    proc_bedgraph(h5dirname, trackname);
     break;
   case FMT_BED:
   default:
