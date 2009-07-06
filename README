@@ -26,6 +26,9 @@ the following packages or newer versions:
 .. _Python: http://www.python.org/
 .. _PyTables: http://www.pytables.org/
 
+To run _load_data, you must use a 64-bit machine for now. E-mail
+Michael if running it on a 32-bit system is important to you.
+
 Installation
 ============
 python setup.py install

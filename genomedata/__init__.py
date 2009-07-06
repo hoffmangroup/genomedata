@@ -5,10 +5,11 @@ __version__ = "$Revision$"
 
 # Copyright 2009 Michael M. Hoffman <mmh1@washington.edu>
 
+from functools import partial
 from os import extsep
 import sys
 
-from numpy import amin, amax
+from numpy import add, amin, amax
 from path import path
 from tables import openFile, NoSuchNodeError
 
@@ -17,11 +18,11 @@ FORMAT_VERSION = 0
 EXT = "h5" # XXX: change to .genomedata
 SUFFIX = extsep + EXT
 
-class InactiveSet(set):
+class InactiveDict(set):
     """
-    fake set that can't be added to
+    fake dict that can't be added to
     """
-    def add(self, item):
+    def __setitem__(self, key, value):
         return
 
 class Genome(object):
@@ -33,26 +34,32 @@ class Genome(object):
     """
     def __init__(self, dirname):
         self.dirpath = path(dirname)
-        self.open_chromosomes = InactiveSet()
 
-    # XXX: if it's run multiple times, it should return via memoization
+        # used when the Genome instance is not used as a context
+        # manager. replaced by __enter__()
+        self.open_chromosomes = InactiveDict()
+
     def __iter__(self):
         # sorted so that the order is always the same
-        for filepath in sorted(self.dirpath.files()):
-            chromosome = Chromosome(filepath)
+        for filepath in sorted(self.dirpath.files("*." + SUFFIX)):
 
-            self.open_chromosomes.add(chromosome)
-            yield chromosome
+            # pass through __getitem__() to allow memoization
+            yield self[filepath.namebase]
 
-    # XXX: memoization necessary
     def __getitem__(self, name):
+        try:
+            # memoization
+            return self.open_chromosomes[name]
+        except KeyError:
+            pass
+
         res = Chromosome(self.dirpath / (name + SUFFIX))
 
-        self.open_chromosomes.add(res)
+        self.open_chromosomes[name] = res
         return res
 
     def __enter__(self):
-        self.open_chromosomes = set()
+        self.open_chromosomes = {}
 
         return self
 
@@ -71,7 +78,7 @@ class Genome(object):
             if res is None:
                 res = new_extrema
             else:
-                res = accumulator([res, new_extrema], 0)
+                res = accumulator([res, new_extrema])
 
         return res
 
@@ -79,7 +86,7 @@ class Genome(object):
     def tracknames_continuous(self):
         res = None
 
-        # XXX: I think these are not being closed
+        # check that all chromosomes have the same tracknames_continuous
         for chromosome in self:
             if res is None:
                 res = chromosome.tracknames_continuous
@@ -88,14 +95,26 @@ class Genome(object):
 
         return res
 
-    # XXX: should memoize these
+    # XXX: should memoize these with an off-the-shelf decorator
     @property
     def mins(self):
-        return self._accum_extrema("mins", amin)
+        return self._accum_extrema("mins", partial(amin, axis=0))
 
     @property
     def maxs(self):
-        return self._accum_extrema("maxs]", amax)
+        return self._accum_extrema("maxs", partial(amax, axis=0))
+
+    @property
+    def sums(self):
+        return self._accum_extrema("sums", add.reduce)
+
+    @property
+    def sums_squares(self):
+        return self._accum_extrema("sums", add.reduce)
+
+    @property
+    def num_datapoints(self):
+        return self._accum_extrema("sums", add.reduce)
 
 class Chromosome(object):
     """

@@ -450,10 +450,7 @@ file_format sniff_header_line(const char *line) {
     return FMT_BEDGRAPH;
   }
 
-  fatal("only fixedStep, variableStep, and bedGraph formats supported");
-  /* return FMT_BED; */
-
-  return -1;
+  return FMT_BED;
 }
 
 void parse_wiggle_header(char *line, file_format fmt, char **chrom,
@@ -808,16 +805,14 @@ void proc_wigfix_header(char *line, char *h5dirname, chromosome_t *chromosome,
     /* XXX: need to read in with load_chromosome() once that invariant
        is abandoned */
 
-    /* XXX: this wasn't checked before, so I'm worried it might cause
-       problems */
-    assert(seek_chromosome(chrom, h5dirname, chromosome) == 0);
+    seek_chromosome(chrom, h5dirname, chromosome);
     malloc_chromosome_buf(chromosome, buf_start, buf_end);
   }
 
   *fill_start = *buf_start + start;
 }
 
-void proc_wigfix(char *h5dirname, char *trackname, char *line,
+void proc_wigfix(char *h5dirname, char *trackname, char **line,
                  size_t *size_line) {
   char *tailptr;
 
@@ -833,14 +828,14 @@ void proc_wigfix(char *h5dirname, char *trackname, char *line,
 
   init_chromosome(&chromosome);
 
-  proc_wigfix_header(line, h5dirname, &chromosome,
+  proc_wigfix_header(*line, h5dirname, &chromosome,
                      &buf_start, &buf_end, &fill_start, &step, &span);
 
   buf_filled_start = fill_start;
 
-  while (getline(&line, size_line, stdin) >= 0) {
+  while (getline(line, size_line, stdin) >= 0) {
     errno = 0;
-    datum = strtof(line, &tailptr);
+    datum = strtof(*line, &tailptr);
     assert(!errno);
 
     if (*tailptr == '\n') {
@@ -870,7 +865,7 @@ void proc_wigfix(char *h5dirname, char *trackname, char *line,
     } else {
       write_buf(&chromosome, trackname, buf_start, buf_end,
                 buf_filled_start, fill_start);
-      proc_wigfix_header(line, h5dirname, &chromosome,
+      proc_wigfix_header(*line, h5dirname, &chromosome,
                          &buf_start, &buf_end, &fill_start, &step, &span);
       buf_filled_start = fill_start;
     }
@@ -900,14 +895,13 @@ void proc_wigvar_header(char *line, char *h5dirname, chromosome_t *chromosome,
      than an if */
   if (strcmp(chrom, chromosome->chrom)) {
     /* only reseek and malloc if it is different */
-    /* XXX: this might fail if there is an unused chromosome in data input */
-    assert(load_chromosome(chrom, h5dirname, chromosome, trackname,
-                           buf_start, buf_end));
+    load_chromosome(chrom, h5dirname, chromosome, trackname,
+                    buf_start, buf_end);
   }
 }
 
 
-void proc_wigvar(char *h5dirname, char *trackname, char *line,
+void proc_wigvar(char *h5dirname, char *trackname, char **line,
                  size_t *size_line) {
   char *tailptr;
 
@@ -922,17 +916,17 @@ void proc_wigvar(char *h5dirname, char *trackname, char *line,
 
   init_chromosome(&chromosome);
 
-  proc_wigvar_header(line, h5dirname, &chromosome, trackname,
+  proc_wigvar_header(*line, h5dirname, &chromosome, trackname,
                      &buf_start, &buf_end, &span);
 
-  while (getline(&line, size_line, stdin) >= 0) {
+  while (getline(line, size_line, stdin) >= 0) {
     /* correcting 1-based coordinate */
     errno = 0;
-    start = strtol(line, &tailptr, BASE) - 1;
+    start = strtol(*line, &tailptr, BASE) - 1;
     assert(!errno);
 
     /* next char must be space */
-    if (tailptr != line && isblank(*tailptr)) {
+    if (tailptr != *line && isblank(*tailptr)) {
       if (!is_valid_chromosome(&chromosome)) {
         continue;
       }
@@ -952,7 +946,7 @@ void proc_wigvar(char *h5dirname, char *trackname, char *line,
     } else {
       write_buf(&chromosome, trackname, buf_start, buf_end,
                 buf_start, buf_end);
-      proc_wigvar_header(line, h5dirname, &chromosome, trackname,
+      proc_wigvar_header(*line, h5dirname, &chromosome, trackname,
                          &buf_start, &buf_end, &span);
     }
   }
@@ -963,11 +957,13 @@ void proc_wigvar(char *h5dirname, char *trackname, char *line,
   free(buf_start);
 }
 
-/** bedGraph **/
+/** bed, bedGraph **/
 
-void proc_bedgraph(char *h5dirname, char *trackname) {
-  char *line = NULL;
-  size_t size_line = 0;
+/*
+  The only difference with bedGraph is that the first line is not passed in
+ */
+void proc_bed(char *h5dirname, char *trackname, char **line, size_t *size_line)
+{
   size_t chrom_len;
 
   char *tailptr;
@@ -980,18 +976,41 @@ void proc_bedgraph(char *h5dirname, char *trackname) {
   float *buf_end = NULL;
 
   chromosome_t chromosome;
+
+  if (!**line) {
+    /* bedGraph case, need to read second line rather than process
+       first */
+
+    if (getline(line, size_line, stdin) == 0) {
+      return;
+    }
+  }
+
   init_chromosome(&chromosome);
 
-  while (getline(&line, &size_line, stdin) >= 0) {
-    chrom_len = strcspn(line, DELIM_BED);
+  do {
+    chrom_len = strcspn(*line, DELIM_BED);
     assert(chrom_len > 0 && chrom_len <= MAX_CHROM_LEN);
 
-    memcpy(chrom, line, chrom_len);
-    chrom[chrom_len+1] = '\0';
+    memcpy(chrom, *line, chrom_len);
+    chrom[chrom_len] = '\0';
+
+    if (strcmp(chrom, chromosome.chrom)) {
+      write_buf(&chromosome, trackname, buf_start, buf_end,
+                buf_start, buf_end);
+
+      /* strdup(chrom) will be freed by close_chromosome */
+      load_chromosome(strdup(chrom), h5dirname, &chromosome, trackname,
+                      &buf_start, &buf_end);
+    }
+
+    if (!is_valid_chromosome(&chromosome)) {
+      continue;
+    }
 
     errno = 0;
 
-    start = strtol(line + chrom_len + 1, &tailptr, BASE); /* 0-based */
+    start = strtol(*line + chrom_len + 1, &tailptr, BASE); /* 0-based */
     assert(!errno && isblank(*tailptr));
 
     end = strtol(tailptr, &tailptr, BASE); /* 0-based */
@@ -1002,23 +1021,13 @@ void proc_bedgraph(char *h5dirname, char *trackname) {
     datum = strtof(tailptr, &tailptr);
     assert(!errno && *tailptr == '\n');
 
-    if (strcmp(chrom, chromosome.chrom)) {
-      write_buf(&chromosome, trackname, buf_start, buf_end,
-                buf_start, buf_end);
-
-      /* strdup(chrom) will be freed by close_chromosome */
-      assert(load_chromosome(strdup(chrom), h5dirname, &chromosome, trackname,
-                             &buf_start, &buf_end));
-    }
-
     fill_buffer(buf_start, buf_end, start, end, datum);
-  }
+  } while (getline(line, size_line, stdin) >= 0);
 
   write_buf(&chromosome, trackname, buf_start, buf_end, buf_start, buf_end);
 
   close_chromosome(&chromosome);
   free(buf_start);
-  free(line);
 }
 
 /** programmatic interface **/
@@ -1044,18 +1053,19 @@ void load_data(char *h5dirname, char *trackname) {
      you are stuck */
   switch (fmt) {
   case FMT_WIGFIX:
-    proc_wigfix(h5dirname, trackname, line, &size_line);
+    proc_wigfix(h5dirname, trackname, &line, &size_line);
     break;
   case FMT_WIGVAR:
-    proc_wigvar(h5dirname, trackname, line, &size_line);
+    proc_wigvar(h5dirname, trackname, &line, &size_line);
     break;
   case FMT_BEDGRAPH:
-    /* don't need to pass line because the first line is unimportant */
-    proc_bedgraph(h5dirname, trackname);
-    break;
+    /* don't need to process line because the first line is unimportant */
+    *line = '\0';
   case FMT_BED:
+    proc_bed(h5dirname, trackname, &line, &size_line);
+    break;
   default:
-    fatal("only fixedStep and variableStep formats supported");
+    fatal("only fixedStep, variableStep, bedGraph, BED formats supported");
     break;
   }
 
