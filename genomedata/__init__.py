@@ -64,7 +64,7 @@ class Genome(object):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        for chromosome in self.open_chromosomes:
+        for chromosome in self.open_chromosomes.itervalues():
             chromosome.close()
 
     def _accum_extrema(self, name, accumulator):
