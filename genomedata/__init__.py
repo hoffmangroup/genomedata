@@ -41,7 +41,7 @@ class Genome(object):
 
     def __iter__(self):
         # sorted so that the order is always the same
-        for filepath in sorted(self.dirpath.files("*." + SUFFIX)):
+        for filepath in sorted(self.dirpath.files("*" + SUFFIX)):
 
             # pass through __getitem__() to allow memoization
             yield self[filepath.namebase]
