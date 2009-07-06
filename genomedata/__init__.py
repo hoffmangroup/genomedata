@@ -79,6 +79,7 @@ class Genome(object):
     def tracknames_continuous(self):
         res = None
 
+        # XXX: I think these are not being closed
         for chromosome in self:
             if res is None:
                 res = chromosome.tracknames_continuous
@@ -133,6 +134,24 @@ class Chromosome(object):
                 continue
 
             yield Supercontig(group)
+
+    def __getitem__(self, key):
+        """
+        returns the supercontig that contains this range if possible
+        """
+        if isinstance(key, slice):
+            start = key.start
+            end = key.stop
+        else:
+            # number
+            start = key
+            end = key + 1
+
+        for supercontig in self:
+            if start >= supercontig.start and end <= supercontig.end:
+                return supercontig
+
+        raise IndexError("no supercontigs matched %r" % key)
 
     def itercontinuous(self):
         for supercontig in self:
@@ -213,6 +232,12 @@ class Supercontig(object):
     @property
     def end(self):
         return self.attrs.end
+
+    def project(self, pos):
+        """
+        project chromsomal coordinates to supercontig coordinates
+        """
+        return pos - self.start
 
 def main(args=sys.argv[1:]):
     pass

@@ -29,6 +29,7 @@ def get_nucleotide_index (nuc, nucs):
     return 2    
                 
 def get_dinucleotide_index (dinuc1, dinuc2, dinucs):
+    # XXX: this is REALLY not a good way of doing this. Switch to a dict.
 # Mirela: get the index of the specified nucleotides dinuc1 and dinuc2 in the array dinucs
     assert len (dinucs) == 11
     d1 = dinuc1.tostring().upper()
@@ -61,7 +62,7 @@ def write_metadata(chromosome):
     sums = fill_array(0.0, row_shape)
     sums_squares = fill_array(0.0, row_shape)
     num_datapoints = fill_array(0, row_shape)
-    
+
     # Mirela: add the counts for nucleotides and dinucleotides
     seq_counts_names = array(['A|T', 'C|G', 'ambig_nucleotide', 'AA|TT', 'AC|GT', 'AG|CT', 'AT', 'CA|TG', 'CC|GG', 'CG', 'GA|TC', 'GC', 'TA', 'ambig_dinucleotide'])
     seq_counts = fill_array(0, len(seq_counts_names))
@@ -71,17 +72,17 @@ def write_metadata(chromosome):
         print >>sys.stderr, " scanning %s" % supercontig._v_name
 
         # Mirela: compute the nucleotide counts
-        nuc_categories = seq_counts_names[0:3]        
-        for nucleotide_int in supercontig.seq.read():            
+        nuc_categories = seq_counts_names[0:3]
+        for nucleotide_int in supercontig.seq.read():
             nuc_index = get_nucleotide_index(nucleotide_int, nuc_categories)
-            seq_counts[nuc_index] += 1      
-        
+            seq_counts[nuc_index] += 1
+
         # Mirela: compute the dinucleotide counts
         dinuc_categories = seq_counts_names[3:]
         for i in range(len(supercontig.seq.read())-1):
             dinuc_index = get_dinucleotide_index(supercontig.seq.read(i), supercontig.seq.read(i+1), dinuc_categories)
             seq_counts[len(nuc_categories)+dinuc_index] += 1
-                
+
         # Mirela: also store the total number of nucleotides in all supercontigs 
         seq_total_counts += len(supercontig.seq.read())
 
@@ -163,7 +164,7 @@ def write_metadata(chromosome):
     chromosome_attrs.seq_counts = seq_counts
     chromosome_attrs.seq_counts_names = seq_counts_names
     chromosome_attrs.seq_total_counts = seq_total_counts
-    
+
     print seq_counts
 
 def save_metadata(*filenames):
