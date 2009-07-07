@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import division
+from __future__ import division, with_statement
 
 __version__ = "$Revision$"
 
@@ -18,7 +18,7 @@ FORMAT_VERSION = 0
 EXT = "h5" # XXX: change to .genomedata
 SUFFIX = extsep + EXT
 
-class InactiveDict(set):
+class InactiveDict(dict):
     """
     fake dict that can't be added to
     """
@@ -59,26 +59,33 @@ class Genome(object):
         return res
 
     def __enter__(self):
-        self.open_chromosomes = {}
+        if isinstance(self.open_chromosomes, InactiveDict):
+            self.open_chromosomes = {}
 
-        return self
+            return self
+        else:
+            print >>sys.stderr, "returning GenomeSurrogate"
+            return GenomeSurrogate(self)
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        for chromosome in self.open_chromosomes.itervalues():
+        for name, chromosome in self.open_chromosomes.iteritems():
             chromosome.close()
 
-    def _accum_extrema(self, name, accumulator):
-        self.tracknames_continuous # for assertion check
+        self.open_chromosomes = InactiveDict()
 
+    def _accum_extrema(self, name, accumulator):
         res = None
 
-        for chromosome in self:
-            new_extrema = getattr(chromosome, name)
+        with self:
+            self.tracknames_continuous # for assertion check
 
-            if res is None:
-                res = new_extrema
-            else:
-                res = accumulator([res, new_extrema])
+            for chromosome in self:
+                new_extrema = getattr(chromosome, name)
+
+                if res is None:
+                    res = new_extrema
+                else:
+                    res = accumulator([res, new_extrema])
 
         return res
 
@@ -87,11 +94,12 @@ class Genome(object):
         res = None
 
         # check that all chromosomes have the same tracknames_continuous
-        for chromosome in self:
-            if res is None:
-                res = chromosome.tracknames_continuous
-            else:
-                assert res == chromosome.tracknames_continuous
+        with self:
+            for chromosome in self:
+                if res is None:
+                    res = chromosome.tracknames_continuous
+                else:
+                    assert res == chromosome.tracknames_continuous
 
         return res
 
@@ -110,11 +118,42 @@ class Genome(object):
 
     @property
     def sums_squares(self):
-        return self._accum_extrema("sums", add.reduce)
+        return self._accum_extrema("sums_squares", add.reduce)
 
     @property
     def num_datapoints(self):
-        return self._accum_extrema("sums", add.reduce)
+        return self._accum_extrema("num_datapoints", add.reduce)
+
+    @property
+    def means(self):
+        with self:
+            return self.sums / self.num_datapoints
+
+    @property
+    def vars(self):
+        # this is an unstable way of calculating the variance,
+        # but it should be good enough
+        # Numerical Recipes in C, Eqn 14.1.7
+        # XXX: best would be to switch to the pairwise parallel method
+        # (see Wikipedia)
+        with self:
+            return (self.sums_squares / self.num_datapoints) - self.means
+
+class GenomeSurrogate(Genome):
+    """
+    surrogate for Genome, lacking an __exit__(), so that nested
+    context managers are possible
+    """
+    def __init__(self, genome):
+        self._genome = genome
+
+    def __getattr__(self, name):
+        print >>sys.stderr, "GenomeSurrogate.__getattr__(%r, %r)" % (self, name)
+
+        return self._genome[name]
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        return
 
 class Chromosome(object):
     """
@@ -122,6 +161,7 @@ class Chromosome(object):
     """
     # XXX: I need to handle the dirty case better, to allow "+" in mode
     def __init__(self, filename, mode="r", *args, **kwargs):
+        print >>sys.stderr, "opening %s" % filename
         h5file = openFile(filename, mode, *args, **kwargs)
         attrs = h5file.root._v_attrs
 
