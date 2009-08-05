@@ -33,6 +33,7 @@ genomedata-load-seq = genomedata.load_seq:main
 genomedata-name-tracks = genomedata.name_tracks:main
 genomedata-load-data = genomedata.load_data:main
 genomedata-save-metadata = genomedata.save_metadata:main
+genomedata-report = genomedata.report:main
 """
 
 install_requires = ["numpy", "path", "tables>2.0.4"]
@@ -49,7 +50,7 @@ if __name__ == "__main__":
           long_description=long_description,
           dependency_links=dependency_links,
           install_requires=install_requires,
-          zip_safe=True,
+          zip_safe=False,
 
           # XXX: this should be based off of __file__ instead
           packages=find_packages("."),

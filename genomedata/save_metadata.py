@@ -11,7 +11,8 @@ __version__ = "$Revision$"
 
 import sys
 
-from numpy import amin, amax, append, array, diff, isfinite, NINF, PINF, square
+from numpy import (amin, amax, append, array, diff, hstack, isfinite, NINF,
+                   PINF, square)
 from tables import openFile
 
 from .load_seq import MIN_GAP_LEN
@@ -134,18 +135,20 @@ def write_metadata(chromosome):
         diffs_signif = diff(indices_present) >= MIN_GAP_LEN
 
         # convert the mask back to indices of the original indices
+        # these are the indices immediately before a big gap
         indices_signif = diffs_signif.nonzero()[0]
 
         if len(indices_signif):
-            starts = indices_present[indices_signif]
+            # start with the indices immediately after a big gap
+            starts = indices_present[hstack([0, indices_signif+1])]
 
-            # finish with the index immediately before each start, and the
-            # last index
-            ends = indices_present[append(indices_signif[1:]-1, -1)]
+            # end with indices immediately before a big gap
+            ends_inclusive = indices_present[hstack([indices_signif, -1])]
 
-            # add 1 because we want slice(start, end) to include the
-            # last_index
-            ends += 1
+            # add 1 to ends because we want slice(start, end) to
+            # include the last_index; convert from inclusive (closed)
+            # to exclusive (half-open) coordinates, as Python needs
+            ends = ends_inclusive + 1
         else:
             starts = array([0])
             ends = array([num_rows])

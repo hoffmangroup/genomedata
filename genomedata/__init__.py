@@ -9,7 +9,7 @@ from functools import partial
 from os import extsep
 import sys
 
-from numpy import add, amin, amax
+from numpy import add, amin, amax, square
 from path import path
 from tables import openFile, NoSuchNodeError
 
@@ -39,6 +39,9 @@ class Genome(object):
         # manager. replaced by __enter__()
         self.open_chromosomes = InactiveDict()
 
+        # a kind of refcounting for context managers
+        self._context_count = 0
+
     def __iter__(self):
         # sorted so that the order is always the same
         for filepath in sorted(self.dirpath.files("*" + SUFFIX)):
@@ -59,19 +62,21 @@ class Genome(object):
         return res
 
     def __enter__(self):
-        if isinstance(self.open_chromosomes, InactiveDict):
+        if self._context_count == 0:
             self.open_chromosomes = {}
 
-            return self
-        else:
-            print >>sys.stderr, "returning GenomeSurrogate"
-            return GenomeSurrogate(self)
+        self._context_count += 1
+
+        return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        for name, chromosome in self.open_chromosomes.iteritems():
-            chromosome.close()
+        if self._context_count == 1:
+            for name, chromosome in self.open_chromosomes.iteritems():
+                chromosome.close()
 
-        self.open_chromosomes = InactiveDict()
+            self.open_chromosomes = InactiveDict()
+
+        self._context_count -= 1
 
     def _accum_extrema(self, name, accumulator):
         res = None
@@ -137,23 +142,7 @@ class Genome(object):
         # XXX: best would be to switch to the pairwise parallel method
         # (see Wikipedia)
         with self:
-            return (self.sums_squares / self.num_datapoints) - self.means
-
-class GenomeSurrogate(Genome):
-    """
-    surrogate for Genome, lacking an __exit__(), so that nested
-    context managers are possible
-    """
-    def __init__(self, genome):
-        self._genome = genome
-
-    def __getattr__(self, name):
-        print >>sys.stderr, "GenomeSurrogate.__getattr__(%r, %r)" % (self, name)
-
-        return self._genome[name]
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        return
+            return (self.sums_squares / self.num_datapoints) - square(self.means)
 
 class Chromosome(object):
     """
@@ -161,7 +150,6 @@ class Chromosome(object):
     """
     # XXX: I need to handle the dirty case better, to allow "+" in mode
     def __init__(self, filename, mode="r", *args, **kwargs):
-        print >>sys.stderr, "opening %s" % filename
         h5file = openFile(filename, mode, *args, **kwargs)
         attrs = h5file.root._v_attrs
 

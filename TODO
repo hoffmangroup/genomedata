@@ -1,0 +1,1 @@
+* make iter(Chromosome) and friends return supercontigs in order

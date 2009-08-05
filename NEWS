@@ -1,5 +1,6 @@
 0.1.3:
 
+* add genomedata-report
 * export genomedata-load-seq script
 * _load_data now supports BED, bedGraph input
 * added slice support to genomedata.Chromosome
@@ -7,3 +8,4 @@
 * Genome.__iter__() now iterates only through files ending in .h5
 * add Genome.sums, Genomes.sums_squares, Genome.num_datapoints
 * fix bug where use of context manager doesn't actually result in closing all open files
+* fix bug in save metadata
