@@ -1,3 +1,5 @@
+0.1.5:
+
 0.1.4:
 
 * strip out seq_counts, seq_total_counts, etc. from metadata (big
