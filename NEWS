@@ -1,6 +1,7 @@
 0.1.4:
 
-
+* strip out seq_counts, seq_total_counts, etc. from metadata (big
+  speed increase for save-metadata)
 
 0.1.3:
 
