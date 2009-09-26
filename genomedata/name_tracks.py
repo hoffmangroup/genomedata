@@ -17,7 +17,6 @@ from tables import openFile
 
 def name_tracks(dirname, *tracknames):
     dirpath = path(dirname)
-
     for filepath in dirpath.walkfiles():
         with openFile(filepath, "r+") as h5file:
             attrs = h5file.root._v_attrs

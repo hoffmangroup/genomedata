@@ -143,6 +143,6 @@ if __name__ == "__main__":
           # XXX: this should be based off of __file__ instead
           packages=find_packages("."),
           entry_points=entry_points,
-          scripts={"genomedata-load-data": ["src/_load_data.c"]},
+          scripts={"genomedata-load-data": ["src/genomedata-load-data.c"]},
           cmdclass = {"build_scripts": MyBuildScripts}
           )

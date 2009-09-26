@@ -38,31 +38,24 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
     seqfiles: list of filenames containing sequence data to add
     """
 
-    # Generate hdf5 data in temporary directory and copy out when done
     try:
-        rmtree("genomedata.temp")
-    except:
-        pass
-    
-    try:
-        os.mkdir("genomedata.temp")
-            
-        tempdatadir = "genomedata.temp"
-        #try:
-        #tempdatadir = mkdtemp(prefix="genomedata.temp")
-        #except OSError, e:
-        #if e.errno != EEXIST
-        #raise
-        print str(locals())
+        # Generate hdf5 data in temporary directory and copy out when done
+        tempdatadir = mkdtemp(prefix="genomedata.")
+        print ">> Using temporary directory: %s" % tempdatadir
+        #print str(locals())
+        
+        # Load sequences if any are specified
         if seqfiles is not None and len(seqfiles) > 0:
             for seqfile in seqfiles:
                 if not os.path.isfile(seqfile):
                     die("Could not find sequence file: %s" % seqfile)
 
-            print "Loading sequence files:"
+            print ">> Loading sequence files:"
             load_seq(seqfiles, tempdatadir)
 
+        # Load tracks if any are specified
         if tracks is not None and len(tracks) > 0:
+            # Open hdf5 with track names
             try:
                 track_names = []
                 for track_name, track_filename in tracks:
@@ -73,45 +66,50 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
             except ValueError:
                 die("Error saving data from tracks: %s" % tracks)
                 
-            print "Opening genomedata with %d tracks" % len(track_names)
-            name_tracks(tempdatadir, track_names)
+            print ">> Opening genomedata with %d tracks" % len(track_names)
+            name_tracks(tempdatadir, *track_names)
+
+            # Load track data
             for track_name, track_filename in tracks:
-                print "\tLoading data for track: %s" % track_name
+                print ">> Loading data for track: %s" % track_name
                 cmd_args = ["zcat", track_filename, "|", LOAD_DATA_CMD, tempdatadir, track_name]
-                print "\t\t%s" % " ".join(cmd_args)
                 retcode = call(" ".join(cmd_args), shell=True)
                 if retcode != 0:
                     die("Error loading data from track file: %s" % track_filename)
-            
-        print "Saving metadata"
-        try:
-            save_metadata(tempdatadir)
-        except:
-            print >>sys.stderr, "Error saving metadata!"
-            raise
-        
-        print "Packing database"
+                    
+
+        # Make output directory
         if not os.path.isdir(genomedatadir):
             os.makedirs(genomedatadir)
-            
+
+        # Close and repack hdf5 files to output directory
         tempfiles = os.listdir(tempdatadir)
         for tempfilename in tempfiles:
+            print ">> Closing and repacking: %s" % tempfilename
             tempfilepath = os.path.join(tempdatadir, tempfilename)
+            try:
+                save_metadata(tempfilepath)  # Close hdf5 file
+            except:
+                print >>sys.stderr, "Error saving metadata!"
+                raise
+
+            # Repack file to output dir
             outfilepath = os.path.join(genomedatadir, tempfilename)
             cmd_args = ["h5repack", "-f GZIP=1", tempfilepath, outfilepath]
             retcode = call(" ".join(cmd_args), shell=True)
             if retcode != 0:
-                die("HDF5 re-packing failed!")
+                die("HDF5 repacking failed!")
     finally:
         try:
-            print "Cleaning up...",
+            # Remove temp directory and all contents
+            print ">> Cleaning up...",
             sys.stdout.flush()
             rmtree(tempdatadir)
             print "done"
         except Exception, e:
             print >>sys.stderr, "\nCleanup failed: %s" % str(e)
 
-    print "Genomedata successfully created in: %s" % genomedatadir
+    print "\n===== Genomedata successfully created in: %s =====\n" % genomedatadir
     
 
 def parse_options(args):
