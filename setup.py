@@ -46,7 +46,7 @@ install_requires = ["numpy", "path", "tables>2.0.4"]
 
 arch = "_".join([system(), processor()])
 
-class MyBuildScripts(build_scripts):
+class BuildScriptWrapper(build_scripts):
     """Override the script-building machinery of distutils.
 
     Intercepts attempts to build scripts with the `scripts` argument to setup()
@@ -144,5 +144,5 @@ if __name__ == "__main__":
           packages=find_packages("."),
           entry_points=entry_points,
           scripts={"genomedata-load-data": ["src/genomedata-load-data.c"]},
-          cmdclass = {"build_scripts": MyBuildScripts}
+          cmdclass = {"build_scripts": BuildScriptWrapper}
           )

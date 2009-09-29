@@ -72,7 +72,9 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
             # Load track data
             for track_name, track_filename in tracks:
                 print ">> Loading data for track: %s" % track_name
-                cmd_args = ["zcat", track_filename, "|", LOAD_DATA_CMD, tempdatadir, track_name]
+                cmd_args = ["zcat", track_filename, "|", LOAD_DATA_CMD,
+                            tempdatadir, track_name]
+                # Need call in shell for piping
                 retcode = call(" ".join(cmd_args), shell=True)
                 if retcode != 0:
                     die("Error loading data from track file: %s" % track_filename)
@@ -95,8 +97,8 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
 
             # Repack file to output dir
             outfilepath = os.path.join(genomedatadir, tempfilename)
-            cmd_args = ["h5repack", "-f GZIP=1", tempfilepath, outfilepath]
-            retcode = call(" ".join(cmd_args), shell=True)
+            cmd_args = ["h5repack", "-f", "GZIP=1", tempfilepath, outfilepath]
+            retcode = call(cmd_args)
             if retcode != 0:
                 die("HDF5 repacking failed!")
     finally:
