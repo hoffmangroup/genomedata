@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+"""
+install.py
+
+This script provides a general installation interface for the genomedata
+package. It is designed to be downloaded separately from the genomedata
+source. Upon execution, it interacts with the user to setup easy_install,
+download and install the necessary dependencies, and download and install
+genomedata.
+
+(c) 2009: Orion Buske <orion.buske@gmail.com>
+"""
+
+${COMMON_CODE_HEADER}
+${COMMON_CODE_BODY}
+
+############################## MAIN #########################
+def main(args=sys.argv[1:]):
+    # Set up shell details
+    try:
+        shell_name = os.path.basename(os.environ["SHELL"])
+    except KeyError:
+        shell_name = None
+    shell = ShellManager(shell_name)
+                
+    try:
+        # Set up arch_home
+        arch_home = setup_arch_home()
+        
+        # Set up python home
+        python_home, default_python_home = setup_python_home(arch_home)
+        # Add python_home to PYTHONPATH
+        prompt_add_to_env(shell, "PYTHONPATH", python_home)
+        
+        # Set up bin directory
+        script_home, default_script_home = setup_script_home(arch_home)
+        # Add script_home to PATH
+        prompt_add_to_env(shell, "PATH", script_home)
+
+        # Maybe create pydistutils.cfg
+        prompt_create_cfg(arch_home, python_home, default_python_home,
+                          script_home, default_script_home)
+            
+        # Add HDF5, if necessary
+        hdf5_dir = prompt_install_hdf5(arch_home)
+        if hdf5_dir:
+            print >>sys.stderr, ("\nPyTables uses the environment variable"
+                                 " HDF5DIR to locate HDF5.")
+            prompt_set_env(shell, "HDF5_DIR", hdf5_dir)
+
+
+        # Add NumPy, if necessary
+        prompt_install_numpy()
+
+        # Install genomedata (and dependencies)
+        prompt_install_genomedata()
+
+        # Test package installations
+        prompt_test_packages(arch_home=arch_home)
+        
+        print >>sys.stderr, "Installation complete"
+        
+    finally:  # Clean up
+        shell.close()
+
+########################### GET VERSION ########################
+def get_genomedata_version():
+    """Returns Genomedata version as a string or None if not found or installed
+    
+    Temporarily removes '.' from sys.path during installation to prevent
+    finding genomedata in current directory (but uninstalled)
+    """
+    dir = os.getcwd()
+    index = None
+    if dir in sys.path:
+        index = sys.path.index(dir)
+        del sys.path[index]
+        
+    try:
+        try:
+            import genomedata
+            return genomedata.__version__
+        except (AttributeError, ImportError):
+            return None
+    finally:
+        if index is not None:
+            sys.path.insert(index, dir)
+
+##################### SPECIFIC PROGRAM INSTALLERS ################
+def prompt_install_genomedata():
+    return _installer("genomedata", install_genomedata, get_genomedata_version,
+                      install_prompt = EASY_INSTALL_PROMPT)
+
+def install_genomedata(*args, **kwargs):
+    return easy_install("genomedata")
+
+            
+if __name__ == "__main__":
+    sys.exit(main())
