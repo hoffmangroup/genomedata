@@ -14,17 +14,18 @@ genomedata.
 import os
 import sys
 
+from distutils.version import StrictVersion
 from urllib import urlretrieve
 from string import Template
 from subprocess import PIPE, Popen
 
 assert sys.version_info >= (2, 4)
 
-MIN_HDF5_VERSION = (1, 8)
-MIN_NUMPY_VERSION = (1, 2)
+MIN_HDF5_VERSION = "1.8"
+MIN_NUMPY_VERSION = "1.2"
 
 
-HDF5_DOWNLOAD_VERSION = (1, 8, 2)  # Should match URL below (displayed to user)
+HDF5_DOWNLOAD_VERSION = "1.8.2"  # Should match URL below (displayed to user)
 HDF5_URL = "http://www.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.8.2/src/hdf5-1.8.2.tar.gz"
 
 EZ_SETUP_URL = "http://peak.telecommunity.com/dist/ez_setup.py"
@@ -306,21 +307,12 @@ def write_pydistutils_cfg(cfg_file, arch_home,
     try:
         print >>ofp, cfg_file_contents
     finally:
-        close(ofp)
+        ofp.close()
     
     
 ########################### GET VERSION ########################
-def get_program_version(progname):
-    progname_lower = progname.lower()
-    if progname_lower == "hdf5":
-        return get_hdf5_version()
-    elif progname_lower == "numpy":
-        return get_numpy_version()
-    else:
-        raise NotImplementedError
-    
 def get_hdf5_version():
-    """Returns HDF5 version as tuple (or None if not found or installed)
+    """Returns HDF5 version as string or None if not found or installed
 
     Only works if h52gif is installed and in current user path
     """
@@ -330,59 +322,42 @@ def get_hdf5_version():
         if "Version" in res:
             # HDF5 Found!
             ver = res.split("Version ")[1]
-            return version2tuple(ver)
+            return ver
         else:
             return None
     except (OSError, IndexError):
         return None
 
 def get_numpy_version():
-    """Returns NumPy version as a tuple (or None if not found or installed)
+    """Returns NumPy version as a string or None if not found or installed
     """
     try:
         import numpy
-        return version2tuple(numpy.__version__)
+        return numpy.__version__
     except (AttributeError, ImportError):
         return None
 
 def get_genomedata_version():
-    """Returns Genomedata version as a tuple (or None if not found or installed)
+    """Returns Genomedata version as a string or None if not found or installed
     """
     try:
         import genomedata
-        return version2tuple(genomedata.__version__)
+        return genomedata.__version__
     except (AttributeError, ImportError):
         return None
 
     
 def get_setuptools_version():
-    """Returns setuptools version as a tuple (or None if not found or installed)
+    """Returns setuptools version as a string or None if not found or installed
     """
     try:
         import setuptools
-        return version2tuple(setuptools.__version__)
+        return setuptools.__version__
     except (AttributeError, ImportError):
         return None
     
-def version2str(ver):  # (#, #[, #]) -> #.#[.#]
-    return ".".join([str(val) for val in ver])
-
-def version2tuple(ver):  #  version -> (#, #[, #])
-    import re
-    components = re.split("[^0-9]+", ver)
-    res = []
-    for component in components:
-        try:
-            if len(component) > 0:
-                val = int(component)
-                res.append(val)
-        except ValueError:
-            break
-
-    if len(res) > 0:
-        return tuple(res)
-    else:
-        return None
+def str2version(ver):  # string to version object
+    return StrictVersion(ver)
 
 ##################### SPECIFIC PROGRAM INSTALLERS ################
 def prompt_install_hdf5(arch_home):
@@ -403,7 +378,6 @@ def install_hdf5(arch_home, *args, **kwargs):
     hdf5_dir = prompt_install_path("HDF5", arch_home)
     install_dir = install_script("HDF5", hdf5_dir, HDF5_INSTALL_SCRIPT,
                                  url=HDF5_URL)
-
     return install_dir
 
 def install_numpy(min_version=MIN_NUMPY_VERSION, *args, **kwargs):
@@ -466,8 +440,9 @@ def _check_install(progname, version_func, min_version=None, *args, **kwargs):
     version = version_func()
     if version is not None:
         print >>sys.stderr, "found!"
-        if min_version is not None and min_version > version:
-            print >>sys.stderr, "Found version: %s. Version %s or above required." % (version2str(version), version2str(min_version))
+        if min_version is not None and \
+                str2version(min_version) > str2version(version):
+            print >>sys.stderr, "Found version: %s. Version %s or above required." % (version, min_version)
         else:
             return True
     else:
@@ -494,7 +469,7 @@ def easy_install(progname, min_version=None):
     
     cmd = "easy_install %s" % progname.lower()
     if min_version is not None:  # Add version requirement
-        cmd += ' "%s>=%s"' % (progname, version2str(min_version))
+        cmd += ' "%s>=%s"' % (progname, min_version)
 
     if os.path.isdir(progname):
         print >>sys.stderr, "\nWarning: installation may fail because there is a subdirectory named %s at your current path."
@@ -574,6 +549,7 @@ def prompt_test_packages(*args, **kwargs):
     """Run each dependency's unit tests and if they fail, prompt reinstall
     XXX: implement this! (but numpy fails test even when correctly installed!)
     """
+    print >>sys.stderr, "\n"
     prompt_test_pytables(*args, **kwargs)
 
 def prompt_test_pytables(*args, **kwargs):
@@ -598,7 +574,7 @@ def prompt_test_pytables(*args, **kwargs):
 def prompt_install(progname, install_prompt = None,
                    version=None, default="Y", *args, **kwargs):
     if version is not None:
-        info = "%s %s" % (progname, version2str(version))
+        info = "%s %s" % (progname, version)
     else:
         info = "%s" % progname
 
