@@ -339,12 +339,25 @@ def get_numpy_version():
 
 def get_genomedata_version():
     """Returns Genomedata version as a string or None if not found or installed
+    
+    Temporarily removes '.' from sys.path during installation to prevent
+    finding genomedata in current directory (but uninstalled)
     """
+    dir = os.getcwd()
+    index = None
+    if dir in sys.path:
+        index = sys.path.index(dir)
+        del sys.path[index]
+        
     try:
-        import genomedata
-        return genomedata.__version__
-    except (AttributeError, ImportError):
-        return None
+        try:
+            import genomedata
+            return genomedata.__version__
+        except (AttributeError, ImportError):
+            return None
+    finally:
+        if index is not None:
+            sys.path.insert(index, dir)
 
     
 def get_setuptools_version():
@@ -381,7 +394,20 @@ def install_hdf5(arch_home, *args, **kwargs):
     return install_dir
 
 def install_numpy(min_version=MIN_NUMPY_VERSION, *args, **kwargs):
-    return easy_install("numpy", min_version=min_version)
+    # Unset LDFLAGS when installing numpy as kludgy solution to
+    #   http://projects.scipy.org/numpy/ticket/182
+    env_old = None
+    if "LDFLAGS" in os.environ:
+        env_old = os.environ["LDFLAGS"]
+        del os.environ["LDFLAGS"]
+
+    try:
+        return easy_install("numpy", min_version=min_version)
+    finally:
+        if env_old is not None:
+            # Make sure variable didn't return, and then replace variable
+            assert "LDFLAGS" not in os.environ
+            os.environ["LDFLAGS"] = env_old
 
 def install_genomedata(*args, **kwargs):
     return easy_install("genomedata")
