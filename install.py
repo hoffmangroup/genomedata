@@ -14,6 +14,7 @@ genomedata.
 ####################### BEGIN COMMON CODE HEADER #####################
 
 import os
+import site
 import sys
 
 from distutils.spawn import find_executable
@@ -132,7 +133,7 @@ class ShellManager(object):
                 self._out = open(os.path.expanduser(self.file), "a")
         
         cmd = self._env_format % (variable, value)
-        print >>self._out, "\n%s  # Added in segway installation\n" % cmd
+        print >>self._out, "\n%s  # Added by install script\n" % cmd
             
     def add_to_rc_env(self, variable, value):
         """Prepend the value to the variable in the shell rc file (or stdout)
@@ -308,7 +309,7 @@ def write_pydistutils_cfg(cfg_file, arch_home,
     """Write a pydistutils.cfg file
     """
     fields = {}
-    fields["prefix"] = arch_home
+    fields["prefix"] = fix_path(arch_home)
     
     if python_home == default_python_home:
         platlib = "$platbase/lib/python$py_version_short"
@@ -413,6 +414,7 @@ def _installer(progname, install_func, version_func=None,
     progname: string name of program
     install_func: function to call with *args, **kwargs to install progname
     version_func: function to call with *args, **kwargs to find progname version
+      If version_func is none, installation will be promped no matter what.
     install_message: helpful message to print if user chooses to install program
 
     Checks if program is installed in a succificent version,
@@ -445,7 +447,11 @@ def _abort_skip_install(func, *args, **kwargs):
     """
     try:
         return func(*args, **kwargs)
-    except InstallationError:
+    except InstallationError, e:
+        e_str = str(e)
+        if e_str:
+            print >>sys.stderr, "Error: %s" % e_str  # print any error message
+            
         query = ("\nWould you like to try to continue the installation"
                  " without this program?")
         default = "n"
@@ -458,16 +464,23 @@ def _abort_skip_install(func, *args, **kwargs):
 def _check_install(progname, version_func, min_version=None, *args, **kwargs):
     """Returns True if program found with at least min_version, False otherwise
 
-    version_func should be a function that, when called, returns the version of
-    the installation as a tuple, or True if installed,
-    or None if not found/unavailable.
+    version_func should either:
+    - be a function that, when called, returns the version of
+      the installation as a tuple, or True if installed,
+      or None if not found/unavailable.
+    - or None, in which False will be returned immediately
 
     If version_func returns True, installation accepted regardless of
     min_version
+    
     """
-    print >>sys.stdout, "\nSearching for %s..." % progname,
-    sys.stdout.flush()
-    version = version_func()
+    if version_func is None:
+        return False
+    else:
+        print >>sys.stdout, "\nSearching for %s..." % progname,
+        sys.stdout.flush()
+        version = version_func()
+        
     if version is not None:
         print >>sys.stderr, "found!"
         if min_version is None or version is True:
@@ -538,6 +551,7 @@ def install_script(progname, prog_dir, script, **kwargs):
     
     Returns installation directory if installation is successful
     (or True if unknown), and None otherwise.
+    
     """
     fields = kwargs
 
@@ -586,26 +600,18 @@ def install_script(progname, prog_dir, script, **kwargs):
     os.chdir(cwd)
     return prog_dir
 
-def reinstall_program(progname, *args, **kwargs):
-    """Reinstall program given name and arguments."""
-    progname = progname.lower()
-    if progname == "hdf5":
-        install_hdf5(*args, **kwargs)
-    elif progname == "numpy":
-        install_numpy(*args, **kwargs)
-    elif progname == "segway":
-        install_segway(*args, **kwargs)
 
 ########################## PROGRAM TESTING ######################
 def prompt_test_packages(*args, **kwargs):
     """Run each dependency's unit tests and if they fail, prompt reinstall
     
     XXX: implement this for more than pytables (but numpy always fails)
+    
     """
-    print >>sys.stderr, "\n\n"
+    # Start by making sure everything is up to date loaded into sys.path
+    print >>sys.stderr, "\n"
     try:
         prompt_test_pytables(*args, **kwargs)
-        print >>sys.stderr, "\n=========== All tests passed! ============"
     except InstallationError:
         die("\n=========== Some tests failed! =============="
             "\nYour installation may be incomplete and might not work.")
@@ -618,7 +624,7 @@ def prompt_test_pytables(*args, **kwargs):
         try:
             import tables
             tables.test()
-            print >>sys.stderr, "Test passed!"
+            print >>sys.stderr, "Test seemed to have passed."
         except:
             print >>sys.stderr, ("There seems to be an error with the"
                                  " PyTables installation!")
@@ -637,6 +643,10 @@ def prompt_install(progname, install_prompt = None,
         
     query = install_prompt % info
     return prompt_yes_no(query, default=default)
+
+def prompt_path(query, default):
+    path = prompt_user(query, default)
+    return fix_path(path)
 
 def prompt_install_path(progname, default):
     query = "Where should %s be installed?" % progname
@@ -766,7 +776,7 @@ def main(args=sys.argv[1:]):
         prompt_install_genomedata()
 
         # Test package installations
-        prompt_test_packages(arch_home=arch_home)
+        prompt_test_packages()
         
         print >>sys.stderr, "Installation complete"
         

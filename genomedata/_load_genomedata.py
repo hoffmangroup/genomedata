@@ -17,9 +17,9 @@ from shutil import rmtree
 from subprocess import call
 from tempfile import mkdtemp, NamedTemporaryFile
 
-from .load_seq import load_seq
-from .name_tracks import name_tracks
-from .save_metadata import save_metadata
+from ._load_seq import load_seq
+from ._name_tracks import name_tracks
+from ._save_metadata import save_metadata
 
 
 LOAD_DATA_CMD = "genomedata-load-data"

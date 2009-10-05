@@ -15,7 +15,7 @@ from numpy import (amin, amax, array, diff, hstack, isfinite, NINF, PINF,
                    square)
 from tables import openFile
 
-from .load_seq import MIN_GAP_LEN
+from ._load_seq import MIN_GAP_LEN
 from ._util import (fill_array, get_tracknames, init_num_obs, new_extrema,
                     walk_continuous_supercontigs)
 

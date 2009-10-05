@@ -35,11 +35,11 @@ classifiers = ["Natural Language :: English",
 
 entry_points = """
 [console_scripts]
-genomedata-load = genomedata.load_genomedata:main
-genomedata-load-seq = genomedata.load_seq:main
-genomedata-name-tracks = genomedata.name_tracks:main
-genomedata-save-metadata = genomedata.save_metadata:main
-genomedata-report = genomedata.report:main
+genomedata-load = genomedata._load_genomedata:main
+genomedata-load-seq = genomedata._load_seq:main
+genomedata-name-tracks = genomedata._name_tracks:main
+genomedata-save-metadata = genomedata._save_metadata:main
+genomedata-report = genomedata._report:main
 """
 
 install_requires = ["numpy", "path", "tables>2.0.4"]
