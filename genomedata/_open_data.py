@@ -2,7 +2,7 @@
 from __future__ import division, with_statement
 
 """
-name_tracks: recursively set up HDF5 files to have named tracks
+_open_data: recursively set up HDF5 files to have named tracks
 """
 
 __version__ = "$Revision$"
@@ -15,7 +15,7 @@ from numpy import array
 from path import path
 from tables import openFile
 
-def name_tracks(dirname, *tracknames):
+def open_data(dirname, *tracknames):
     dirpath = path(dirname)
     for filepath in dirpath.walkfiles():
         with openFile(filepath, "r+") as h5file:
@@ -45,7 +45,7 @@ def parse_options(args):
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
 
-    return name_tracks(*args)
+    return open_data(*args)
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -19,9 +19,9 @@ The workflow
 A genomedata collection contains sequence and may also contain
 numerical data associated with that sequence. You can easily load
 sequence and numerical data into a genomedata collection with the
-``genomedata_load`` command::
+``genomedata-load`` command::
 
-    genomedata_load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATADIR
+    genomedata-load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATADIR
 
 
 This command is a user-friendly shortcut to the typical workflow.
@@ -29,9 +29,12 @@ The underlying commands are still installed and may be used if more
 fine-grained control is required. The commands and required ordering are:
 
   1. ``genomedata-load-seq``
-  #. ``genomedata-name-tracks``
+  #. ``genomedata-open-data``
   #. ``genomedata-load-data``
-  #. ``genomedata-save-metadata``
+  #. ``genomedata-close-data``
+
+.. note:: A call to ``h5repack`` after ``genomedata-close-data`` is also
+          necessary.
 
 
 Overview

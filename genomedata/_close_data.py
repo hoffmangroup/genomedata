@@ -2,7 +2,7 @@
 from __future__ import division, with_statement
 
 """
-save_metadata: DESCRIPTION
+_close_data: DESCRIPTION
 """
 
 __version__ = "$Revision$"
@@ -115,7 +115,7 @@ def write_metadata(chromosome):
     chromosome_attrs.num_datapoints = num_datapoints
     chromosome_attrs.dirty = False
 
-def save_metadata(*filenames):
+def close_data(*filenames):
     for filename in filenames:
         with openFile(filename, "r+") as chromosome:
             write_metadata(chromosome)
@@ -138,7 +138,7 @@ def parse_options(args):
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
 
-    return save_metadata(*args)
+    return close_data(*args)
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -18,8 +18,8 @@ from subprocess import call
 from tempfile import mkdtemp, NamedTemporaryFile
 
 from ._load_seq import load_seq
-from ._name_tracks import name_tracks
-from ._save_metadata import save_metadata
+from ._open_data import open_data
+from ._close_data import close_data
 
 
 LOAD_DATA_CMD = "genomedata-load-data"
@@ -67,7 +67,7 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
                 die("Error saving data from tracks: %s" % tracks)
                 
             print ">> Opening genomedata with %d tracks" % len(track_names)
-            name_tracks(tempdatadir, *track_names)
+            open_data(tempdatadir, *track_names)
 
             # Load track data
             for track_name, track_filename in tracks:
@@ -90,7 +90,7 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
             print ">> Closing and repacking: %s" % tempfilename
             tempfilepath = os.path.join(tempdatadir, tempfilename)
             try:
-                save_metadata(tempfilepath)  # Close hdf5 file
+                close_data(tempfilepath)  # Close hdf5 file
             except:
                 print >>sys.stderr, "Error saving metadata!"
                 raise
