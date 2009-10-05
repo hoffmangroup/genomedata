@@ -45,7 +45,7 @@
 #define DATASET_NAME "continuous"
 #define DTYPE H5T_IEEE_F32LE
 
-#define SUFFIX_H5 ".h5"
+#define SUFFIX_H5 ".genomedata"
 
 #define NARGS 2
 #define CARDINALITY 2

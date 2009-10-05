@@ -28,10 +28,10 @@ from tables import openFile, NoSuchNodeError
 
 FORMAT_VERSION = 0
 
-EXT = "h5" # XXX: change to .genomedata
+EXT = "genomedata"
 SUFFIX = extsep + EXT
 
-class InactiveDict(dict):
+class _InactiveDict(dict):
     """A fake dict that can't be added to."""
     def __setitem__(self, key, value):
         return
@@ -55,7 +55,7 @@ class Genome(object):
 
         # used when the Genome instance is not used as a context
         # manager. replaced by __enter__()
-        self.open_chromosomes = InactiveDict()
+        self.open_chromosomes = _InactiveDict()
 
         # a kind of refcounting for context managers
         self._context_count = 0
@@ -101,7 +101,7 @@ class Genome(object):
             for name, chromosome in self.open_chromosomes.iteritems():
                 chromosome.close()
 
-            self.open_chromosomes = InactiveDict()
+            self.open_chromosomes = _InactiveDict()
 
         self._context_count -= 1
 
