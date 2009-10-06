@@ -18,7 +18,7 @@ from numpy import frombuffer, uint8
 from path import path
 from tables import openFile, UInt8Atom
 
-from .__init__ import EXT
+from . import EXT
 from ._util import EXT_GZ, FILTERS_GZIP, gzip_open, LightIterator
 
 MIN_GAP_LEN = 100000
