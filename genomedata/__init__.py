@@ -71,7 +71,7 @@ class Genome(object):
     def __getitem__(self, name):
         """Return a reference to a chromosome of the given name.
 
-        :param name: name of the chromosome file (e.g. "chr1" if chr1.h5
+        :param name: name of the chromosome file (e.g. "chr1" if chr1.genomedata
                      is a file in the genomedata directory)
         :type name: string
         :rtype: Chromosome_

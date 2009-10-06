@@ -13,6 +13,7 @@ import sys
 
 from numpy import (amin, amax, array, diff, hstack, isfinite, NINF, PINF,
                    square)
+from path import path
 from tables import openFile
 
 from ._load_seq import MIN_GAP_LEN
@@ -115,30 +116,30 @@ def write_metadata(chromosome):
     chromosome_attrs.num_datapoints = num_datapoints
     chromosome_attrs.dirty = False
 
-def close_data(*filenames):
-    for filename in filenames:
-        with openFile(filename, "r+") as chromosome:
+def close_data(dirname):
+    dirpath = path(dirname)
+    for filepath in dirpath.walkfiles():
+        with openFile(filepath, "r+") as chromosome:
             write_metadata(chromosome)
 
 def parse_options(args):
     from optparse import OptionParser
 
-    usage = "%prog [OPTION]... FILE..."
+    usage = "%prog [OPTION]... GENOMEDATADIR"
     version = "%%prog %s" % __version__
     parser = OptionParser(usage=usage, version=version)
 
     options, args = parser.parse_args(args)
 
-    if not len(args) >= 1:
-        parser.print_usage()
-        sys.exit(1)
+    if not len(args) == 1:
+        parser.error("Inappropriate number of arguments")
 
     return options, args
 
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
-
-    return close_data(*args)
+    genomedatadir = args[0]
+    return close_data(genomedatadir)
 
 if __name__ == "__main__":
     sys.exit(main())

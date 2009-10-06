@@ -15,7 +15,7 @@ from numpy import array
 from path import path
 from tables import openFile
 
-def open_data(dirname, *tracknames):
+def open_data(dirname, tracknames):
     dirpath = path(dirname)
     for filepath in dirpath.walkfiles():
         with openFile(filepath, "r+") as h5file:
@@ -30,22 +30,22 @@ def open_data(dirname, *tracknames):
 def parse_options(args):
     from optparse import OptionParser
 
-    usage = "%prog [OPTION]... DIR TRACKNAME..."
+    usage = "%prog [OPTION]... GENOMEDATADIR TRACKNAME..."
     version = "%%prog %s" % __version__
     parser = OptionParser(usage=usage, version=version)
 
     options, args = parser.parse_args(args)
 
     if not len(args) >= 2:
-        parser.print_usage()
-        sys.exit(1)
+        parser.error("Inappropriate number of arguments")
 
     return options, args
 
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
-
-    return open_data(*args)
+    genomedatadir = args[0]
+    tracknames = args[1:]
+    return open_data(genomedatadir, tracknames)
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1078,8 +1078,8 @@ void load_data(char *h5dirname, char *trackname) {
 const char *argp_program_version = "$Revision$";
 const char *argp_program_bug_address = "Michael Hoffman <mmh1@washington.edu>";
 
-static char doc[] = "Loads data into genomedata format";
-static char args_doc[] = "DST TRACKNAME";
+static char doc[] = "Loads data into genomedata format\nTakes track data in on stdin";
+static char args_doc[] = "GENOMEDATADIR TRACKNAME";
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state) {
   char **arguments = state->input;

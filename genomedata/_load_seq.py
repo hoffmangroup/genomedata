@@ -18,6 +18,7 @@ from numpy import frombuffer, uint8
 from path import path
 from tables import openFile, UInt8Atom
 
+from .__init__ import EXT
 from ._util import EXT_GZ, FILTERS_GZIP, gzip_open, LightIterator
 
 MIN_GAP_LEN = 100000
@@ -29,7 +30,6 @@ REGEX_SEGMENT_LEN = MIN_GAP_LEN // 2 # max == MAXREPEAT
 
 DNA_LETTERS_UNAMBIG = "ACGTacgt"
 
-EXT_H5 = "h5"
 SUPERCONTIG_NAME_FMT = "supercontig_%s"
 
 ATOM = UInt8Atom()
@@ -77,7 +77,7 @@ def read_seq(h5file, seq):
         else:
             assert m_segment.group(1)
 
-def load_seq(filenames, outdirname):
+def load_seq(outdirname, filenames):
     outdirpath = path(outdirname)
     try:
         outdirpath.makedirs()
@@ -96,7 +96,7 @@ def load_seq(filenames, outdirname):
         # needed to process gzip_open stuff
         with infile as infile:
             for defline, seq in LightIterator(infile):
-                h5filename = outdirpath / extsep.join([defline, EXT_H5])
+                h5filename = outdirpath / extsep.join([defline, EXT])
                 h5file = openFile(h5filename, "w", defline,
                                   filters=FILTERS_GZIP)
                 with h5file as h5file:
@@ -106,22 +106,22 @@ def load_seq(filenames, outdirname):
 def parse_options(args):
     from optparse import OptionParser
 
-    usage = "%prog [OPTION]... FILE... DST"
+    usage = "%prog [OPTION]... GENOMEDATADIR SEQFILE..."
     version = "%%prog %s" % __version__
     parser = OptionParser(usage=usage, version=version)
 
     options, args = parser.parse_args(args)
 
     if not len(args) >= 2:
-        parser.print_usage()
-        sys.exit(1)
+        parser.error("Inappropriate number of arguments")
 
     return options, args
 
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
-
-    return load_seq(args[:-1], args[-1])
+    genomedatadir = args[0]
+    seqfiles = args[1:]
+    return load_seq(genomedatadir, seqfiles)
 
 if __name__ == "__main__":
     sys.exit(main())

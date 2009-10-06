@@ -20,7 +20,7 @@ from tempfile import mkdtemp, NamedTemporaryFile
 from ._load_seq import load_seq
 from ._open_data import open_data
 from ._close_data import close_data
-
+from ._util import EXT_GZ
 
 LOAD_DATA_CMD = "genomedata-load-data"
 
@@ -42,7 +42,6 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
         # Generate hdf5 data in temporary directory and copy out when done
         tempdatadir = mkdtemp(prefix="genomedata.")
         print ">> Using temporary directory: %s" % tempdatadir
-        #print str(locals())
         
         # Load sequences if any are specified
         if seqfiles is not None and len(seqfiles) > 0:
@@ -51,7 +50,7 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
                     die("Could not find sequence file: %s" % seqfile)
 
             print ">> Loading sequence files:"
-            load_seq(seqfiles, tempdatadir)
+            load_seq(tempdatadir, seqfiles)
 
         # Load tracks if any are specified
         if tracks is not None and len(tracks) > 0:
@@ -67,40 +66,49 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
                 die("Error saving data from tracks: %s" % tracks)
                 
             print ">> Opening genomedata with %d tracks" % len(track_names)
-            open_data(tempdatadir, *track_names)
+            open_data(tempdatadir, track_names)
 
             # Load track data
             for track_name, track_filename in tracks:
                 print ">> Loading data for track: %s" % track_name
-                cmd_args = ["zcat", track_filename, "|", LOAD_DATA_CMD,
+                cmd_args = [track_filename, "|", LOAD_DATA_CMD,
                             tempdatadir, track_name]
+                if track_filename.endswith(EXT_GZ):
+                    cmd_args.insert(0, "zcat")
+                else:
+                    cmd_args.insert(0, "cat")
+                    
                 # Need call in shell for piping
                 retcode = call(" ".join(cmd_args), shell=True)
                 if retcode != 0:
                     die("Error loading data from track file: %s" % track_filename)
                     
 
+        # Close hdf5 files
+        try:
+            close_data(tempdatadir)  # Close genomedata
+        except:
+            die("Error saving metadata!")
+                    
         # Make output directory
         if not os.path.isdir(genomedatadir):
+            print ">> Creating directory: %s" % genomedatadir
             os.makedirs(genomedatadir)
 
         # Close and repack hdf5 files to output directory
         tempfiles = os.listdir(tempdatadir)
         for tempfilename in tempfiles:
-            print ">> Closing and repacking: %s" % tempfilename
-            tempfilepath = os.path.join(tempdatadir, tempfilename)
-            try:
-                close_data(tempfilepath)  # Close hdf5 file
-            except:
-                print >>sys.stderr, "Error saving metadata!"
-                raise
-
             # Repack file to output dir
+            print ">> Repacking: %s into genomedata" % tempfilename
+            tempfilepath = os.path.join(tempdatadir, tempfilename)
             outfilepath = os.path.join(genomedatadir, tempfilename)
             cmd_args = ["h5repack", "-f", "GZIP=1", tempfilepath, outfilepath]
             retcode = call(cmd_args)
             if retcode != 0:
                 die("HDF5 repacking failed!")
+    except:
+        print >>sys.stderr, "Error creating genomedata!"
+        raise
     finally:
         try:
             # Remove temp directory and all contents
@@ -119,7 +127,7 @@ def parse_options(args):
 
     usage = ("%prog [OPTIONS] GENOMEDATADIR"
              "\ne.g. %prog -t high=signal.high -t low=signal.low"
-             " -s seq.X -s seq.Y outdir")
+             " -s seq.X -s seq.Y mygenomedata")
     version = "%%prog %s" % __version__
     description = ("--track and --sequence may be repeated to specify multiple"
                    " trackname=trackfile pairings and sequence files,"
@@ -137,8 +145,8 @@ def parse_options(args):
     
     options, args = parser.parse_args(args)
 
-    if len(args) < 1:
-        parser.error("Insufficient number of arguments")
+    if not len(args) == 1:
+        parser.error("Inappropriate number of arguments")
 
     return options, args
 
