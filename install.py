@@ -14,7 +14,6 @@ genomedata.
 ####################### BEGIN COMMON CODE HEADER #####################
 
 import os
-import site
 import sys
 
 from distutils.spawn import find_executable
@@ -339,7 +338,7 @@ def get_hdf5_version():
     Only works if h52gif is installed and in current user path
     """
     try:
-        cmd = Popen("h52gif -V", shell=True, stdout=PIPE, stderr=PIPE)
+        cmd = Popen(["h52gif", "-V"], stdout=PIPE, stderr=PIPE)
         res = cmd.stdout.readlines()[0].strip()
         if "Version" in res:
             # HDF5 Found!
@@ -378,9 +377,9 @@ def prompt_install_hdf5(arch_home):
                       install_message=HDF5_INSTALL_MESSAGE, arch_home=arch_home,
                       version=HDF5_DOWNLOAD_VERSION)
 
-def prompt_install_numpy():
+def prompt_install_numpy(min_version=MIN_NUMPY_VERSION):
     return _installer("Numpy", install_numpy, get_numpy_version,
-                      min_version=MIN_NUMPY_VERSION,
+                      min_version=min_version,
                       install_prompt=EASY_INSTALL_PROMPT)
 
 def install_hdf5(arch_home, *args, **kwargs):
@@ -558,6 +557,9 @@ def install_script(progname, prog_dir, script, **kwargs):
     # Set fields for template substitution
     if "dir" not in fields:
         fields["dir"] = prog_dir
+
+    # Make dir absolute
+    fields["dir"] = fix_path(fields["dir"])
         
     if "url" in fields:
         filename = os.path.basename(fields["url"])
@@ -765,7 +767,7 @@ def main(args=sys.argv[1:]):
         hdf5_dir = prompt_install_hdf5(arch_home)
         if hdf5_dir:
             print >>sys.stderr, ("\nPyTables uses the environment variable"
-                                 " HDF5DIR to locate HDF5.")
+                                 " HDF5_DIR to locate HDF5.")
             prompt_set_env(shell, "HDF5_DIR", hdf5_dir)
 
 

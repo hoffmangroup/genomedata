@@ -45,7 +45,7 @@ def main(args=sys.argv[1:]):
         hdf5_dir = prompt_install_hdf5(arch_home)
         if hdf5_dir:
             print >>sys.stderr, ("\nPyTables uses the environment variable"
-                                 " HDF5DIR to locate HDF5.")
+                                 " HDF5_DIR to locate HDF5.")
             prompt_set_env(shell, "HDF5_DIR", hdf5_dir)
 
 
