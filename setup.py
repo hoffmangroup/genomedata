@@ -10,21 +10,20 @@ __version__ = "0.1.5"
 # Copyright 2008-2009 Michael M. Hoffman <mmh1@washington.edu>
 
 import os
-import sys
 
 from ez_setup import use_setuptools
 use_setuptools()
 
 from distutils.command.build_scripts import build_scripts
 from platform import system, processor
-from setuptools import Extension, find_packages, setup
+from setuptools import find_packages, setup
 from shutil import rmtree
 
 doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")
 long_description = "\n".join(doclines[2:])
 
-url = "http://noble.gs.washington.edu/~mmh1/software/%s/" % name.lower()
+url = "http://noble.gs.washington.edu/proj/%s/" % name.lower()
 download_url = "%s%s-%s.tar.gz" % (url, name, __version__)
 
 # XXX: remove these when the upstream packages are updated to fix these issues
@@ -78,7 +77,7 @@ class BuildScriptWrapper(build_scripts):
                 v.remove(bad_flag)
             except (AttributeError, TypeError, ValueError):
                 pass
-        
+
         extra_postargs = ["-std=c99"]
         try:
             extra_preargs = os.environ["LDFLAGS"].split()
@@ -86,7 +85,7 @@ class BuildScriptWrapper(build_scripts):
         except KeyError:
             extra_preargs = []
             pass
-        
+
         output_dir = os.path.join(self.build_dir, arch)
         try:
             binaries = []
@@ -98,7 +97,7 @@ class BuildScriptWrapper(build_scripts):
                 except AttributeError:
                     if not src.endswith(".c"):
                         continue
-                        
+
                 print "Compiling: %s" % str(srcs)
                 objs = compiler.compile(srcs, output_dir = output_dir,
                                         extra_postargs=extra_postargs,
@@ -115,7 +114,7 @@ class BuildScriptWrapper(build_scripts):
             self.scripts = binaries
         except AttributeError:  # Not a dict
             pass
-        
+
         print "##################################################"
 
         build_scripts.run(self)  # Call actual script
@@ -124,8 +123,8 @@ class BuildScriptWrapper(build_scripts):
         if os.path.isdir(output_dir):
             print "Removing script build dir: %s" % output_dir
             rmtree(output_dir)
-        
-        
+
+
 if __name__ == "__main__":
     setup(name=name,
           version=__version__,
@@ -139,7 +138,7 @@ if __name__ == "__main__":
           dependency_links=dependency_links,
           install_requires=install_requires,
           zip_safe=False,
-          
+
           # XXX: this should be based off of __file__ instead
           packages=find_packages("."),
           entry_points=entry_points,
