@@ -45,6 +45,39 @@ install_requires = ["numpy", "path", "tables>2.0.4"]
 
 arch = "_".join([system(), processor()])
 
+class DirSet(object):
+    """Maintain a set of valid directories.
+
+    add_dir: add the given directory to the set
+    add_env: add the given ':'-separated environment variable to the set
+    
+    """
+    def __init__(self):
+        self._set = set()
+    def add_dir(self, dir):
+        if os.path.isdir(dir):
+            self._set.add(dir)
+    def add_env(self, env):
+        if env in os.environ:
+            for dir in os.environ[env].split(":"):
+                self.add_dir(dir)
+    def as_list(self):
+        return list(self._set)
+
+# Get compile flags/information from environment
+library_dirs = DirSet()
+include_dirs = DirSet()
+
+library_dirs.add_env("LIBRARY_PATH")
+library_dirs.add_env("LD_LIBRARY_PATH")
+include_dirs.add_env("C_INCLUDE_PATH")
+if "HDF5_DIR" in os.environ:
+    hdf5_dir = os.environ["HDF5_DIR"]
+    library_dirs.add_dir(os.path.join(hdf5_dir, "lib"))
+    include_dirs.add_dir(os.path.join(hdf5_dir, "include"))
+
+library_dirs = library_dirs.as_list()
+include_dirs = include_dirs.as_list()
 class BuildScriptWrapper(build_scripts):
     """Override the script-building machinery of distutils.
 
@@ -60,17 +93,17 @@ class BuildScriptWrapper(build_scripts):
     """
     def run(self):
         print "##################################################"
-#        print str(self)
-#        print "OPTIONS: ", dir(self)
-#        print str(self.scripts)
-#        print str(self.build_dir)
-#        print str(self.mkdir)
         from distutils.ccompiler import new_compiler
         from distutils.sysconfig import customize_compiler
 
         compiler = new_compiler()
         customize_compiler(compiler)
+
+        # Customize compiler options
         compiler.add_library("hdf5")
+        extra_postargs = ["-std=c99"]
+
+        # Remove DNDEBUG flag from all compile statements
         bad_flag = "-DNDEBUG"
         for k, v, in compiler.__dict__.items():
             try:
@@ -78,14 +111,7 @@ class BuildScriptWrapper(build_scripts):
             except (AttributeError, TypeError, ValueError):
                 pass
 
-        extra_postargs = ["-std=c99"]
-        try:
-            extra_preargs = os.environ["LDFLAGS"].split()
-            print "Added LDFLAGS to link arguments"
-        except KeyError:
-            extra_preargs = []
-            pass
-
+        # Compile and link any sources that are passed in
         output_dir = os.path.join(self.build_dir, arch)
         try:
             binaries = []
@@ -98,16 +124,15 @@ class BuildScriptWrapper(build_scripts):
                     if not src.endswith(".c"):
                         continue
 
-                print "Compiling: %s" % str(srcs)
-                objs = compiler.compile(srcs, output_dir = output_dir,
+                objs = compiler.compile(srcs, output_dir=output_dir,
+                                        include_dirs=include_dirs,
                                         extra_postargs=extra_postargs,
                                         debug=False)
 
                 bin_path = os.path.join(output_dir, bin)
 
-                print "Linking: %s" % objs
                 compiler.link_executable(objs, bin_path,
-                                         extra_preargs = extra_preargs)
+                                         library_dirs=library_dirs)
                 binaries.append(bin_path)
 
             # Replace dict script with actual before build_scripts.run() call
@@ -142,6 +167,6 @@ if __name__ == "__main__":
           # XXX: this should be based off of __file__ instead
           packages=find_packages("."),
           entry_points=entry_points,
-          scripts={"genomedata-load-data": ["src/genomedata-load-data.c"]},
-          cmdclass = {"build_scripts": BuildScriptWrapper}
+          scripts={"genomedata-load-data": ["src/genomedata_load_data.c"]},
+          cmdclass={"build_scripts": BuildScriptWrapper}
           )
