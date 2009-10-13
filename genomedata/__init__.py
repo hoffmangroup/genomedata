@@ -42,14 +42,14 @@ class Genome(object):
     Implemented via a file system directory
     If you use this as a context manager, it will keep track of open
     Chromosomes and close them for you later when the context is left.
-    
+
     """
     def __init__(self, dirname):
         """Create a Genome object from the genomedata objects in the directory.
 
         :param dirname: directory containing any chomosome files to include.
         :type dirname: string
-        
+
         """
         self.dirpath = path(dirname)
 
@@ -71,11 +71,11 @@ class Genome(object):
     def __getitem__(self, name):
         """Return a reference to a chromosome of the given name.
 
-        :param name: name of the chromosome file (e.g. "chr1" if chr1.genomedata
-                     is a file in the genomedata directory)
+        :param name: name of the chromosome file (e.g. "chr1" if
+                     chr1.genomedata is a file in the genomedata directory)
         :type name: string
         :rtype: Chromosome_
-        
+
         """
         try:
             # memoization
@@ -142,7 +142,7 @@ class Genome(object):
         """Return the minimum value for each track.
 
         :rtype: numpy.array
-        
+
         """
         return self._accum_extrema("mins", partial(amin, axis=0))
 
@@ -151,7 +151,7 @@ class Genome(object):
         """Return a vector of the maximum value for each track.
 
         :rtype: numpy.array
-        
+
         """
         return self._accum_extrema("maxs", partial(amax, axis=0))
 
@@ -160,7 +160,7 @@ class Genome(object):
         """Return a vector of the sum of the values for each track.
 
         :rtype: numpy.array
-        
+
         """
         return self._accum_extrema("sums", add.reduce)
 
@@ -169,7 +169,7 @@ class Genome(object):
         """Return a vector of the sum of squared values for each track's data.
 
         :rtype: numpy.array
-        
+
         """
         return self._accum_extrema("sums_squares", add.reduce)
 
@@ -179,7 +179,7 @@ class Genome(object):
 
         :returns: a vector with an entry for each track.
         :rtype: numpy.array
-        
+
         """
         return self._accum_extrema("num_datapoints", add.reduce)
 
@@ -188,7 +188,7 @@ class Genome(object):
         """Return a vector of the mean value of each track.
 
         :rtype: numpy.array
-        
+
         """
         with self:
             return self.sums / self.num_datapoints
@@ -198,7 +198,7 @@ class Genome(object):
         """Return a vector of the variance in the data for each track.
 
         :rtype: numpy.array
-        
+
         """
         # this is an unstable way of calculating the variance,
         # but it should be good enough
@@ -210,9 +210,9 @@ class Genome(object):
 
 class Chromosome(object):
     """The genomedata object corresponding to data for a given chromosome.
-    
+
     Implemented via an HDF5 File
-    
+
     """
     # XXX: I need to handle the dirty case better, to allow "+" in mode
     def __init__(self, filename, mode="r", *args, **kwargs):
@@ -223,7 +223,7 @@ class Chromosome(object):
         :type mode: string
         :param \*args: args passed on to openFile
         :param \*\*kwargs: keyword args passed on to openFile
-        
+
         """
         h5file = openFile(filename, mode, *args, **kwargs)
         attrs = h5file.root._v_attrs
@@ -264,7 +264,7 @@ class Chromosome(object):
         :param key: index or range of indices to find containing supercontig for
         :type key: slice or integer
         :rtype: Supercontig_
-        
+
         """
         if isinstance(key, slice):
             start = key.start
@@ -294,7 +294,7 @@ class Chromosome(object):
         :param trackname: name of data track
         :type trackname: string
         :rtype: integer
-        
+
         """
         return self.tracknames_continuous.index(trackname)
 
@@ -349,15 +349,15 @@ class Chromosome(object):
 
 class Supercontig(object):
     """A container for a segment of data in one chromosome.
-    
+
     Implemented via a HDF5 Group
-    
+
     """
     def __init__(self, h5group):
         """
         :param h5group: group containing the Supercontig data
         :type h5group: HDF5 Group
-        
+
         """
         self.h5group = h5group
 
@@ -366,7 +366,7 @@ class Supercontig(object):
         """Return the underlying continuous data in this supercontig.
 
         :rtype: numpy.array
-        
+
         """
         return self.h5group.continuous
 
@@ -401,7 +401,7 @@ class Supercontig(object):
         :param pos: chromosome coordinate
         :type pos: integer
         :rtype: integer
-        
+
         """
         return pos - self.start
 
