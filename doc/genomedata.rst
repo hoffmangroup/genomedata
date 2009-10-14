@@ -8,8 +8,8 @@ Genomedata documentation
 
 For a broad overview, see the paper:
 
-    Hoffman and Noble, "The genomedata format for storing large-scale 
-    functional genomics data." In preparation.
+    Hoffman MM, Buske OJ, Noble WS, "The genomedata format for storing
+    large-scale functional genomics data." In preparation.
 
 Michael <mmh1 at washington dot edu> can send you a copy of the latest
 manuscript. Please cite this paper if you use genomedata.
@@ -19,7 +19,7 @@ The workflow
 A genomedata collection contains sequence and may also contain
 numerical data associated with that sequence. You can easily load
 sequence and numerical data into a genomedata collection with the
-``genomedata-load`` command::
+:program:`genomedata-load` command::
 
     genomedata-load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATADIR
 
@@ -28,14 +28,14 @@ This command is a user-friendly shortcut to the typical workflow.
 The underlying commands are still installed and may be used if more
 fine-grained control is required. The commands and required ordering are:
 
-  1. ``genomedata-load-seq``
-  #. ``genomedata-open-data``
-  #. ``genomedata-load-data``
-  #. ``genomedata-close-data``
+  1. :program:`genomedata-load-seq`
+  #. :program:`genomedata-open-data`
+  #. :program:`genomedata-load-data`
+  #. :program:`genomedata-close-data`
 
-.. note:: A call to ``h5repack`` after ``genomedata-close-data`` is also
-          necessary.
-
+.. note:: A call to :program:`h5repack` after
+          :program:`genomedata-close-data` may be used to
+          transparently compress the data.
 
 Overview
 ========
@@ -63,7 +63,7 @@ Command-line interface
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Genomedata collections can be created and loaded from the command line
-with the ``genomedata-load`` command. 
+with the :program:`genomedata-load` command. 
 
 Usage information follows, but in summary, it accepts sequence files
 (in ``.fa`` or ``.fa.gz`` format) and trackname, datafile pairs
