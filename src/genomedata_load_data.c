@@ -51,13 +51,14 @@
 #define CARDINALITY 2
 #define BASE 10
 
-/* XXX: this needs to adjust, but always be smaller than max size for
-   a dataset */
-#define CHUNK_NROWS 10000
-
+/* make sure to keep option default updated to this value */
+#define DEFAULT_CHUNK_NROWS 10000
 #define MAX_CHROM_LEN 1024
 
 const float nan_float = NAN;
+
+/** globals **/
+long chunk_nrows = DEFAULT_CHUNK_NROWS;
 
 /** typedefs **/
 
@@ -388,7 +389,7 @@ hid_t open_supercontig_dataset(supercontig_t *supercontig, hsize_t num_cols) {
   hid_t file_dataspace = -1;
 
   hsize_t file_dataspace_dims[CARDINALITY];
-  hsize_t chunk_dims[CARDINALITY] = {CHUNK_NROWS, 1};
+  hsize_t chunk_dims[CARDINALITY] = {chunk_nrows, 1};
 
   /* set up creation options */
   dataset_creation_plist = H5Pcreate(H5P_DATASET_CREATE);
@@ -1078,19 +1079,41 @@ void load_data(char *h5dirname, char *trackname) {
 const char *argp_program_version = "$Revision$";
 const char *argp_program_bug_address = "Michael Hoffman <mmh1@washington.edu>";
 
-static char doc[] = "Loads data into genomedata format\nTakes track data in on stdin";
+static char doc[] = "Loads data into genomedata format\
+\nTakes track data in on stdin";
 static char args_doc[] = "GENOMEDATADIR TRACKNAME";
+static struct argp_option options[] = {
+  {"chunk-size", 'c', "NROWS", 0, "Chunk hdf5 data into blocks of NROWS. \
+A higher value increases compression but slows random access. \
+Must always be smaller than the max size for a dataset. \
+[default: 10000]"},  /* Would be nice if it were easy to use constant here */
+  { 0 }
+};
+
+struct arguments {
+  char *args[NARGS];
+  long chunk_size;
+};
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state) {
-  char **arguments = state->input;
+  struct arguments *arguments = state->input;
 
   switch (key) {
+  case 'c':
+    arguments->chunk_size = atol(arg);
+    if (arguments->chunk_size <= 0) {
+      printf("Expected positive long integer for chunk size but found: %s\n",
+             arg);
+      argp_usage(state);
+      exit(EXIT_FAILURE);
+    }
+    break;
   case ARGP_KEY_ARG:
     if (state->arg_num >= NARGS) {
       argp_usage(state);
       exit(EXIT_FAILURE);
     }
-    arguments[state->arg_num] = arg;
+    arguments->args[state->arg_num] = arg;
     break;
 
   case ARGP_KEY_END:
@@ -1098,8 +1121,8 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
       argp_usage(state);
       exit(EXIT_FAILURE);
     }
-
     break;
+
   default:
     return ARGP_ERR_UNKNOWN;
   }
@@ -1107,16 +1130,22 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 }
 
 
-static struct argp argp = {0, parse_opt, args_doc, doc};
+static struct argp argp = {options, parse_opt, args_doc, doc};
 
 int main(int argc, char **argv) {
-  char *arguments[NARGS];
+  struct arguments arguments;
   char *h5dirname, *trackname;
 
-  assert(argp_parse(&argp, argc, argv, 0, 0, arguments) == 0);
+  /* default value */
+  arguments.chunk_size = DEFAULT_CHUNK_NROWS;
 
-  h5dirname = arguments[0];
-  trackname = arguments[1];
+  assert(argp_parse(&argp, argc, argv, 0, 0, &arguments) == 0);
+
+  h5dirname = arguments.args[0];
+  trackname = arguments.args[1];
+  /* set global chunk size variable */
+  chunk_nrows = arguments.chunk_size;
+  printf("using chunks of %ld rows\n", chunk_nrows);
 
   load_data(h5dirname, trackname);
 

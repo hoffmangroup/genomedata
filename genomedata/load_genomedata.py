@@ -29,7 +29,8 @@ def die(msg="Unexpected error!"):
     print >>sys.stderr, msg
     sys.exit(1)
 
-def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
+def load_genomedata(genomedatadir, tracks=None, seqfiles=None,
+                    chunk_size=None):
     """Loads genomedata object with given data
 
     genomedatadir: name of output directory for genomedata
@@ -42,7 +43,7 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
         # Generate hdf5 data in temporary directory and copy out when done
         tempdatadir = mkdtemp(prefix="genomedata.")
         print ">> Using temporary directory: %s" % tempdatadir
-        
+
         # Load sequences if any are specified
         if seqfiles is not None and len(seqfiles) > 0:
             for seqfile in seqfiles:
@@ -64,32 +65,35 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
                         die("Could not find track file: %s" % track_filename)
             except ValueError:
                 die("Error saving data from tracks: %s" % tracks)
-                
+
             print ">> Opening genomedata with %d tracks" % len(track_names)
             open_data(tempdatadir, track_names)
 
             # Load track data
             for track_name, track_filename in tracks:
                 print ">> Loading data for track: %s" % track_name
-                cmd_args = [track_filename, "|", LOAD_DATA_CMD,
-                            tempdatadir, track_name]
+                cmd_args = [track_filename, "|", LOAD_DATA_CMD]
+                if chunk_size:
+                    cmd_args.append("--chunk-size=%d" % chunk_size)
+                cmd_args.extend([tempdatadir, track_name])
                 if track_filename.endswith(EXT_GZ):
                     cmd_args.insert(0, "zcat")
                 else:
                     cmd_args.insert(0, "cat")
-                    
+
                 # Need call in shell for piping
                 retcode = call(" ".join(cmd_args), shell=True)
                 if retcode != 0:
-                    die("Error loading data from track file: %s" % track_filename)
-                    
+                    die("Error loading data from track file: %s" % \
+                            track_filename)
+
 
         # Close hdf5 files
         try:
             close_data(tempdatadir)  # Close genomedata
         except:
             die("Error saving metadata!")
-                    
+
         # Make output directory
         if not os.path.isdir(genomedatadir):
             print ">> Creating directory: %s" % genomedatadir
@@ -119,8 +123,9 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None):
         except Exception, e:
             print >>sys.stderr, "\nCleanup failed: %s" % str(e)
 
-    print "\n===== Genomedata successfully created in: %s =====\n" % genomedatadir
-    
+    print "\n===== Genomedata successfully created in: %s =====\n" % \
+        genomedatadir
+
 
 def parse_options(args):
     from optparse import OptionParser
@@ -132,8 +137,15 @@ def parse_options(args):
     description = ("--track and --sequence may be repeated to specify multiple"
                    " trackname=trackfile pairings and sequence files,"
                    " respectively")
-    parser = OptionParser(usage=usage, version=version, description=description)
+    parser = OptionParser(usage=usage, version=version,
+                          description=description)
 
+#     parser.add_option("-c", "--chunk-size", dest="nrows",
+#                       type="int", default=10000,
+#                       help="Chunk hdf5 data into blocks of NROWS. A higher"
+#                       " value increases compression but slows random access."
+#                       " Must always be smaller than the max size for a"
+#                       " dataset. [default: %default]")
     parser.add_option("-s", "--sequence", action="append",
                       dest="seqfile", default=[],
                       help="Add the sequence data in the specified file")
@@ -142,7 +154,7 @@ def parse_options(args):
                       help="Add data for the given track. TRACK"
                       " should be specified in the form: NAME=FILE,"
                       " such as: -t signal=signal.dat")
-    
+
     options, args = parser.parse_args(args)
 
     if not len(args) == 1:
@@ -154,6 +166,7 @@ def main(args=sys.argv[1:]):
     options, args = parse_options(args)
     genomedatadir = args[0]
     seqfiles = options.seqfile
+
     # Parse tracks into list of tuples
     try:
         tracks = []
@@ -165,6 +178,6 @@ def main(args=sys.argv[1:]):
              "in NAME=FILE form, such as: -t high=signal.high") % track_expr)
 
     load_genomedata(genomedatadir, tracks, seqfiles)
-    
+
 if __name__ == "__main__":
     sys.exit(main())

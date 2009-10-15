@@ -18,7 +18,7 @@ import pkg_resources
 import sys
 
 from distutils.spawn import find_executable
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion
 from urllib import urlretrieve
 from site import addsitedir
 from string import Template
@@ -66,8 +66,6 @@ rm -f $file
 
 ####################### END COMMON CODE HEADER #####################
 
-
-import pkg_resources
 
 MIN_GENOMEDATA_VERSION = "0.1.5"
 
@@ -770,14 +768,14 @@ def main(args=sys.argv[1:]):
     except KeyError:
         shell_name = None
     shell = ShellManager(shell_name)
-                
+
     try:
         arch_home = setup_arch_home()
-        
+
         python_home, default_python_home = setup_python_home(arch_home)
         # Add python_home to PYTHONPATH
         prompt_add_to_env(shell, "PYTHONPATH", python_home)
-        
+
         script_home, default_script_home = setup_script_home(arch_home)
         # Add script_home to PATH
         prompt_add_to_env(shell, "PATH", script_home)
@@ -785,7 +783,7 @@ def main(args=sys.argv[1:]):
         # Maybe create pydistutils.cfg
         prompt_create_cfg(arch_home, python_home, default_python_home,
                           script_home, default_script_home)
-            
+
         hdf5_dir = setup_hdf5_installation(shell, arch_home)
 
         prompt_install_numpy()
@@ -794,9 +792,9 @@ def main(args=sys.argv[1:]):
 
         # Done: Test package installations?
         prompt_test_packages(python_home)
-        
+
         print >>sys.stderr, "Installation complete"
-        
+
     finally:  # Clean up
         shell.close()
 
@@ -815,7 +813,7 @@ def get_genomedata_version():
     if dir in sys.path:
         index = sys.path.index(dir)
         del sys.path[index]
-        
+
     try:
         try:
             ref = pkg_resources.Requirement.parse("genomedata")
@@ -837,7 +835,7 @@ def prompt_install_genomedata(min_version=MIN_GENOMEDATA_VERSION):
 def install_genomedata(min_version=MIN_GENOMEDATA_VERSION, *args, **kwargs):
     return easy_install("genomedata", min_version=min_version)
 
-            
+
 if __name__ == "__main__":
     sys.exit(main())
 
