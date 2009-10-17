@@ -22,7 +22,7 @@ from functools import partial
 from os import extsep
 import sys
 
-from numpy import add, amin, amax, square
+from numpy import add, amin, amax, empty, NAN, square
 from path import path
 from tables import openFile, NoSuchNodeError
 
@@ -136,6 +136,21 @@ class Genome(object):
 
         return res
 
+    @property
+    def num_tracks_continuous(self):
+        """Returns the number of continuous data tracks."""
+        res = None
+
+        # check that all chromosomes have the same tracknames_continuous
+        with self:
+            for chromosome in self:
+                if res is None:
+                    res = chromosome.num_tracks_continuous
+                else:
+                    assert res == chromosome.num_tracks_continuous
+
+        return res
+
     # XXX: should memoize these with an off-the-shelf decorator
     @property
     def mins(self):
@@ -246,6 +261,8 @@ class Chromosome(object):
 
         self.filename = filename
         self.h5file = h5file
+        self._seq = _ChromosomeSeqSlice(self)
+        self._supercontigs = _Supercontigs(self)
 
     def __iter__(self):
         """Return next supercontig in chromosome."""
@@ -259,29 +276,39 @@ class Chromosome(object):
             yield Supercontig(group)
 
     def __getitem__(self, key):
-        """Return the supercontig that contains this range if possible.
+        """Return the contiguous data corresponding to this bp slice
 
-        :param key: index or range of indices to find containing supercontig for
+        If slice is taken over a supercontig boundary, missing data
+        is filled in with NaN's automatically and a warning is printed.
+
+        :param key: index or range of indices to get continuous data for
         :type key: slice or integer
-        :rtype: Supercontig_
+        :rtype: numpy.array
 
         """
-        if isinstance(key, slice):
-            start = key.start
-            end = key.stop
-        else:
-            # number
-            start = key
-            end = key + 1
+        supercontigs = self.supercontigs[key]
+        if len(supercontigs) == 0:
+            print >>sys.stderr, "Warning: slice of chromosome data does \
+not overlap any supercontig (filled with 'NaN')."
+        elif len(supercontigs) > 1:
+            print >>sys.stderr, "Warning: slice of chromosome data \
+spans more than one supercontig (filled with 'NaN')."
 
-        for supercontig in self:
-            if start >= supercontig.start and end <= supercontig.end:
-                return supercontig
+        start, end = _key_to_chrom_range(key, self)
+        data = empty((end - start, self.num_tracks_continuous),
+                     dtype=self._continuous_dtype)
+        data.fill(NAN)
+        for supercontig in supercontigs:
+            chr_start = max(start, supercontig.start)
+            chr_end = min(end, supercontig.end)
+            data[chr_start - start:chr_end - start] = \
+                supercontig.continuous[supercontig.project(chr_start):
+                                           supercontig.project(chr_end)]
 
-        raise IndexError("no supercontigs matched %r" % key)
+        return data
 
     def itercontinuous(self):
-        """Return a generator over all superconig, continuous pairs."""
+        """Return a generator over all supercontig, continuous pairs."""
         for supercontig in self:
             try:
                 yield supercontig, supercontig.continuous
@@ -303,6 +330,16 @@ class Chromosome(object):
         return self.h5file.close()
 
     @property
+    def _continuous_dtype(self):
+        for supercontig in self:
+            return supercontig._continuous_dtype
+
+    @property
+    def _seq_dtype(self):
+        for supercontig in self:
+            return supercontig._seq_dtype
+
+    @property
     def name(self):
         """Return the name of this chromosome."""
         return path(self.filename).name.rpartition(SUFFIX)[0]
@@ -316,6 +353,11 @@ class Chromosome(object):
     def tracknames_continuous(self):
         """Return a list of the data track names in this Chromosome."""
         return self.attrs.tracknames.tolist()
+
+    @property
+    def num_tracks_continuous(self):
+        """Returns the number of tracks in this chromosome"""
+        return len(self.tracknames_continuous)
 
     @property
     def mins(self):
@@ -347,6 +389,70 @@ class Chromosome(object):
         """Return the position of the last base in this chromosome."""
         return max(supercontig.end for supercontig in self)
 
+    @property
+    def seq(self):
+        return self._seq
+
+    @property
+    def supercontigs(self):
+        """Return the supercontig that contains this range if possible.
+
+        Get items with a slice or simple index
+        :rtype: Supercontig_
+
+        """
+        return self._supercontigs
+
+class _ChromosomeSeqSlice(object):
+    def __init__(self, chromosome):
+        self._chromosome = chromosome
+
+    def __getitem__(self, key):
+        """Get the underlying sequence that corresponds to this index (range).
+
+        Insert "N"s if the index range spans multiple supercontigs.
+        """
+
+        supercontigs = self._chromosome.supercontigs[key]
+
+        if len(supercontigs) == 0:
+            print >>sys.stderr, "Warning: index of chromosome sequence does \
+not overlap any supercontig (filling with 'N')."
+        elif len(supercontigs) > 1:
+            print >>sys.stderr, "Warning: index of chromosome sequence \
+spans more than one supercontig (filling with 'N')."
+
+        start, end = _key_to_chrom_range(key, self._chromosome)
+        seq = empty((end - start,), dtype=self._chromosome._seq_dtype)
+        seq.fill(ord("N"))
+        for supercontig in supercontigs:
+            chr_start = max(start, supercontig.start)
+            chr_end = min(end, supercontig.end)
+            seq[chr_start - start:chr_end - start] = \
+                supercontig.seq[supercontig.project(chr_start):
+                                    supercontig.project(chr_end)]
+
+        return seq
+
+class _Supercontigs(object):
+    def __init__(self, chromosome):
+        self._chromosome = chromosome
+
+    def __getitem__(self, key):
+        """Get the supercontigs that contains this index range, if possible."""
+        start, end = _key_to_chrom_range(key, self._chromosome)
+
+        supercontigs = []
+        for supercontig in self._chromosome:
+            if start < supercontig.end and end > supercontig.start:
+                supercontigs.append(supercontig)
+                if start >= supercontig.start and end <= supercontig.end:
+                    # Key entirely within one supercontig, so we're done
+                    break
+            # XXX: would be nice if we could count on supercontig ordering
+
+        return supercontigs
+
 class Supercontig(object):
     """A container for a segment of data in one chromosome.
 
@@ -360,6 +466,24 @@ class Supercontig(object):
 
         """
         self.h5group = h5group
+
+    def project(self, pos):
+        """Project chromsomal coordinates to supercontig coordinates.
+
+        :param pos: chromosome coordinate
+        :type pos: integer
+        :rtype: integer
+
+        """
+        return pos - self.start
+
+    @property
+    def _seq_dtype(self):
+        return self.seq.atom.dtype
+
+    @property
+    def _continuous_dtype(self):
+        return self.continuous.atom.dtype
 
     @property
     def continuous(self):
@@ -395,15 +519,22 @@ class Supercontig(object):
         """Return the end position of this supercontig."""
         return self.attrs.end
 
-    def project(self, pos):
-        """Project chromsomal coordinates to supercontig coordinates.
+def _key_to_range(key):
+    """Convert a slice or integer key to (start, stop) tuple."""
+    if isinstance(key, slice):
+        return (key.start, key.stop)
+    else:
+        start = int(key)
+        return (start, start + 1)
 
-        :param pos: chromosome coordinate
-        :type pos: integer
-        :rtype: integer
+def _key_to_chrom_range(key, chrom):
+    """Key to range with enforcement within chromosome bounds."""
+    start, end = _key_to_range(key)
+    if start < 0 or end > chrom.end:
+        raise IndexError("Chromosome sequence index: %r out of chromosome"
+                         " range: [0, %d)" % (key, chrom.end))
+    return start, end
 
-        """
-        return pos - self.start
 
 def main(args=sys.argv[1:]):
     pass
