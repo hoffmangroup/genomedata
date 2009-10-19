@@ -290,10 +290,15 @@ class Chromosome(object):
         if isinstance(key, tuple):
             key, cols = key
             if isinstance(cols, slice):
-                if cols.start is None:
-                    cols.start = 0
-                if cols.stop is None:
-                    cols.stop = self.num_tracks_continuous
+                col_start = cols.start
+                col_stop = cols.stop
+                col_step = cols.step
+                if col_start is None:
+                    col_start = 0
+                if col_stop is None:
+                    col_stop = self.num_tracks_continuous
+
+                cols = slice(col_start, col_stop, col_step)
                 num_cols = cols.stop - cols.start
             else:
                 num_cols = 1
@@ -316,7 +321,7 @@ class Chromosome(object):
         for supercontig in supercontigs:
             chr_start = max(start, supercontig.start)
             chr_end = min(end, supercontig.end)
-            data[chr_start - start:chr_end - start, cols] = \
+            data[chr_start - start:chr_end - start] = \
                 supercontig.continuous[supercontig.project(chr_start):
                                            supercontig.project(chr_end),
                                        cols]
