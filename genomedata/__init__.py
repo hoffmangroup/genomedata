@@ -25,6 +25,7 @@ import sys
 from numpy import add, amin, amax, empty, NAN, square
 from path import path
 from tables import openFile, NoSuchNodeError
+from warning import warn
 
 FORMAT_VERSION = 0
 
@@ -288,11 +289,11 @@ class Chromosome(object):
         """
         supercontigs = self.supercontigs[key]
         if len(supercontigs) == 0:
-            print >>sys.stderr, "Warning: slice of chromosome data does \
-not overlap any supercontig (filled with 'NaN')."
+            warn("slice of chromosome data does not overlap any supercontig"
+                 " (filling with 'NaN')")
         elif len(supercontigs) > 1:
-            print >>sys.stderr, "Warning: slice of chromosome data \
-spans more than one supercontig (filled with 'NaN')."
+            warn("slice of chromosome data spans more than one supercontig"
+                 " (filling gaps with 'NaN')")
 
         start, end = _key_to_chrom_range(key, self)
         data = empty((end - start, self.num_tracks_continuous),
@@ -410,17 +411,17 @@ class _ChromosomeSeqSlice(object):
     def __getitem__(self, key):
         """Get the underlying sequence that corresponds to this index (range).
 
-        Insert "N"s if the index range spans multiple supercontigs.
+        Insert "N"s if the index range spans no/multiple supercontigs.
         """
 
         supercontigs = self._chromosome.supercontigs[key]
 
         if len(supercontigs) == 0:
-            print >>sys.stderr, "Warning: index of chromosome sequence does \
-not overlap any supercontig (filling with 'N')."
+            warn("slice of chromosome sequence does not overlap any"
+                 " supercontig (filling with 'N')")
         elif len(supercontigs) > 1:
-            print >>sys.stderr, "Warning: index of chromosome sequence \
-spans more than one supercontig (filling with 'N')."
+            warn("slice of chromosome sequence spans more than one supercontig"
+                 " (filling gaps with 'NaN')")
 
         start, end = _key_to_chrom_range(key, self._chromosome)
         seq = empty((end - start,), dtype=self._chromosome._seq_dtype)
