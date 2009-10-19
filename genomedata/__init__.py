@@ -25,7 +25,7 @@ import sys
 from numpy import add, amin, amax, empty, NAN, square
 from path import path
 from tables import openFile, NoSuchNodeError
-from warning import warn
+from warnings import warn
 
 FORMAT_VERSION = 0
 
@@ -287,6 +287,22 @@ class Chromosome(object):
         :rtype: numpy.array
 
         """
+        if isinstance(key, tuple):
+            key, cols = key
+            if isinstance(cols, slice):
+                if cols.start is None:
+                    cols.start = 0
+                if cols.stop is None:
+                    cols.stop = self.num_tracks_continuous
+                num_cols = cols.stop - cols.start
+            else:
+                num_cols = 1
+            print str(key), str(cols), str(num_cols)
+        else:
+            cols = slice(None)
+            num_cols = self.num_tracks_continuous
+            print str(cols), str(num_cols)
+
         supercontigs = self.supercontigs[key]
         if len(supercontigs) == 0:
             warn("slice of chromosome data does not overlap any supercontig"
@@ -296,15 +312,16 @@ class Chromosome(object):
                  " (filling gaps with 'NaN')")
 
         start, end = _key_to_chrom_range(key, self)
-        data = empty((end - start, self.num_tracks_continuous),
+        data = empty((end - start, num_cols),
                      dtype=self._continuous_dtype)
         data.fill(NAN)
         for supercontig in supercontigs:
             chr_start = max(start, supercontig.start)
             chr_end = min(end, supercontig.end)
-            data[chr_start - start:chr_end - start] = \
+            data[chr_start - start:chr_end - start, cols] = \
                 supercontig.continuous[supercontig.project(chr_start):
-                                           supercontig.project(chr_end)]
+                                           supercontig.project(chr_end),
+                                       cols]
 
         return data
 
@@ -384,6 +401,11 @@ class Chromosome(object):
     def num_datapoints(self):
         """See Genome.num_datapoints."""
         return self.attrs.num_datapoints
+
+    @property
+    def start(self):
+        """Return the position of the first base in this chromosome."""
+        return min(supercontig.start for supercontig in self)
 
     @property
     def end(self):
@@ -531,6 +553,11 @@ def _key_to_range(key):
 def _key_to_chrom_range(key, chrom):
     """Key to range with enforcement within chromosome bounds."""
     start, end = _key_to_range(key)
+    if start is None:
+        start = chrom.start
+    if end is None:
+        end = chrom.end
+    # Check chrom bounds
     if start < 0 or end > chrom.end:
         raise IndexError("Chromosome sequence index: %r out of chromosome"
                          " range: [0, %d)" % (key, chrom.end))
