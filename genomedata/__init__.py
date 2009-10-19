@@ -297,11 +297,9 @@ class Chromosome(object):
                 num_cols = cols.stop - cols.start
             else:
                 num_cols = 1
-            print str(key), str(cols), str(num_cols)
         else:
             cols = slice(None)
             num_cols = self.num_tracks_continuous
-            print str(cols), str(num_cols)
 
         supercontigs = self.supercontigs[key]
         if len(supercontigs) == 0:
