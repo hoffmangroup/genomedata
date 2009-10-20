@@ -98,6 +98,10 @@ class Genome(object):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
+        # XXX: this and __enter__ have potential race conditions, if
+        # _context_count is changed simultaneously by different
+        # threads. should be synchronized
+
         if self._context_count == 1:
             for name, chromosome in self.open_chromosomes.iteritems():
                 chromosome.close()
@@ -230,21 +234,30 @@ class Chromosome(object):
     Implemented via an HDF5 File
 
     """
-    # XXX: I need to handle the dirty case better, to allow "+" in mode
     def __init__(self, filename, mode="r", *args, **kwargs):
         """
         :param filename: name of the chromosome file in the genomedata directory
-        :param mode: mode of interaction with the chromosome file, with
-                     ``r``: read, ``w``: write
+
+        :param mode: mode of interaction with the chromosome file,
+                     with ``r``: read, ``w``: write
+
         :type mode: string
         :param \*args: args passed on to openFile
         :param \*\*kwargs: keyword args passed on to openFile
 
         """
+
+        # disabled possibilities:
+        # , ``a``: append, ``r+``: append but force file to exist
+        # already. See documentation for tables.openFile().
+
         h5file = openFile(filename, mode, *args, **kwargs)
         attrs = h5file.root._v_attrs
 
         # set or check file format version and dirty flag
+        # XXX: need to handle the dirty case better, to allow "+" in mode
+        assert mode in set("rw") # others not allowed yet
+
         if "w" in mode:
             attrs.genomedata_format_version = FORMAT_VERSION
             attrs.dirty = True
