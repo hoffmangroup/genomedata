@@ -57,6 +57,10 @@
 
 const float nan_float = NAN;
 
+/* stringize a macro value with Xstr(VAL_MACRO) */
+#define Str(x) #x
+#define Xstr(x) Str(x)
+
 /** typedefs **/
 
 typedef enum {
@@ -1082,14 +1086,14 @@ void load_data(char *h5dirname, char *trackname, long chunk_nrows) {
 const char *argp_program_version = "$Revision$";
 const char *argp_program_bug_address = "Michael Hoffman <mmh1@washington.edu>";
 
-static char doc[] = "Loads data into genomedata format\
+static char doc[] = "Loads data into genomedata format \
 \nTakes track data in on stdin";
 static char args_doc[] = "GENOMEDATADIR TRACKNAME";
 static struct argp_option options[] = {
   {"chunk-size", 'c', "NROWS", 0, "Chunk hdf5 data into blocks of NROWS. \
 A higher value increases compression but slows random access. \
-Must always be smaller than the max size for a dataset. \
-[default: 10000]"},  /* Would be nice if it were easy to use constant here */
+Must always be smaller than the max size for a dataset. [default: "
+   Xstr(DEFAULT_CHUNK_NROWS) "]"},
   { 0 }
 };
 
