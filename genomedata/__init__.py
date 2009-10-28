@@ -75,7 +75,7 @@ class Genome(object):
         :param name: name of the chromosome file (e.g. "chr1" if
                      chr1.genomedata is a file in the genomedata directory)
         :type name: string
-        :rtype: Chromosome_
+        :rtype: :class:`Chromosome`
 
         """
         try:
@@ -437,7 +437,8 @@ class Chromosome(object):
         """Return the supercontig that contains this range if possible.
 
         Get items with a slice or simple index
-        :rtype: Supercontig_
+
+        :rtype: :class:`Supercontig`
 
         """
         return self._supercontigs
@@ -500,7 +501,7 @@ class Supercontig(object):
     """
     def __init__(self, h5group):
         """
-        :param h5group: group containing the Supercontig data
+        :param h5group: group containing the supercontig data
         :type h5group: HDF5 Group
 
         """
