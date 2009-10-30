@@ -14,6 +14,52 @@ For a broad overview, see the paper:
 Michael <mmh1 at washington dot edu> can send you a copy of the latest
 manuscript. Please cite this paper if you use genomedata.
 
+Installation
+============
+
+A simple, interactive script_ has been created to install genomedata
+(and most dependencies) on any Linux platform. Installation is as
+simple as downloading and running this script! For instance::
+
+  wget http://noble.gs.washington.edu/proj/genomedata/install.py
+  python install.py
+
+.. _script: http://noble.gs.washington.edu/proj/genomedata/install.py
+
+.. note:: 
+  The following are prerequisites:
+
+  - Python 2.X | X >= 5
+  - Zlib
+
+.. note:: Please send any install script bugs/issues/comments to:
+          Orion Buske <stasis at uw dot edu>
+
+
+.. _genomedata-overview:
+
+Overview
+========
+
+.. automodule:: genomedata
+
+
+The genomedata hierarchy:
+
+  Each :class:`Genome` contains many :class:`Chromosomes <Chromosome>`
+    Each :class:`Chromosome` contains many :class:`Supercontigs <Supercontig>`
+      Each :class:`Supercontig` contains one ``continuous`` data set
+        Each ``continuous`` data set is a numpy.array of floating
+        point numbers with a column for each data track and a row
+        for each base in the data set.
+
+Why have :class:`Supercontigs <Supercontig>`?
+  Genomic data seldom covers the entire genome but instead tends to be defined
+  in large but scattered regions. In order to avoid storing the undefined
+  data between the regions, chromosomes are divided into separate supercontigs
+  when regions of defined data are far enough apart.
+
+
 The workflow
 ============
 A genomedata collection contains sequence and may also contain
@@ -28,39 +74,80 @@ This command is a user-friendly shortcut to the typical workflow.
 The underlying commands are still installed and may be used if more
 fine-grained control is required. The commands and required ordering are:
 
-  1. :ref:`genomedata-load-seq`
-  #. :ref:`genomedata-open-data`
-  #. :ref:`genomedata-load-data`
-  #. :ref:`genomedata-close-data`
+1. :ref:`genomedata-load-seq`
+#. :ref:`genomedata-open-data`
+#. :ref:`genomedata-load-data`
+#. :ref:`genomedata-close-data`
 
 .. note:: A call to :program:`h5repack` after
           :ref:`genomedata-close-data` may be used to
           transparently compress the data.
 
-.. _genomedata-overview:
 
-Overview
-========
-
-.. automodule:: genomedata
-
-
-The genomedata hierarchy:
-
-Each :class:`Genome` contains many :class:`Chromosomes <Chromosome>`
-  Each :class:`Chromosome` contains many :class:`Supercontigs <Supercontig>`
-    Each :class:`Supercontig` contains one ``continuous`` data set
-      Each ``continuous`` data set is a numpy.array of floating
-      point numbers with a column for each data track and a row
-      for each base in the data set.
-
-Genomic data seldom covers the entire genome but instead tends to be defined
-in large but scattered regions. In order to avoid storing the undefined
-data between the regions, chromosomes are divided into separate supercontigs
-when regions of defined data are far enough apart.
-
-Genomedata Usage
+Genomedata usage
 ================
+
+Python interface
+~~~~~~~~~~~~~~~~
+
+The data in genomedata is accessed through the hierarchy described in
+:ref:`genomedata-overview`. A full :ref:`Python API <python-api>` is 
+also available. To appreciate the full benefit of genomedata,
+it is most easily used as a contextmanager::
+
+    from genomedata import Genome
+    ...
+    genomedatadir = "/path/to/genomedata"
+    with Genome(genomedatadir) as genome:
+        ...
+
+.. note:: 
+    If used as a context manager, chromosome access is memoized. 
+    If not, chromosomes should be closed manually with 
+    :meth:`Chromosome.close`.
+
+Basic usage
+-----------
+
+Genomedata is designed to make it easy to get to the data you want.
+Here are a few examples:
+
+**Get arbitrary sequence** (10-bp sequence starting at chr2:1423)::
+
+    >>> chrom = genome["chr2"]
+    >>> seq = chrom.seq[1423:1433]
+    >>> seq
+    array([116,  99,  99,  99,  99, 103, 103, 103, 103, 103], dtype=uint8)
+
+*In a form you're used to*::
+
+    >>> print "".join([chr(v) for v in seq])
+    tccccggggg
+
+**Get arbitrary data** (data from first 3 tracks for region chr8:999-1000)::
+
+    >>> chrom = genome["chr8"]
+    >>> chrom[999:1001, 0:3]  # Note the half-open, zero-based indexing
+    array([[ NaN,  NaN,  NaN],
+           [ 3. ,  5.5,  3.5], dtype=float32)
+
+**Get data for a specific track** (specified data in first 5-bp of chr1)::
+
+    >>> chrom = genome["chr1"]
+    >>> col_index = chrom.index_continuous("sample_track")
+    >>> data = chrom[0:5, col_index]
+    >>> data
+    array([ 47.,  NaN,  NaN,  NaN,  NaN], dtype=float32)
+
+.. note: Specify a slice for the track to keep in column form
+         (e.g. ``data = chrom[0:5, col_index:col_index+1]``)
+
+*Only specified data*::
+
+    >>> from numpy import isfinite
+    >>> data[isfinite(data)]
+    array([ 47. ,  60.5,  64. ,  59. ], dtype=float32)
+    
 
 Command-line interface
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -187,6 +274,7 @@ Closes the specified genomedata object.
 
 
 
+.. _python-api:
 
 Python API
 ~~~~~~~~~~
@@ -208,7 +296,6 @@ languages, but currently only exports the following Python API.
    :members:
    :undoc-members:
    
-   .. automethod:: __init__
    .. automethod:: __iter__
    .. automethod:: __getitem__
 
@@ -216,6 +303,4 @@ languages, but currently only exports the following Python API.
 .. autoclass:: Supercontig
    :members:
    :undoc-members:
-    
-   .. automethod:: __init__
 
