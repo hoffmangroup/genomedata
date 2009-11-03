@@ -45,16 +45,16 @@ class Genome(object):
     Chromosomes and close them for you later when the context is left::
 
       with Genome("/path/to/genomedata") as genome:
-        chrom = genome["chr1"]
+        chromosome = genome["chr1"]
         ...
 
     If not used as a context manager, you are responsible for closing
     chromosomes when you are done with them::
 
       >>> genome = Genome("/path/to/genomedata")
-      >>> chrom = genome["chr1"]
+      >>> chromosome = genome["chr1"]
       ...
-      >>> chrom.close()
+      >>> chromosome.close()
 
     """
     def __init__(self, dirname):
@@ -85,9 +85,9 @@ class Genome(object):
 
         Example::
 
-          for chrom in genome:
-            print chrom
-            for supercontig, continuous in chrom.itercontinuous():
+          for chromosome in genome:
+            print chromosome.name
+            for supercontig, continuous in chromosome.itercontinuous():
               ...
 
         """
@@ -108,7 +108,7 @@ class Genome(object):
         Example::
 
           >>> genome["chrX"]
-          Chromosome('chrX', 0:154913754)
+          Chromosome('/path/to/genomedata/chrX.genomedata', 'r')
           >>> genome["chrZ"]
           KeyError: 'Could not find chromosome: chrZ'
 
@@ -149,10 +149,10 @@ class Genome(object):
         self._context_count -= 1
 
     def __repr__(self):
-        return str(self)
+        return "Genome('%s')" % self.dirpath
 
     def __str__(self):
-        return "Genome('%s')" % self.dirpath
+        return self.__repr__()
 
     def _accum_extrema(self, name, accumulator):
         res = None
@@ -281,10 +281,10 @@ class Chromosome(object):
     chromosome, as in:
 
       >>> with Genome("/path/to/genomedata") as genome:
-      ...     chrom = genome["chrX"]
-      ...     chrom
+      ...     chromosome = genome["chrX"]
+      ...     chromosome
       ...
-      Chromosome('chrX', 0:154913754)
+      Chromosome('/path/to/genomedata/chrX.genomedata', 'r')
 
     """
     def __init__(self, filename, mode="r", *args, **kwargs):
@@ -328,6 +328,7 @@ class Chromosome(object):
             assert not attrs.dirty
 
         self.filename = filename
+        self.mode = mode
         self.h5file = h5file
         self._seq = _ChromosomeSeqSlice(self)
         self._supercontigs = _Supercontigs(self)
@@ -340,12 +341,12 @@ class Chromosome(object):
 
         Example:
 
-          >>> for sc in chrom:
-          ...     sc  # calls repr()
+          >>> for supercontig in chromosome:
+          ...     supercontig  # calls repr()
           ...
-          Supercontig('supercontig_0', 0:66115833)
-          Supercontig('supercontig_1', 66375833:90587544)
-          Supercontig('supercontig_2', 94987544:199501827)
+          <Supercontig('supercontig_0', 0:66115833)>
+          <Supercontig('supercontig_1', 66375833:90587544)>
+          <Supercontig('supercontig_2', 94987544:199501827)>
 
         """
         h5file = self.h5file
@@ -371,9 +372,9 @@ class Chromosome(object):
 
         Typical use::
 
-          >>> chrom = genome["chr4"]
-          >>> chrom[0:5]  # Get all data for the first five bases of chr4
-          >>> chrom[0, 0:2]  # Get data for first two tracks at chr4:0
+          >>> chromosome = genome["chr4"]
+          >>> chromosome[0:5]  # Get all data for the first five bases of chr4
+          >>> chromosome[0, 0:2]  # Get data for first two tracks at chr4:0
 
         """
         # XXX: Allow variable/negative steps, negative starts/stops, etc.
@@ -462,7 +463,7 @@ class Chromosome(object):
         return str(self.name)
 
     def __repr__(self):
-        return "Chromosome('%s', %d:%d)" % (self.name, self.start, self.end)
+        return "Chromosome('%s', '%s')" % (self.filename, self.mode)
 
     def itercontinuous(self):
         """Return a generator over all supercontig, continuous pairs.
@@ -486,9 +487,9 @@ class Chromosome(object):
 
         This is important for indexing into continuous data::
 
-          >>> chrom = genome["chr3"]
-          >>> col_index = chrom.index_continuous("sample_track")
-          >>> data = chrom[100:150, col_index]
+          >>> chromosome = genome["chr3"]
+          >>> col_index = chromosome.index_continuous("sample_track")
+          >>> data = chromosome[100:150, col_index]
 
         """
         return self.tracknames_continuous.index(trackname)
@@ -581,11 +582,11 @@ class Chromosome(object):
 
         Indexable with a slice or simple index::
 
-          >>> chrom.supercontigs[100]
-          [Supercontig('supercontig_0', 0:66115833)]
-          >>> chrom.supercontigs[1:100000000]
-          [Supercontig('supercontig_0', 0:66115833), Supercontig('supercontig_1', 66375833:90587544), Supercontig('supercontig_2', 94987544:199501827)]
-          >>> chrom.supercontigs[66115833:66375833]  # Between two supercontigs
+          >>> chromosome.supercontigs[100]
+          [<Supercontig('supercontig_0', 0:66115833)>]
+          >>> chromosome.supercontigs[1:100000000]
+          [<Supercontig('supercontig_0', 0:66115833)>, <Supercontig('supercontig_1', 66375833:90587544)>, <Supercontig('supercontig_2', 94987544:199501827)>]
+          >>> chromosome.supercontigs[66115833:66375833]  # Between two supercontigs
           []
 
         """
@@ -606,7 +607,7 @@ class Supercontig(object):
         self.h5group = h5group
 
     def __repr__(self):
-        return "Supercontig('%s', %d:%d)" % (self.name, self.start, self.end)
+        return "<Supercontig('%s', %d:%d)>" % (self.name, self.start, self.end)
 
     def __str__(self):
         return str(self.name)

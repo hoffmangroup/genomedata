@@ -57,7 +57,8 @@ Why have :class:`Supercontigs <Supercontig>`?
   Genomic data seldom covers the entire genome but instead tends to be defined
   in large but scattered regions. In order to avoid storing the undefined
   data between the regions, chromosomes are divided into separate supercontigs
-  when regions of defined data are far enough apart.
+  when regions of defined data are far enough apart. They also serve as
+  a convenient chunk since they can usually fit entirely in memory.
 
 
 The workflow
@@ -114,33 +115,30 @@ Here are a few examples:
 
 **Get arbitrary sequence** (10-bp sequence starting at chr2:1423)::
 
-    >>> chrom = genome["chr2"]
-    >>> seq = chrom.seq[1423:1433]
+    >>> chromosome = genome["chr2"]
+    >>> seq = chromosome.seq[1423:1433]
     >>> seq
     array([116,  99,  99,  99,  99, 103, 103, 103, 103, 103], dtype=uint8)
-
-*In a form you're used to*::
-
-    >>> print "".join([chr(v) for v in seq])
-    tccccggggg
+    >>> seq.tostring()
+    'tccccggggg'
 
 **Get arbitrary data** (data from first 3 tracks for region chr8:999-1000)::
 
-    >>> chrom = genome["chr8"]
-    >>> chrom[999:1001, 0:3]  # Note the half-open, zero-based indexing
+    >>> chromosome = genome["chr8"]
+    >>> chromosome[999:1001, 0:3]  # Note the half-open, zero-based indexing
     array([[ NaN,  NaN,  NaN],
            [ 3. ,  5.5,  3.5], dtype=float32)
 
 **Get data for a specific track** (specified data in first 5-bp of chr1)::
 
-    >>> chrom = genome["chr1"]
-    >>> col_index = chrom.index_continuous("sample_track")
-    >>> data = chrom[0:5, col_index]
+    >>> chromosome = genome["chr1"]
+    >>> col_index = chromosome.index_continuous("sample_track")
+    >>> data = chromosome[0:5, col_index]
     >>> data
     array([ 47.,  NaN,  NaN,  NaN,  NaN], dtype=float32)
 
 .. note: Specify a slice for the track to keep in column form
-         (e.g. ``data = chrom[0:5, col_index:col_index+1]``)
+         (e.g. ``data = chromosome[0:5, col_index:col_index+1]``)
 
 *Only specified data*::
 
