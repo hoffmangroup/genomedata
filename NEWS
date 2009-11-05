@@ -1,6 +1,14 @@
+0.1.7:
+
+
+
 0.1.6:
 
-
+* extend documentation, including examples
+* extended API with: chromosome[start:end], chromosome.seq[start:end],
+  and chromosome.supercontigs[start:end]
+* added reasonable repr and str return values for Genome, Chromosome, 
+  and Supercontig
 
 0.1.5:
 
