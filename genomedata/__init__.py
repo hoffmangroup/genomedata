@@ -451,8 +451,12 @@ class Chromosome(object):
             supercontig_slice = slice(supercontig.project(chr_start),
                                       supercontig.project(chr_end))
             # Only works if track_key is always a slice
-            data[data_slice] = supercontig.continuous[supercontig_slice,
-                                                      track_key]
+            try:
+                data[data_slice] = supercontig.continuous[supercontig_slice,
+                                                          track_key]
+            except NoSuchNodeError:
+                # Allow the supercontig to not have a continuous dataset
+                pass
 
         # Make output shape appropriate for indexing method (like numpy)
         if base_int:
@@ -512,7 +516,7 @@ class Chromosome(object):
 
     @property
     def _continuous_dtype(self):
-        for supercontig, continuous in self.itercontinuous:
+        for supercontig, continuous in self.itercontinuous():
             return supercontig._continuous_dtype
         return DEFAULT_CONTINUOUS_DTYPE
 
