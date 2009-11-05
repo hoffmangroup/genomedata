@@ -67,7 +67,7 @@ rm -f $file
 ####################### END COMMON CODE HEADER #####################
 
 
-MIN_GENOMEDATA_VERSION = "0.1.5"
+MIN_GENOMEDATA_VERSION = "0.1.6"
 
 ####################### BEGIN COMMON CODE BODY #####################
 
