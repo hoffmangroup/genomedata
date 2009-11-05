@@ -20,14 +20,15 @@ __version__ = "$Revision$"
 import sys
 
 from functools import partial
-from math import ceil
-from numpy import add, amin, amax, empty, NAN, square
+from numpy import add, amin, amax, array, empty, NAN, square
 from os import extsep
 from path import path
 from tables import openFile, NoSuchNodeError
 from warnings import warn
 
 FORMAT_VERSION = 0
+DEFAULT_SEQ_DTYPE = "uint8"
+DEFAULT_CONTINUOUS_DTYPE = "float32"
 
 EXT = "genomedata"
 SUFFIX = extsep + EXT
@@ -108,7 +109,7 @@ class Genome(object):
         Example::
 
           >>> genome["chrX"]
-          Chromosome('/path/to/genomedata/chrX.genomedata', 'r')
+          Chromosome('/path/to/genomedata/chrX.genomedata')
           >>> genome["chrZ"]
           KeyError: 'Could not find chromosome: chrZ'
 
@@ -152,7 +153,7 @@ class Genome(object):
         return "Genome('%s')" % self.dirpath
 
     def __str__(self):
-        return self.__repr__()
+        return repr(self)
 
     def _accum_extrema(self, name, accumulator):
         res = None
@@ -284,10 +285,11 @@ class Chromosome(object):
       ...     chromosome = genome["chrX"]
       ...     chromosome
       ...
-      Chromosome('/path/to/genomedata/chrX.genomedata', 'r')
+      Chromosome('/path/to/genomedata/chrX.genomedata')
 
     """
-    def __init__(self, filename, mode="r", *args, **kwargs):
+    default_mode = "r"
+    def __init__(self, filename, mode=default_mode, *args, **kwargs):
         """
         :param filename: name of the chromosome file in the
                          genomedata directory
@@ -463,7 +465,10 @@ class Chromosome(object):
         return str(self.name)
 
     def __repr__(self):
-        return "Chromosome('%s', '%s')" % (self.filename, self.mode)
+        if self.mode == self.default_mode:
+            return "Chromosome('%s')" % (self.filename)
+        else:
+            return "Chromosome('%s', '%s')" % (self.filename, self.mode)
 
     def itercontinuous(self):
         """Return a generator over all supercontig, continuous pairs.
@@ -507,13 +512,15 @@ class Chromosome(object):
 
     @property
     def _continuous_dtype(self):
-        for supercontig in self:
+        for supercontig, continuous in self.itercontinuous:
             return supercontig._continuous_dtype
+        return DEFAULT_CONTINUOUS_DTYPE
 
     @property
     def _seq_dtype(self):
         for supercontig in self:
             return supercontig._seq_dtype
+        return DEFAULT_SEQ_DTYPE
 
     @property
     def name(self):
@@ -624,11 +631,17 @@ class Supercontig(object):
 
     @property
     def _seq_dtype(self):
-        return self.seq.atom.dtype
+        try:
+            return self.seq.atom.dtype
+        except NoSuchNodeError:
+            return DEFAULT_SEQ_DTYPE
 
     @property
     def _continuous_dtype(self):
-        return self.continuous.atom.dtype
+        try:
+            return self.continuous.atom.dtype
+        except NoSuchNodeError:
+            return DEFAULT_CONTINUOUS_DTYPE
 
     @property
     def continuous(self):
