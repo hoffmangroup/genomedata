@@ -9,11 +9,11 @@ download and install the necessary dependencies, and download and install
 genomedata.
 
 (c) 2009: Orion Buske <orion.buske@gmail.com>
+
 """
+MIN_GENOMEDATA_VERSION = "0.1.6"
 
 ${COMMON_CODE_HEADER}
-
-MIN_GENOMEDATA_VERSION = "0.1.6"
 
 ${COMMON_CODE_BODY}
 
@@ -28,6 +28,7 @@ def main(args=sys.argv[1:]):
 
     try:
         arch_home = setup_arch_home()
+        prompt_set_env(shell, "ARCHHOME", fix_path(arch_home))
 
         python_home, default_python_home = setup_python_home(arch_home)
         # Add python_home to PYTHONPATH
