@@ -66,7 +66,7 @@ The workflow
 A genomedata collection contains sequence and may also contain
 numerical data associated with that sequence. You can easily load
 sequence and numerical data into a genomedata collection with the
-:ref:`genomedata-load` command::
+:ref:`genomedata-load` command (see command details additional details)::
 
     genomedata-load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATADIR
 
@@ -158,15 +158,32 @@ with the :ref:`genomedata-load` command.
 genomedata-load
 ---------------
 
-Usage information follows, but in summary, this script accepts sequence files
-(in ``.fa`` or ``.fa.gz`` format) and trackname, datafile pairs
-(where trackname is a ``string`` and datafile is in ``.wig`` or ``wig.gz``
-format). It outputs a genomedata collection as the specified directory.
+Usage information follows, but in summary, this script takes as input:
 
-::
+- sequence files in |sequence file formats| format
+- trackname, datafile pairs (specified as ``trackname=datafile``), where:
+    * trackname is a ``string`` identifier (e.g. ``broad.h3k27me3``) 
+    * datafile contains one column of data for this data track 
+      in one of the following formats: |signal file formats|
+- the name of the genomedata collection to create
+
+For example, let's say you have sequence data for chrX (``chrX.fa``) and
+chrY (``chrY.fa.gz``), as well as two signal tracks: high (``signal.high.wig``)
+and low (``signal.low.bed.gz``). You could construct a genomedata collection
+named ``mygenomedata`` in the current directory with the following command::
+
+    > genomedata-load -s chrX.fa -s chrY.fa.gz -t high=signal.high.wig -t low=signal.low.bed.gz mygenomedata
+
+.. |signal file formats| replace:: |signal data formats|, or a gzip'd 
+                         form of any of the preceding
+
+.. |sequence file formats| replace:: FASTA_ (``.fa`` or ``.fa.gz``)
+
+.. _FASTA: http://www.ncbi.nlm.nih.gov/blast/fasta.shtml
+
+Command-line usage information::
 
  Usage: genomedata-load [OPTIONS] GENOMEDATADIR
- e.g. genomedata-load -t high=signal.high -t low=signal.low -s seq.X -s seq.Y outdir
 
  --track and --sequence may be repeated to specify multiple trackname=trackfile
  pairings and sequence files, respectively
@@ -194,8 +211,9 @@ genomedata-load-seq
 -------------------
 
 This command adds the provided sequence files to the specified genomedatadir,
-creating it if it does not already exist. Gaps of >= 100,000
-base pairs (specified as :option:`gap-length`) in the reference sequence,
+creating it if it does not already exist. Sequence files should be in
+|sequence file formats| format. Gaps of >= 100,000 base pairs 
+(specified as :option:`gap-length`) in the reference sequence,
 are used to divide the sequence into supercontigs.
 
 ::
@@ -231,11 +249,19 @@ genomedata-load-data
 --------------------
 
 This command loads data from stdin into genomedata under the given trackname.
+The input data must be in one of these supported datatypes: 
+|signal data formats|.
 A :option:`chunk-size` can be specified to control the size of hdf5 chunks
 (the smallest data read size, like a page size). Larger values of 
 :option:`chunk-size` can increase the level of compression, but they also
 increase the minimum amount of data that must be read to access a single
 value.
+
+.. |signal data formats| replace:: WIG_, BED_, bedGraph_
+
+.. _WIG: http://genome.ucsc.edu/FAQ/FAQformat#format6
+.. _BED: http://genome.ucsc.edu/FAQ/FAQformat#format1
+.. _bedGraph: http://genome.ucsc.edu/goldenPath/help/bedgraph.html
 
 ::
 

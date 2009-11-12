@@ -131,8 +131,8 @@ def parse_options(args):
     from optparse import OptionParser
 
     usage = ("%prog [OPTIONS] GENOMEDATADIR"
-             "\ne.g. %prog -t high=signal.high -t low=signal.low"
-             " -s seq.X -s seq.Y mygenomedata")
+             "\ne.g. %prog -t high=signal.high.wig -t low=signal.low.bed.gz"
+             " -s chrX.fa -s chrY.fa.gz mygenomedata")
     version = "%%prog %s" % __version__
     description = ("--track and --sequence may be repeated to specify multiple"
                    " trackname=trackfile pairings and sequence files,"
@@ -153,7 +153,7 @@ def parse_options(args):
                       dest="track", default=[],
                       help="Add data for the given track. TRACK"
                       " should be specified in the form: NAME=FILE,"
-                      " such as: -t signal=signal.dat")
+                      " such as: -t signal=signal.wig")
 
     options, args = parser.parse_args(args)
 
