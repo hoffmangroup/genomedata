@@ -11,7 +11,7 @@ genomedata.
 (c) 2009: Orion Buske <orion.buske@gmail.com>
 
 """
-MIN_GENOMEDATA_VERSION = "0.1.6"
+GENOMEDATA_VERSION = "0.1.6"
 
 ${COMMON_CODE_HEADER}
 
@@ -42,6 +42,8 @@ def main(args=sys.argv[1:]):
         prompt_create_cfg(arch_home, python_home, default_python_home,
                           script_home, default_script_home)
 
+        prompt_install_setuptools(python_home)
+
         hdf5_dir = setup_hdf5_installation(shell, arch_home)
 
         prompt_install_numpy()
@@ -52,7 +54,8 @@ def main(args=sys.argv[1:]):
         prompt_test_packages(python_home)
 
         print >>sys.stderr, "Installation complete"
-
+        print >>sys.stderr, ("* Source your ~/.*rc file to update your"
+                             " environment *")
     finally:  # Clean up
         shell.close()
 
@@ -60,37 +63,19 @@ def main(args=sys.argv[1:]):
 def get_genomedata_version():
     """Returns Genomedata version as a string or None if not found or installed
 
-    Temporarily removes '.' from sys.path during installation to prevent
-    finding genomedata in current directory (but uninstalled)
-
     Since genomedata __version__ is currently a revision number, get the full
     number from pkg_resources
     """
-    dir = os.getcwd()
-    index = None
-    if dir in sys.path:
-        index = sys.path.index(dir)
-        del sys.path[index]
-
-    try:
-        try:
-            ref = pkg_resources.Requirement.parse("genomedata")
-            data = pkg_resources.working_set.find(ref)
-            return data.version
-        except (AttributeError, ImportError):
-            return None
-    finally:
-        if index is not None:
-            sys.path.insert(index, dir)
+    return get_egg_version("genomedata")
 
 ##################### SPECIFIC PROGRAM INSTALLERS ################
-def prompt_install_genomedata(min_version=MIN_GENOMEDATA_VERSION):
+def prompt_install_genomedata(min_version=GENOMEDATA_VERSION):
     return _installer("genomedata", install_genomedata,
                       get_genomedata_version,
                       install_prompt = EASY_INSTALL_PROMPT,
                       min_version=min_version)
 
-def install_genomedata(min_version=MIN_GENOMEDATA_VERSION, *args, **kwargs):
+def install_genomedata(min_version=GENOMEDATA_VERSION, *args, **kwargs):
     return easy_install("genomedata", min_version=min_version)
 
 
