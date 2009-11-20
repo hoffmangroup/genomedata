@@ -9,7 +9,7 @@ but genomedata provides a transparent interface to interact with your
 underlying data without having to worry about the mess of repeatedly parsing
 large data files or having to keep them in memory for random access.
 
-.. Copyright 2009 Michael M. Hoffman <mmh1@washington.edu>
+Copyright 2009 Michael M. Hoffman <mmh1@washington.edu>
 
 """
 
@@ -528,7 +528,7 @@ class Chromosome(object):
 
     @property
     def name(self):
-        """Return the name of this chromosome (smae as __str__())."""
+        """Return the name of this chromosome (same as __str__())."""
         return path(self.filename).name.rpartition(SUFFIX)[0]
 
     @property
@@ -548,27 +548,27 @@ class Chromosome(object):
 
     @property
     def mins(self):
-        """See :meth:`Genome.mins`"""
+        """See :attr:`Genome.mins`"""
         return self.attrs.mins
 
     @property
     def maxs(self):
-        """See :meth:`Genome.maxs`"""
+        """See :attr:`Genome.maxs`"""
         return self.attrs.maxs
 
     @property
     def sums(self):
-        """See :meth:`Genome.sums`"""
+        """See :attr:`Genome.sums`"""
         return self.attrs.sums
 
     @property
     def sums_squares(self):
-        """See :meth:`Genome.sums_squares`"""
+        """See :attr:`Genome.sums_squares`"""
         return self.attrs.sums_squares
 
     @property
     def num_datapoints(self):
-        """See :meth:`Genome.num_datapoints`"""
+        """See :attr:`Genome.num_datapoints`"""
         return self.attrs.num_datapoints
 
     @property
