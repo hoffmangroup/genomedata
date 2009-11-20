@@ -500,11 +500,15 @@ class Chromosome(object):
         :type trackname: string
         :returns: integer
 
-        This is important for indexing into continuous data:
+        This is used for efficient indexing into continuous data:
 
         >>> chromosome = genome["chr3"]
         >>> col_index = chromosome.index_continuous("sample_track")
         >>> data = chromosome[100:150, col_index]
+
+        although for typical use, the track can be indexed directly:
+
+        >>> data = chromosome[100:150, "sample_track"]
 
         """
         try:

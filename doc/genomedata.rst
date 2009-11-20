@@ -140,20 +140,21 @@ array([[ NaN,  NaN,  NaN],
 **Get data for a specific track** (specified data in first 5-bp of chr1):
 
 >>> chromosome = genome["chr1"]
->>> col_index = chromosome.index_continuous("sample_track")
->>> data = chromosome[0:5, col_index]
+>>> data = chromosome[0:5, "sample_track"]
 >>> data
 array([ 47.,  NaN,  NaN,  NaN,  NaN], dtype=float32)
-
-.. note: Specify a slice for the track to keep in column form
-         (e.g. ``data = chromosome[0:5, col_index:col_index+1]``)
 
 *Only specified data*:
 
 >>> from numpy import isfinite
 >>> data[isfinite(data)]
-array([ 47. ,  60.5,  64. ,  59. ], dtype=float32)
+array([ 47.], dtype=float32)
     
+.. note:: Specify a slice for the track to keep the data in column form:
+
+          >>> col_index = chromosome.index_continuous("sample_track")
+          >>> data = chromosome[0:5, col_index:col_index+1]
+
 
 Command-line interface
 ~~~~~~~~~~~~~~~~~~~~~~
