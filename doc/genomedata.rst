@@ -41,8 +41,14 @@ simple as downloading and running this script! For instance::
 Overview
 ========
 
-.. automodule:: genomedata
+Genomedata is a module to store and access large-scale functional
+genomics data in a format which is both space-efficient and allows
+efficient random-access.
 
+Under the surface, genomedata is implemented as a collection of HDF5 files,
+but genomedata provides a transparent interface to interact with your
+underlying data without having to worry about the mess of repeatedly parsing
+large data files or having to keep them in memory for random access.
 
 The genomedata hierarchy:
 
@@ -297,8 +303,8 @@ Closes the specified genomedata object.
    -h, --help  show this help message and exit
 
 
-
 .. _python-api:
+
 
 Python API
 ~~~~~~~~~~
@@ -306,6 +312,7 @@ Python API
 The genomedata package is designed to be used from a variety of scripting
 languages, but currently only exports the following Python API.
 
+.. module:: genomedata
 
 .. autoclass:: Genome
    :members:
@@ -315,14 +322,12 @@ languages, but currently only exports the following Python API.
    .. automethod:: __iter__
    .. automethod:: __getitem__
 
-
 .. autoclass:: Chromosome
    :members:
    :undoc-members:
    
    .. automethod:: __iter__
    .. automethod:: __getitem__
-
 
 .. autoclass:: Supercontig
    :members:
