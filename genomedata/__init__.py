@@ -47,15 +47,15 @@ class Genome(object):
 
       with Genome("/path/to/genomedata") as genome:
         chromosome = genome["chr1"]
-        ...
+        [...]
 
     If not used as a context manager, you are responsible for closing
-    chromosomes when you are done with them::
+    chromosomes when you are done with them:
 
-      >>> genome = Genome("/path/to/genomedata")
-      >>> chromosome = genome["chr1"]
-      ...
-      >>> chromosome.close()
+    >>> genome = Genome("/path/to/genomedata")
+    >>> chromosome = genome["chr1"]
+    [...]
+    >>> chromosome.close()
 
     """
     def __init__(self, dirname):
@@ -65,11 +65,11 @@ class Genome(object):
                         (usually just the genomedata directory).
         :type dirname: string
 
-        Example::
+        Example:
 
-          >>> genome = Genome("./genomedata.ctcf.pol2b/")
-          >>> genome
-          Genome("./genomedata.ctcf.pol2b/")
+        >>> genome = Genome("./genomedata.ctcf.pol2b/")
+        >>> genome
+        Genome("./genomedata.ctcf.pol2b/")
 
         """
         self.dirpath = path(dirname)
@@ -89,7 +89,7 @@ class Genome(object):
           for chromosome in genome:
             print chromosome.name
             for supercontig, continuous in chromosome.itercontinuous():
-              ...
+              [...]
 
         """
         # sorted so that the order is always the same
@@ -106,12 +106,12 @@ class Genome(object):
         :type name: string
         :returns: :class:`Chromosome`
 
-        Example::
+        Example:
 
-          >>> genome["chrX"]
-          Chromosome('/path/to/genomedata/chrX.genomedata')
-          >>> genome["chrZ"]
-          KeyError: 'Could not find chromosome: chrZ'
+        >>> genome["chrX"]
+        Chromosome('/path/to/genomedata/chrX.genomedata')
+        >>> genome["chrZ"]
+        KeyError: 'Could not find chromosome: chrZ'
 
         """
         try:
@@ -281,11 +281,11 @@ class Chromosome(object):
     Usually created by keying into a Genome object with the name of a
     chromosome, as in:
 
-      >>> with Genome("/path/to/genomedata") as genome:
-      ...     chromosome = genome["chrX"]
-      ...     chromosome
-      ...
-      Chromosome('/path/to/genomedata/chrX.genomedata')
+    >>> with Genome("/path/to/genomedata") as genome:
+    ...     chromosome = genome["chrX"]
+    ...     chromosome
+    ...
+    Chromosome('/path/to/genomedata/chrX.genomedata')
 
     """
     default_mode = "r"
@@ -343,12 +343,12 @@ class Chromosome(object):
 
         Example:
 
-          >>> for supercontig in chromosome:
-          ...     supercontig  # calls repr()
-          ...
-          <Supercontig('supercontig_0', 0:66115833)>
-          <Supercontig('supercontig_1', 66375833:90587544)>
-          <Supercontig('supercontig_2', 94987544:199501827)>
+        >>> for supercontig in chromosome:
+        ...     supercontig  # calls repr()
+        ...
+        <Supercontig('supercontig_0', 0:66115833)>
+        <Supercontig('supercontig_1', 66375833:90587544)>
+        <Supercontig('supercontig_2', 94987544:199501827)>
 
         """
         h5file = self.h5file
@@ -363,20 +363,23 @@ class Chromosome(object):
     def __getitem__(self, key):
         """Return the continuous data corresponding to this bp slice
 
-        :param key: index or range of indices for continuous data with
-                    dimensions: (base index, track index)
-        :type key: slice or integer
+        :param key: key must index or slice bases, but can also index, slice,
+                    or directly specify (string or list of strings) the data
+                    tracks.
+
+        :type key: <base_key>[, <track_key>]
         :returns: numpy.array
 
         If slice is taken over or outside a supercontig boundary,
         missing data is filled in with NaN's automatically and a
         warning is printed.
 
-        Typical use::
+        Typical use:
 
-          >>> chromosome = genome["chr4"]
-          >>> chromosome[0:5]  # Get all data for the first five bases of chr4
-          >>> chromosome[0, 0:2]  # Get data for first two tracks at chr4:0
+        >>> chromosome = genome["chr4"]
+        >>> chromosome[0:5]  # Get all data for the first five bases of chr4
+        >>> chromosome[0, 0:2]  # Get data for first two tracks at chr4:0
+        >>> chromosome[100, "ctcf"]  # Get "ctcf" track value at chr4:100
 
         """
         # XXX: Allow variable/negative steps, negative starts/stops, etc.
@@ -395,39 +398,42 @@ class Chromosome(object):
             track_key = slice(None)  # All tracks
 
         # Treat direct indexing differently (just like numpy)
-        base_int = False
-        track_int = False
+        base_index = False
+        track_index = False
 
         if isinstance(base_key, int):
-            base_int = True
+            base_index = True
 
         base_start, base_stop = _key_to_tuple(base_key)
         base_key = slice(base_start, base_stop)
 
-        # Process track_key in two steps if int
+        # First convert track_key toward slice
+        if isinstance(track_key, basestring):
+            track_key = self.index_continuous(track_key)
+
         if isinstance(track_key, int):
             track_key = slice(track_key, track_key + 1, 1)
-            track_int = True
+            track_index = True
 
         if isinstance(track_key, slice):
             # Fix indices to number of tracks
             track_key = slice(*track_key.indices(self.num_tracks_continuous))
-            if track_key.step is not None and track_key.step != 1:
-                raise NotImplementedError("Slices must be contiguous")
         else:
-            raise IndexError("Unrecognized track indexing method: %s" %
-                             track_key)
+            raise TypeError("Unrecognized track indexing method: %s" %
+                            track_key)
 
-        # Handle degenerate case
         nrows = base_key.stop - base_key.start
-        ncols = track_key.stop - track_key.start
+        ncols = len(xrange(track_key.start, track_key.stop, track_key.step))
+
+        print track_key, ncols
+        # Handle degenerate case
         dtype = self._continuous_dtype
         if nrows < 1 or ncols < 1:
             # Return empty array (matches numpy behavior)
             return array((), dtype=dtype)
 
         # At this point, base_key and track_key are guaranteed to be slices
-        # with both start and end >= 0, start < end, and step in [1, None]
+        # with both start and end >= 0
 
         # Lookup appropriate data
         supercontigs = self.supercontigs[base_key]
@@ -450,19 +456,19 @@ class Chromosome(object):
                                chr_end - base_key.start)
             supercontig_slice = slice(supercontig.project(chr_start),
                                       supercontig.project(chr_end))
-            # Only works if track_key is always a slice
+            # track_key must be a splice
             try:
-                data[data_slice] = supercontig.continuous[supercontig_slice,
+                data[data_slice, :] = supercontig.continuous[supercontig_slice,
                                                           track_key]
             except NoSuchNodeError:
                 # Allow the supercontig to not have a continuous dataset
                 pass
 
         # Make output shape appropriate for indexing method (like numpy)
-        if base_int:
-            data = data[0]
-        if track_int:
+        if track_index:
             data = data[:, 0]
+        if base_index:
+            data = data[0]
         return data
 
     def __str__(self):
@@ -494,14 +500,17 @@ class Chromosome(object):
         :type trackname: string
         :returns: integer
 
-        This is important for indexing into continuous data::
+        This is important for indexing into continuous data:
 
-          >>> chromosome = genome["chr3"]
-          >>> col_index = chromosome.index_continuous("sample_track")
-          >>> data = chromosome[100:150, col_index]
+        >>> chromosome = genome["chr3"]
+        >>> col_index = chromosome.index_continuous("sample_track")
+        >>> data = chromosome[100:150, col_index]
 
         """
-        return self.tracknames_continuous.index(trackname)
+        try:
+            return self.tracknames_continuous.index(trackname)
+        except ValueError:
+            raise KeyError("Could not find continuous track: %s" % trackname)
 
     def close(self):
         """Close the current chromosome file.
@@ -591,14 +600,14 @@ class Chromosome(object):
 
         :returns: :class:`Supercontig`
 
-        Indexable with a slice or simple index::
+        Indexable with a slice or simple index:
 
-          >>> chromosome.supercontigs[100]
-          [<Supercontig('supercontig_0', 0:66115833)>]
-          >>> chromosome.supercontigs[1:100000000]
-          [<Supercontig('supercontig_0', 0:66115833)>, <Supercontig('supercontig_1', 66375833:90587544)>, <Supercontig('supercontig_2', 94987544:199501827)>]
-          >>> chromosome.supercontigs[66115833:66375833]  # Between two supercontigs
-          []
+        >>> chromosome.supercontigs[100]
+        [<Supercontig('supercontig_0', 0:66115833)>]
+        >>> chromosome.supercontigs[1:100000000]
+        [<Supercontig('supercontig_0', 0:66115833)>, <Supercontig('supercontig_1', 66375833:90587544)>, <Supercontig('supercontig_2', 94987544:199501827)>]
+        >>> chromosome.supercontigs[66115833:66375833]  # Between two supercontigs
+        []
 
         """
         return self._supercontigs

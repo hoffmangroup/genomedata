@@ -14,6 +14,8 @@ For a broad overview, see the paper:
 Michael <mmh1 at washington dot edu> can send you a copy of the latest
 manuscript. Please cite this paper if you use genomedata.
 
+.. currentmodule:: genomedata
+
 Installation
 ============
 
@@ -103,10 +105,10 @@ also available. To appreciate the full benefit of genomedata,
 it is most easily used as a contextmanager::
 
     from genomedata import Genome
-    ...
+    [...]
     genomedatadir = "/path/to/genomedata"
     with Genome(genomedatadir) as genome:
-        ...
+        [...]
 
 .. note:: 
     If used as a context manager, chromosome access is memoized. 
@@ -119,38 +121,38 @@ Basic usage
 Genomedata is designed to make it easy to get to the data you want.
 Here are a few examples:
 
-**Get arbitrary sequence** (10-bp sequence starting at chr2:1423)::
+**Get arbitrary sequence** (10-bp sequence starting at chr2:1423):
 
-    >>> chromosome = genome["chr2"]
-    >>> seq = chromosome.seq[1423:1433]
-    >>> seq
-    array([116,  99,  99,  99,  99, 103, 103, 103, 103, 103], dtype=uint8)
-    >>> seq.tostring()
-    'tccccggggg'
+>>> chromosome = genome["chr2"]
+>>> seq = chromosome.seq[1423:1433]
+>>> seq
+array([116,  99,  99,  99,  99, 103, 103, 103, 103, 103], dtype=uint8)
+>>> seq.tostring()
+'tccccggggg'
 
-**Get arbitrary data** (data from first 3 tracks for region chr8:999-1000)::
+**Get arbitrary data** (data from first 3 tracks for region chr8:999-1000):
 
-    >>> chromosome = genome["chr8"]
-    >>> chromosome[999:1001, 0:3]  # Note the half-open, zero-based indexing
-    array([[ NaN,  NaN,  NaN],
-           [ 3. ,  5.5,  3.5], dtype=float32)
+>>> chromosome = genome["chr8"]
+>>> chromosome[999:1001, 0:3]  # Note the half-open, zero-based indexing
+array([[ NaN,  NaN,  NaN],
+       [ 3. ,  5.5,  3.5], dtype=float32)
 
-**Get data for a specific track** (specified data in first 5-bp of chr1)::
+**Get data for a specific track** (specified data in first 5-bp of chr1):
 
-    >>> chromosome = genome["chr1"]
-    >>> col_index = chromosome.index_continuous("sample_track")
-    >>> data = chromosome[0:5, col_index]
-    >>> data
-    array([ 47.,  NaN,  NaN,  NaN,  NaN], dtype=float32)
+>>> chromosome = genome["chr1"]
+>>> col_index = chromosome.index_continuous("sample_track")
+>>> data = chromosome[0:5, col_index]
+>>> data
+array([ 47.,  NaN,  NaN,  NaN,  NaN], dtype=float32)
 
 .. note: Specify a slice for the track to keep in column form
          (e.g. ``data = chromosome[0:5, col_index:col_index+1]``)
 
-*Only specified data*::
+*Only specified data*:
 
-    >>> from numpy import isfinite
-    >>> data[isfinite(data)]
-    array([ 47. ,  60.5,  64. ,  59. ], dtype=float32)
+>>> from numpy import isfinite
+>>> data[isfinite(data)]
+array([ 47. ,  60.5,  64. ,  59. ], dtype=float32)
     
 
 Command-line interface
@@ -178,7 +180,7 @@ chrY (``chrY.fa.gz``), as well as two signal tracks: high (``signal.high.wig``)
 and low (``signal.low.bed.gz``). You could construct a genomedata collection
 named ``mygenomedata`` in the current directory with the following command::
 
-    > genomedata-load -s chrX.fa -s chrY.fa.gz -t high=signal.high.wig -t low=signal.low.bed.gz mygenomedata
+    genomedata-load -s chrX.fa -s chrY.fa.gz -t high=signal.high.wig -t low=signal.low.bed.gz mygenomedata
 
 .. |signal file formats| replace:: |signal data formats|, or a gzip'd 
                          form of any of the preceding
