@@ -336,3 +336,21 @@ languages, but currently only exports the following Python API.
    :members:
    :undoc-members:
 
+
+Support
+=======
+
+There is a moderated genomedata-announce mailing list that you can 
+subscribe to for information on new releases of genomedata:
+    
+https://mailman1.u.washington.edu/mailman/listinfo/genomedata-announce
+
+If you want to report a bug or request a feature, please do so using the
+Genomedata issue tracker:
+
+http://code.google.com/p/genomedata/issues
+
+For other support with Genomedata, or to provide feedback, please write
+contact the authors directly. We are interested in all comments regarding the 
+package and the ease of use of installation and documentation.
+
