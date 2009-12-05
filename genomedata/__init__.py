@@ -484,7 +484,11 @@ class Chromosome(object):
         """Return a generator over all supercontig, continuous pairs.
 
         This is the best way to efficiently iterate over the data since
-        all specified data is in supercontigs.
+        all specified data is in supercontigs::
+
+            for supercontig, continuous in chromosome.itercontinuous():
+                print supercontig, supercontig.start, supercontig.end
+                [...]
 
         """
         for supercontig in self:
@@ -644,7 +648,7 @@ class Supercontig(object):
         :returns: integer
 
         """
-        return pos - self.start
+        return int(pos - self.start)
 
     @property
     def _seq_dtype(self):
@@ -681,18 +685,41 @@ class Supercontig(object):
 
     @property
     def seq(self):
-        """Return the genomic sequence of this supercontig."""
+        """Return the genomic sequence of this supercontig.
+
+        If the index or slice spans a non-supercontig range, N's are
+        inserted in place of the missing data and a warning is issued.
+
+        Example:
+
+        >>> chromosome = genome["chr1"]
+        >>> for supercontig in chromosome:
+        ...     print repr(supercontig)
+        ...
+        <Supercontig('supercontig_0', 0:121186957)>
+        <Supercontig('supercontig_1', 141476957:143422081)>
+        <Supercontig('supercontig_2', 143522081:247249719)>
+        >>> chromosome.seq[0:10].tostring()  # Inside supercontig
+        'taaccctaac'
+        >>> chromosome.seq[121186950:121186970].tostring() # Supercontig boundary
+        'agAATTCNNNNNNNNNNNNN'
+        >>> chromosome.seq[121186957:121186960].tostring() # Not in supercontig
+        /net/noble/vol2/home/stasis/arch/Linux/RHEL5/i686/lib/python2.5/genomedata-0.1.7.dev_r2548-py2.5.egg/genomedata/__init__.py:709: UserWarning: slice of chromosome sequence does not overlap any supercontig (filling with 'N')
+        warn("slice of chromosome sequence does not overlap any"
+        'NNN'
+
+        """
         return self.h5group.seq
 
     @property
     def start(self):
         """Return the start position of this supercontig."""
-        return self.attrs.start
+        return int(self.attrs.start)
 
     @property
     def end(self):
         """Return the end position of this supercontig."""
-        return self.attrs.end
+        return int(self.attrs.end)
 
 class _ChromosomeSeqSlice(object):
     def __init__(self, chromosome):
@@ -728,9 +755,11 @@ class _ChromosomeSeqSlice(object):
         for supercontig in supercontigs:
             chr_start = max(start, supercontig.start)
             chr_end = min(end, supercontig.end)
-            seq[chr_start - start:chr_end - start] = \
-                supercontig.seq[supercontig.project(chr_start):
-                                    supercontig.project(chr_end)]
+            dest_start = chr_start - start
+            dest_end = chr_end - start
+            sc_start = supercontig.project(chr_start)
+            sc_end = supercontig.project(chr_end)
+            seq[dest_start:dest_end] = supercontig.seq[sc_start:sc_end]
 
         if key_int:
             seq = seq[0]

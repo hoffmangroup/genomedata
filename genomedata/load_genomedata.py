@@ -60,7 +60,8 @@ def load_genomedata(genomedatadir, tracks=None, seqfiles=None,
                 track_names = []
                 for track_name, track_filename in tracks:
                     if os.path.isfile(track_filename):
-                        track_names.append(track_name)
+                        if track_name not in track_names:  # No duplicates
+                            track_names.append(track_name)
                     else:
                         die("Could not find track file: %s" % track_filename)
             except ValueError:
