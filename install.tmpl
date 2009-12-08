@@ -69,13 +69,13 @@ def get_genomedata_version():
     return get_egg_version("genomedata")
 
 ##################### SPECIFIC PROGRAM INSTALLERS ################
-def prompt_install_genomedata(min_version=GENOMEDATA_VERSION):
+def prompt_install_genomedata(min_version=PKG_VERSION):
     return _installer("genomedata", install_genomedata,
                       get_genomedata_version,
                       install_prompt = EASY_INSTALL_PROMPT,
                       min_version=min_version)
 
-def install_genomedata(min_version=GENOMEDATA_VERSION, *args, **kwargs):
+def install_genomedata(min_version=PKG_VERSION, *args, **kwargs):
     return easy_install("genomedata", min_version=min_version)
 
 
