@@ -11,20 +11,22 @@ __version__ = "$Revision$"
 
 import sys
 
-from numpy import (amin, amax, array, diff, hstack, isfinite, NINF, PINF,
-                   square)
+from numpy import (amin, amax, array, diff, empty, hstack, isfinite, NAN,
+                   NINF, PINF, square)
 from path import path
-from tables import openFile
+from tables import NoSuchNodeError, openFile
 
+from . import CONTINUOUS_ATOM, CONTINUOUS_CHUNK_SHAPE, CONTINUOUS_DTYPE
 from ._load_seq import MIN_GAP_LEN
 from ._util import (fill_array, get_tracknames, init_num_obs, new_extrema,
-                    walk_continuous_supercontigs)
+                    walk_supercontigs)
 
 def update_extrema(func, extrema, data, col_index):
     extrema[col_index] = new_extrema(func, data, extrema[col_index])
 
-def write_metadata(chromosome):
-    print >>sys.stderr, "writing metadata for %s" % chromosome.title
+def write_metadata(chromosome, verbose=False):
+    if verbose:
+        print >>sys.stderr, "writing metadata for %s" % chromosome.title
 
     tracknames = get_tracknames(chromosome)
     num_obs = len(tracknames)
@@ -35,8 +37,22 @@ def write_metadata(chromosome):
     sums_squares = fill_array(0.0, row_shape)
     num_datapoints = fill_array(0, row_shape)
 
-    for supercontig, continuous in walk_continuous_supercontigs(chromosome):
-        print >>sys.stderr, " scanning %s" % supercontig._v_name
+    for supercontig in walk_supercontigs(chromosome):
+        if verbose:
+            print >>sys.stderr, " scanning %s" % supercontig._v_name
+
+        try:
+            continuous = supercontig.continuous
+        except NoSuchNodeError:
+            # Create empty continuous array
+            continuous_shape = (supercontig.seq.shape[0], num_obs)
+            continuous_array = fill_array(NAN, continuous_shape,
+                                          dtype=CONTINUOUS_DTYPE)
+            chromosome.createCArray(supercontig, "continuous",
+                                    CONTINUOUS_ATOM, continuous_shape,
+                                    chunkshape=CONTINUOUS_CHUNK_SHAPE)
+            supercontig.continuous[...] = continuous_array
+            continue
 
         # only runs when assertions checked
         if __debug__:
@@ -51,7 +67,8 @@ def write_metadata(chromosome):
         # have to change the mask value for every operation, like in
         # revisions <= r243
         for col_index, trackname in enumerate(tracknames):
-            print >>sys.stderr, "  %s" % trackname
+            if verbose:
+                print >>sys.stderr, "  %s" % trackname
 
             ## read data
             col = continuous[:, col_index]
@@ -116,11 +133,11 @@ def write_metadata(chromosome):
     chromosome_attrs.num_datapoints = num_datapoints
     chromosome_attrs.dirty = False
 
-def close_data(dirname):
+def close_data(dirname, verbose=False):
     dirpath = path(dirname)
     for filepath in dirpath.walkfiles():
         with openFile(filepath, "r+") as chromosome:
-            write_metadata(chromosome)
+            write_metadata(chromosome, verbose=verbose)
 
 def parse_options(args):
     from optparse import OptionParser
@@ -128,6 +145,10 @@ def parse_options(args):
     usage = "%prog [OPTION]... GENOMEDATADIR"
     version = "%%prog %s" % __version__
     parser = OptionParser(usage=usage, version=version)
+
+    parser.add_option("-v", "--verbose", dest="verbose",
+                      default=False, action="store_true",
+                      help="Print status updates and diagnostic messages")
 
     options, args = parser.parse_args(args)
 
@@ -139,7 +160,8 @@ def parse_options(args):
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
     genomedatadir = args[0]
-    return close_data(genomedatadir)
+    kwargs = {"verbose": options.verbose}
+    return close_data(genomedatadir, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -20,18 +20,30 @@ __version__ = "$Revision$"
 import sys
 
 from functools import partial
-from numpy import add, amin, amax, array, empty, NAN, square
+from numpy import add, amin, amax, array, empty, float32, NAN, square, uint8
 from os import extsep
 from path import path
-from tables import openFile, NoSuchNodeError
+from tables import Float32Atom, openFile, NoSuchNodeError, UInt8Atom
 from warnings import warn
 
 FORMAT_VERSION = 0
-DEFAULT_SEQ_DTYPE = "uint8"
-DEFAULT_CONTINUOUS_DTYPE = "float32"
+SEQ_DTYPE = uint8
+SEQ_ATOM = UInt8Atom()
+
+CONTINUOUS_DTYPE = float32
+CONTINUOUS_ATOM = Float32Atom()
+CONTINUOUS_CHUNK_SHAPE = (10000, 1)
 
 EXT = "genomedata"
 SUFFIX = extsep + EXT
+
+try:
+    PKG = __package__  # Python 2.6
+except NameError:
+    if __name__ == "__main__":
+        PKG = "genomedata"
+    else:
+        PKG = __name__
 
 class _InactiveDict(dict):
     """A fake dict that can't be added to."""
@@ -425,7 +437,6 @@ class Chromosome(object):
         nrows = base_key.stop - base_key.start
         ncols = len(xrange(track_key.start, track_key.stop, track_key.step))
 
-        print track_key, ncols
         # Handle degenerate case
         dtype = self._continuous_dtype
         if nrows < 1 or ncols < 1:
@@ -535,13 +546,13 @@ class Chromosome(object):
     def _continuous_dtype(self):
         for supercontig, continuous in self.itercontinuous():
             return supercontig._continuous_dtype
-        return DEFAULT_CONTINUOUS_DTYPE
+        return CONTINUOUS_DTYPE
 
     @property
     def _seq_dtype(self):
         for supercontig in self:
             return supercontig._seq_dtype
-        return DEFAULT_SEQ_DTYPE
+        return SEQ_DTYPE
 
     @property
     def name(self):
@@ -655,14 +666,14 @@ class Supercontig(object):
         try:
             return self.seq.atom.dtype
         except NoSuchNodeError:
-            return DEFAULT_SEQ_DTYPE
+            return SEQ_DTYPE
 
     @property
     def _continuous_dtype(self):
         try:
             return self.continuous.atom.dtype
         except NoSuchNodeError:
-            return DEFAULT_CONTINUOUS_DTYPE
+            return CONTINUOUS_DTYPE
 
     @property
     def continuous(self):
@@ -812,7 +823,6 @@ def _key_to_tuple(key):
         raise IndexError("Start index can be at most the end index")
 
     return start, end
-
 
 def main(args=sys.argv[1:]):
     pass

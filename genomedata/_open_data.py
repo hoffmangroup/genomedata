@@ -15,7 +15,7 @@ from numpy import array
 from path import path
 from tables import openFile
 
-def open_data(dirname, tracknames):
+def open_data(dirname, tracknames, verbose=False):
     dirpath = path(dirname)
     for filepath in dirpath.walkfiles():
         with openFile(filepath, "r+") as h5file:
@@ -32,7 +32,14 @@ def parse_options(args):
 
     usage = "%prog [OPTION]... GENOMEDATADIR TRACKNAME..."
     version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version)
+    description = ("Specify the tracks that will be in this Genomedata"
+                   " collection")
+    parser = OptionParser(usage=usage, version=version,
+                          description=description)
+
+    parser.add_option("-v", "--verbose", dest="verbose",
+                      default=False, action="store_true",
+                      help="Print status updates and diagnostic messages")
 
     options, args = parser.parse_args(args)
 
@@ -45,7 +52,8 @@ def main(args=sys.argv[1:]):
     options, args = parse_options(args)
     genomedatadir = args[0]
     tracknames = args[1:]
-    return open_data(genomedatadir, tracknames)
+    kwargs = {"verbose": options.verbose}
+    return open_data(genomedatadir, tracknames, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -14,11 +14,11 @@ from os import extsep
 from re import compile, VERBOSE
 import sys
 
-from numpy import frombuffer, uint8
+from numpy import frombuffer
 from path import path
-from tables import openFile, UInt8Atom
+from tables import openFile
 
-from . import EXT
+from . import SEQ_ATOM, SEQ_DTYPE, EXT
 from ._util import EXT_GZ, FILTERS_GZIP, gzip_open, LightIterator
 
 MIN_GAP_LEN = 100000
@@ -32,14 +32,12 @@ DNA_LETTERS_UNAMBIG = "ACGTacgt"
 
 SUPERCONTIG_NAME_FMT = "supercontig_%s"
 
-ATOM = UInt8Atom()
-
 def create_supercontig(h5file, index, seq, start, end):
     name = SUPERCONTIG_NAME_FMT % index
     supercontig = h5file.createGroup("/", name)
 
-    seq_array = frombuffer(seq, uint8)
-    h5file.createCArray(supercontig, "seq", ATOM, seq_array.shape)
+    seq_array = frombuffer(seq, SEQ_DTYPE)
+    h5file.createCArray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
 
     supercontig.seq[...] = seq_array
 
@@ -77,7 +75,7 @@ def read_seq(h5file, seq):
         else:
             assert m_segment.group(1)
 
-def load_seq(outdirname, filenames):
+def load_seq(outdirname, filenames, verbose=False):
     outdirpath = path(outdirname)
     try:
         outdirpath.makedirs()
@@ -86,7 +84,8 @@ def load_seq(outdirname, filenames):
             raise
 
     for filename in filenames:
-        print >>sys.stderr, filename
+        if verbose:
+            print >>sys.stderr, filename
 
         if filename.endswith(EXT_GZ):
             infile = gzip_open(filename)
@@ -110,6 +109,10 @@ def parse_options(args):
     version = "%%prog %s" % __version__
     parser = OptionParser(usage=usage, version=version)
 
+    parser.add_option("-v", "--verbose", dest="verbose",
+                      default=False, action="store_true",
+                      help="Print status updates and diagnostic messages")
+
     options, args = parser.parse_args(args)
 
     if not len(args) >= 2:
@@ -121,7 +124,8 @@ def main(args=sys.argv[1:]):
     options, args = parse_options(args)
     genomedatadir = args[0]
     seqfiles = args[1:]
-    return load_seq(genomedatadir, seqfiles)
+    kwargs = {"verbose": options.verbose}
+    return load_seq(genomedatadir, seqfiles, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())
