@@ -35,15 +35,14 @@ def clear_track_data(chromosome, trackname, verbose=False):
 
         supercontig.continuous[:, col_index] = new_data
 
-def remove_tracks(dirname, tracknames, verbose=False):
+def erase_track(dirname, trackname, verbose=False):
+    if verbose:
+        print >>sys.stderr, "Erasing data for track: %s" % trackname
+
     dirpath = path(dirname)
     for filepath in dirpath.walkfiles():
         with openFile(filepath, "r+") as h5file:
-            for trackname in tracknames:
-                if verbose:
-                    print >>sys.stderr, "  Erasing data for track: %s" % \
-                        trackname
-                clear_track_data(h5file, trackname, verbose=verbose)
+            clear_track_data(h5file, trackname, verbose=verbose)
 
 def parse_options(args):
     from optparse import OptionParser
@@ -71,7 +70,9 @@ def main(args=sys.argv[1:]):
     genomedatadir = args[0]
     tracknames = args[1:]
     kwargs = {"verbose": options.verbose}
-    return remove_tracks(genomedatadir, tracknames, **kwargs)
+
+    for trackname in tracknames:
+        remove_tracks(genomedatadir, trackname, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -23,7 +23,7 @@ from genomedata import Genome
 from genomedata.load_genomedata import load_genomedata
 from genomedata._load_data import load_data
 from genomedata._close_data import close_data
-from genomedata._remove_tracks import remove_tracks
+from genomedata._erase_track import erase_track
 
 test_filename = lambda filename: os.path.join("data", filename)
 
@@ -132,7 +132,7 @@ class TestGenomedata(unittest.TestCase):
                                    old_entry[1])
 
         # Remove track
-        remove_tracks(self.genomedatadir, [trackname], verbose=self.verbose)
+        erase_track(self.genomedatadir, trackname, verbose=self.verbose)
 
         # Re-close data
         close_data(self.genomedatadir, verbose=self.verbose)
@@ -158,7 +158,7 @@ class TestGenomedata(unittest.TestCase):
                                    old_entry[1])
 
         # Remove track
-        remove_tracks(self.genomedatadir, [old_trackname],
+        erase_track(self.genomedatadir, old_trackname,
                       verbose=self.verbose)
 
         # Now replace it with the data from a different track
