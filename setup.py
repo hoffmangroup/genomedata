@@ -166,7 +166,7 @@ if __name__ == "__main__":
           zip_safe=False,
 
           # XXX: this should be based off of __file__ instead
-          packages=find_packages("."),
+          packages=find_packages(".", exclude="test"),
           entry_points=entry_points,
           scripts={"genomedata-load-data": ["src/genomedata_load_data.c"]},
           cmdclass={"build_scripts": BuildScriptWrapper}

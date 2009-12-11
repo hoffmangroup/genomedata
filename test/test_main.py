@@ -75,8 +75,7 @@ class TestGenomedata(unittest.TestCase):
         if logical_and(not_equal, logical_not(both_nan)).any():
             self.fail("%r != %r" % (observed, expected))
 
-    def test(self):
-        # Test interface
+    def test_interface(self):
         with Genome(self.genomedatadir) as genome:
             chromosome = genome["chr1"]
 
@@ -111,8 +110,6 @@ class TestGenomedata(unittest.TestCase):
             # Given track ordering, check multi-track data retrieval
             self.assertArraysEqual(chromosome[290, 1:4],
                                    [-2.297, -2.327, -2.320])
-
-            chromosome.close()
 
             # Test filling of unassigned continuous segments
             chromosome = genome["chrY"]
