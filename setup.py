@@ -37,7 +37,7 @@ entry_points = """
 genomedata-load = genomedata.load_genomedata:main
 genomedata-load-seq = genomedata._load_seq:main
 genomedata-open-data = genomedata._open_data:main
-genomedata-remove-tracks = genomedata._remove_tracks:main
+genomedata-erase-track = genomedata._erase_track:main
 genomedata-close-data = genomedata._close_data:main
 genomedata-report = genomedata._report:main
 """
