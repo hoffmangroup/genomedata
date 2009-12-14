@@ -72,7 +72,7 @@ def main(args=sys.argv[1:]):
     kwargs = {"verbose": options.verbose}
 
     for trackname in tracknames:
-        remove_tracks(genomedatadir, trackname, **kwargs)
+        erase_track(genomedatadir, trackname, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())
