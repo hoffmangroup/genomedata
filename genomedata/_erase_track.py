@@ -12,7 +12,7 @@ import sys
 
 from numpy import NAN
 from path import path
-from tables import openFile
+from tables import NoSuchNodeError, openFile
 
 from ._util import fill_array, get_tracknames, walk_supercontigs
 
@@ -30,10 +30,15 @@ def clear_track_data(chromosome, trackname, verbose=False):
 
     # XXX: should replace with iter(Chromosome)
     for supercontig in walk_supercontigs(chromosome):
-        new_data = fill_array(NAN, (supercontig.continuous.shape[0], ),
-                              dtype = supercontig.continuous.atom.dtype)
+        try:
+            new_data = fill_array(NAN, (supercontig.continuous.shape[0], ),
+                                  dtype = supercontig.continuous.atom.dtype)
 
-        supercontig.continuous[:, col_index] = new_data
+            supercontig.continuous[:, col_index] = new_data
+        except NoSuchNodeError:
+            print >>sys.stderr, "  No continuous node found for %s in %s" % \
+                (supercontig._v_name, chromosome.title)
+            continue
 
 def erase_track(dirname, trackname, verbose=False):
     if verbose:
