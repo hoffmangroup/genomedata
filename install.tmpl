@@ -8,7 +8,7 @@ source. Upon execution, it interacts with the user to setup easy_install,
 download and install the necessary dependencies, and download and install
 genomedata.
 
-(c) 2009: Orion Buske <orion.buske@gmail.com>
+(c) 2009: Orion Buske <stasis {at} uw {dot} edu>
 
 """
 PKG_VERSION = "1.0.1"
