@@ -11,7 +11,7 @@ genomedata.
 (c) 2009: Orion Buske <orion.buske@gmail.com>
 
 """
-PKG_VERSION = "1.0.0"
+PKG_VERSION = "1.0.1"
 
 ####################### BEGIN COMMON CODE HEADER #####################
 
