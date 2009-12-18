@@ -1,6 +1,9 @@
-0.1.7:
-
-
+1.0.0:
+* added test module with basic unit tests
+* improved documentation, examples
+* added verbose flags
+* compiled default types in __init__.py
+* added _load_data.py wrapper for genomedata_load_data.c
 
 0.1.6:
 

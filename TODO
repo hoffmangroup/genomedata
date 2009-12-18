@@ -1,1 +1,5 @@
+* get genomedata-erase-track to work
 * make iter(Chromosome) and friends return supercontigs in order
+* add supercontig gap length variable
+* add sequence length variable (set during load_seq)
+** allow full slicing once sequence length known for each chromosome

@@ -18,17 +18,15 @@ from tempfile import mkdtemp
 
 from ._load_seq import load_seq
 from ._open_data import open_data
-from ._load_data import load_data
+from ._load_data import DEFAULT_CHUNK_SIZE, load_data
 from ._close_data import close_data
-
-DEFAULT_CHUNK_SIZE = 10000
 
 def die(msg="Unexpected error!"):
     print >>sys.stderr, msg
     sys.exit(1)
 
 def load_genomedata(genomedatadir, tracks=None, seqfiles=None,
-                    chunk_size=None, verbose=False):
+                    chunk_size=DEFAULT_CHUNK_SIZE, verbose=False):
     """Loads genomedata collection with given data
 
     genomedatadir: name of output directory for genomedata
@@ -139,13 +137,13 @@ def parse_options(args):
     parser = OptionParser(usage=usage, version=version,
                           description=description)
 
-    parser.add_option("-c", "--chunk-size", dest="chunk_size",
-                      metavar="NROWS", type="int",
-                      default=DEFAULT_CHUNK_SIZE,
-                      help="Chunk hdf5 data into blocks of NROWS. A higher"
-                      " value increases compression but slows random access."
-                      " Must always be smaller than the max size for a"
-                      " dataset. [default: %default]")
+#     parser.add_option("-c", "--chunk-size", dest="chunk_size",
+#                       metavar="NROWS", type="int",
+#                       default=DEFAULT_CHUNK_SIZE,
+#                       help="Chunk hdf5 data into blocks of NROWS. A higher"
+#                       " value increases compression but slows random access."
+#                       " Must always be smaller than the max size for a"
+#                       " dataset. [default: %default]")
     parser.add_option("-s", "--sequence", action="append",
                       dest="seqfile", default=[],
                       help="Add the sequence data in the specified file")
@@ -154,10 +152,6 @@ def parse_options(args):
                       help="Add data for the given track. TRACK"
                       " should be specified in the form: NAME=FILE,"
                       " such as: -t signal=signal.wig")
-    parser.add_option("-q", "--quiet", dest="verbose",
-                      default=True, action="store_false",
-                      help="Do not print status updates or diagnostic"
-                      " messages")
 
     options, args = parser.parse_args(args)
 
@@ -181,8 +175,8 @@ def main(args=sys.argv[1:]):
         die(("Error parsing track expression: %s\nMake sure to specify tracks"
              "in NAME=FILE form, such as: -t high=signal.high") % track_expr)
 
-    kwargs = {"verbose": options.verbose,
-              "chunk_size": options.chunk_size}
+    kwargs = {"verbose": options.verbose}
+#              "chunk_size": options.chunk_size
     load_genomedata(genomedatadir, tracks, seqfiles, **kwargs)
 
 if __name__ == "__main__":
