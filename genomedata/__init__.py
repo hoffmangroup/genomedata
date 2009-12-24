@@ -71,10 +71,10 @@ class Genome(object):
 
     """
     def __init__(self, dirname):
-        """Create a Genome object from the genomedata objects in the directory.
+        """Create a Genome object from a genomdata archive.
 
         :param dirname: directory containing any chomosome files to include
-                        (usually just the genomedata directory).
+                        (usually just the genomedata archive).
         :type dirname: string
 
         Example:
@@ -114,7 +114,7 @@ class Genome(object):
         """Return a reference to a chromosome of the given name.
 
         :param name: name of the chromosome file (e.g. "chr1" if
-                     chr1.genomedata is a file in the genomedata directory)
+                     chr1.genomedata is a file in the genomedata archive)
         :type name: string
         :returns: :class:`Chromosome`
 
@@ -304,7 +304,7 @@ class Chromosome(object):
     def __init__(self, filename, mode=default_mode, *args, **kwargs):
         """
         :param filename: name of the chromosome file in the
-                         genomedata directory
+                         genomedata archive
 
         :param mode: mode of interaction with the chromosome file,
                      with ``r``: read, ``w``: write
@@ -715,8 +715,7 @@ class Supercontig(object):
         >>> chromosome.seq[121186950:121186970].tostring() # Supercontig boundary
         'agAATTCNNNNNNNNNNNNN'
         >>> chromosome.seq[121186957:121186960].tostring() # Not in supercontig
-        /net/noble/vol2/home/stasis/arch/Linux/RHEL5/i686/lib/python2.5/genomedata-0.1.7.dev_r2548-py2.5.egg/genomedata/__init__.py:709: UserWarning: slice of chromosome sequence does not overlap any supercontig (filling with 'N')
-        warn("slice of chromosome sequence does not overlap any"
+        UserWarning: slice of chromosome sequence does not overlap any supercontig (filling with 'N')
         'NNN'
 
         """

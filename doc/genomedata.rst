@@ -71,9 +71,9 @@ Why have :class:`Supercontigs <Supercontig>`?
 
 The workflow
 ============
-A genomedata collection contains sequence and may also contain
+A genomedata archive contains sequence and may also contain
 numerical data associated with that sequence. You can easily load
-sequence and numerical data into a genomedata collection with the
+sequence and numerical data into a genomedata archive with the
 :ref:`genomedata-load` command (see command details additional details)::
 
     genomedata-load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATADIR
@@ -159,7 +159,7 @@ array([ 47.], dtype=float32)
 Command-line interface
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Genomedata collections can be created and loaded from the command line
+Genomedata archives can be created and loaded from the command line
 with the :ref:`genomedata-load` command. 
 
 .. _genomedata-load:
@@ -174,11 +174,11 @@ Usage information follows, but in summary, this script takes as input:
     * trackname is a ``string`` identifier (e.g. ``broad.h3k27me3``) 
     * datafile contains one column of data for this data track 
       in one of the following formats: |signal file formats|
-- the name of the genomedata collection to create
+- the name of the genomedata archive to create
 
 For example, let's say you have sequence data for chrX (``chrX.fa``) and
 chrY (``chrY.fa.gz``), as well as two signal tracks: high (``signal.high.wig``)
-and low (``signal.low.bed.gz``). You could construct a genomedata collection
+and low (``signal.low.bed.gz``). You could construct a genomedata archive
 named ``mygenomedata`` in the current directory with the following command::
 
     genomedata-load -s chrX.fa -s chrY.fa.gz -t high=signal.high.wig -t low=signal.low.bed.gz mygenomedata
