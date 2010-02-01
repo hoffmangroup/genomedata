@@ -819,7 +819,6 @@ def prompt_yes_no(query, default="Y"):
     while True:
         # Query user and get response
         print >>sys.stderr, "%s (Y/n) [%s] " % (query, default),
-        sys.stdin.flush()
         response = raw_input().strip().lower()
         if len(response) == 0:
             response = default.strip().lower()
@@ -855,7 +854,6 @@ def prompt_user(query, default=None, choices=None):
             msg = "%s [%s] " % (prompt, default)
 
         print >>sys.stderr, msg,
-        sys.stdin.flush()
         response = raw_input().strip()
 
         if len(response) == 0:  # User didn't enter a response

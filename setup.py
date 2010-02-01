@@ -42,7 +42,7 @@ genomedata-report = genomedata._report:main
 """
 #genomedata-erase-track = genomedata._erase_track:main
 
-install_requires = ["numpy", "path", "tables>2.0.4"]
+install_requires = ["numpy", "path", "tables>2.0.4", "textinput"]
 
 arch = "_".join([system(), processor()])
 

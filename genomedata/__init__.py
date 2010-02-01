@@ -651,14 +651,20 @@ class Supercontig(object):
     def __str__(self):
         return str(self.name)
 
-    def project(self, pos):
+    def project(self, pos, bound=False):
         """Project chromsomal coordinates to supercontig coordinates.
 
         :param pos: chromosome coordinate
+        :param bound: bound result to valid supercontig coordinates
         :type pos: integer
+        :type bound: boolean
         :returns: integer
 
         """
+        if bound:
+            pos = max(pos, self.start)
+            pos = min(pos, self.end)
+
         return int(pos - self.start)
 
     @property
