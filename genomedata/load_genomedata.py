@@ -144,6 +144,9 @@ def parse_options(args):
 #                       " value increases compression but slows random access."
 #                       " Must always be smaller than the max size for a"
 #                       " dataset. [default: %default]")
+    parser.add_option("-v", "--verbose", dest="verbose",
+                      default=False, action="store_true",
+                      help="Print status updates and diagnostic messages")
     parser.add_option("-s", "--sequence", action="append",
                       dest="seqfile", default=[],
                       help="Add the sequence data in the specified file")
