@@ -8,18 +8,18 @@ Genomedata documentation
 
 For a broad overview, see the paper:
 
-    Hoffman MM, Buske OJ, Noble WS, "The genomedata format for storing
-    large-scale functional genomics data." In preparation.
+    Hoffman MM, Buske OJ, Noble WS, "The Genomedata format for storing
+    large-scale functional genomics data." Under review.
 
 Michael <mmh1 at washington dot edu> can send you a copy of the latest
-manuscript. Please cite this paper if you use genomedata.
+manuscript. Please cite this paper if you use Genomedata.
 
 .. currentmodule:: genomedata
 
 Installation
 ============
 
-A simple, interactive script_ has been created to install genomedata
+A simple, interactive script_ has been created to install Genomedata
 (and most dependencies) on any Linux platform. Installation is as
 simple as downloading and running this script! For instance::
 
@@ -43,16 +43,17 @@ simple as downloading and running this script! For instance::
 Overview
 ========
 
-Genomedata is a module to store and access large-scale functional
+Genomedata provides a way to store and access large-scale functional
 genomics data in a format which is both space-efficient and allows
-efficient random-access.
+efficient random-access. Genomedata archives are currently write-once, 
+although we are working to fix this.
 
-Under the surface, genomedata is implemented as a collection of HDF5 files,
-but genomedata provides a transparent interface to interact with your
+Under the surface, Genomedata is implemented as a collection of HDF5 files,
+but Genomedata provides a transparent interface to interact with your
 underlying data without having to worry about the mess of repeatedly parsing
 large data files or having to keep them in memory for random access.
 
-The genomedata hierarchy:
+The Genomedata hierarchy:
 
   Each :class:`Genome` contains many :class:`Chromosomes <Chromosome>`
     Each :class:`Chromosome` contains many :class:`Supercontigs <Supercontig>`
@@ -71,9 +72,9 @@ Why have :class:`Supercontigs <Supercontig>`?
 
 The workflow
 ============
-A genomedata archive contains sequence and may also contain
+A Genomedata archive contains sequence and may also contain
 numerical data associated with that sequence. You can easily load
-sequence and numerical data into a genomedata archive with the
+sequence and numerical data into a Genomedata archive with the
 :ref:`genomedata-load` command (see command details additional details)::
 
     genomedata-load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATADIR
@@ -88,6 +89,11 @@ fine-grained control is required. The commands and required ordering are:
 #. :ref:`genomedata-load-data`
 #. :ref:`genomedata-close-data`
 
+Although Genomedata collections are currently write-once, this 
+restriction only applies on the per-chromosome basis. Thus, the above
+workflow can be repeated to store sequence and data for new chromosomes,
+but old chromosomes cannot be modified.
+
 .. note:: A call to :program:`h5repack` after
           :ref:`genomedata-close-data` may be used to
           transparently compress the data.
@@ -99,9 +105,9 @@ Genomedata usage
 Python interface
 ~~~~~~~~~~~~~~~~
 
-The data in genomedata is accessed through the hierarchy described in
+The data in Genomedata is accessed through the hierarchy described in
 :ref:`genomedata-overview`. A full :ref:`Python API <python-api>` is 
-also available. To appreciate the full benefit of genomedata,
+also available. To appreciate the full benefit of Genomedata,
 it is most easily used as a contextmanager::
 
     from genomedata import Genome
@@ -174,11 +180,11 @@ Usage information follows, but in summary, this script takes as input:
     * trackname is a ``string`` identifier (e.g. ``broad.h3k27me3``) 
     * datafile contains one column of data for this data track 
       in one of the following formats: |signal file formats|
-- the name of the genomedata archive to create
+- the name of the Genomedata archive to create
 
 For example, let's say you have sequence data for chrX (``chrX.fa``) and
 chrY (``chrY.fa.gz``), as well as two signal tracks: high (``signal.high.wig``)
-and low (``signal.low.bed.gz``). You could construct a genomedata archive
+and low (``signal.low.bed.gz``). You could construct a Genomedata archive
 named ``mygenomedata`` in the current directory with the following command::
 
     genomedata-load -s chrX.fa -s chrY.fa.gz -t high=signal.high.wig -t low=signal.low.bed.gz mygenomedata
@@ -210,7 +216,7 @@ Command-line usage information::
 
 Alternately, as described in :ref:`genomedata-overview`, the underlying
 Python and C load scripts are also accessible for more finely-grained control.
-This can be especially useful for parallelizing genomedata loading over a
+This can be especially useful for parallelizing Genomedata loading over a
 cluster. 
 
 
@@ -240,7 +246,7 @@ are used to divide the sequence into supercontigs.
 genomedata-open-data
 --------------------
 
-This command opens the specified tracknames in the genomedata object,
+This command opens the specified tracknames in the Genomedata object,
 allowing data for those tracks to be added with :ref:`genomedata-load-data`.
 
 ::
@@ -257,7 +263,7 @@ allowing data for those tracks to be added with :ref:`genomedata-load-data`.
 genomedata-load-data
 --------------------
 
-This command loads data from stdin into genomedata under the given trackname.
+This command loads data from stdin into Genomedata under the given trackname.
 The input data must be in one of these supported datatypes: 
 |signal data formats|.
 A :option:`chunk-size` can be specified to control the size of hdf5 chunks
@@ -275,7 +281,7 @@ value.
 ::
 
  Usage: genomedata-load-data [OPTION...] GENOMEDATADIR TRACKNAME
- Loads data into genomedata format
+ Loads data into Genomedata format
  Takes track data in on stdin
  
    -c, --chunk-size=NROWS     Chunk hdf5 data into blocks of NROWS. A higher
@@ -295,7 +301,7 @@ value.
 genomedata-close-data
 ---------------------
 
-Closes the specified genomedata object.
+Closes the specified Genomedata object.
 
 ::
 
@@ -312,7 +318,7 @@ Closes the specified genomedata object.
 Python API
 ~~~~~~~~~~
 
-The genomedata package is designed to be used from a variety of scripting
+The Genomedata package is designed to be used from a variety of scripting
 languages, but currently only exports the following Python API.
 
 .. module:: genomedata
@@ -341,7 +347,7 @@ Support
 =======
 
 There is a moderated genomedata-announce mailing list that you can 
-subscribe to for information on new releases of genomedata:
+subscribe to for information on new releases of Genomedata:
     
 https://mailman1.u.washington.edu/mailman/listinfo/genomedata-announce
 
