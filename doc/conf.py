@@ -176,7 +176,7 @@ htmlhelp_basename = 'genomedatadoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'genomedata.tex', u'genomedata Documentation',
+  ('index', 'genomedata.tex', u'Genomedata Documentation',
    u'Michael M. Hoffman', 'manual'),
 ]
 
