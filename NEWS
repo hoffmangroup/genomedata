@@ -1,3 +1,7 @@
+1.0.2:
+
+
+
 1.0.1:
 * Fixed OSX bug that caused installer to crash on sys.stdin.flush
 * Clarified write-once behavior in documentation
