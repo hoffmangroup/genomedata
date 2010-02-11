@@ -869,7 +869,7 @@ void proc_wigfix(char *h5dirname, char *trackname, char **line,
       if (fill_start < buf_end) {
         fill_end = fill_start + span;
         if (fill_end > buf_end) {
-          fprintf(stderr, " ignoring data at %s:%zd+%zd\n",
+          fprintf(stderr, " ignoring data at %s:%zd+%ld\n",
                   chromosome.chrom, fill_start - buf_start, span);
           fill_end = buf_end;
         }
