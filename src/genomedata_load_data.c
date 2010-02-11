@@ -90,8 +90,8 @@ typedef struct {
 
 /* XXX: GNU-only extension; should be wrapped */
 __attribute__((noreturn)) void fatal(char *msg) {
-  fprintf(stderr, msg);
-  fprintf(stderr, "\n");
+  fputs(msg, stderr);
+  fputs("\t", stderr);
   exit(EXIT_FAILURE);
 }
 
@@ -280,7 +280,7 @@ int open_chromosome(chromosome_t *chromosome, const char *h5filename) {
 
   /* if opening failed, then return -1 with h5file set bad */
   if (!is_valid_chromosome(chromosome)) {
-    fprintf(stderr, " can't open chromosome\n");
+    fputs(" can't open chromosome\n", stderr);
     return -1;
   }
 
@@ -423,7 +423,7 @@ hid_t open_supercontig_dataset(supercontig_t *supercontig, hsize_t num_cols,
                         H5P_DEFAULT);
     assert(dataset >= 0);
     if (verbose) {
-      fprintf(stderr, " done\n");
+      fputs(" done\n", stderr);
     }
 
     make_pytables_carray(dataset);
@@ -654,7 +654,7 @@ void write_buf(chromosome_t *chromosome, char *trackname,
     assert(H5Dwrite(dataset, DTYPE, mem_dataspace, file_dataspace,
                     H5P_DEFAULT, buf_supercontig_start) >= 0);
     if (verbose) {
-      fprintf(stderr, " done\n");
+      fputs(" done\n", stderr);
     }
 
     /* close all */
@@ -770,7 +770,7 @@ bool load_chromosome(char *chrom, char *h5dirname, chromosome_t *chromosome,
     assert(H5Dread(dataset, DTYPE, mem_dataspace, file_dataspace,
                    H5P_DEFAULT, (*buf_start) + supercontig->start) >= 0);
     if (verbose) {
-      fprintf(stderr, " done\n");
+      fputs(" done\n", stderr);
     }
 
     /* close all */

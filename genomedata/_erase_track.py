@@ -6,7 +6,7 @@ _erase_track.py: wipe the data for a specified track in such a way
 that the data can be reloaded (essentially replacing the track data)
 """
 
-__version__ = "$Revision: $"
+__version__ = "$Revision$"
 
 import sys
 

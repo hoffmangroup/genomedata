@@ -5,7 +5,7 @@ from __future__ import division, with_statement
 _load_data.py: A python interface for genome_load_data.c
 """
 
-__version__ = "$Revision: $"
+__version__ = "$Revision$"
 
 import sys
 
