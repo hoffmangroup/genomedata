@@ -1,6 +1,13 @@
 1.0.2:
-
-
+* Fixed format warning on 32-bit systems
+* Fixed Ubuntu format string warnings (switched fprintf to fputs)
+* Fixed bug that caused segmentation fault when accessing
+  tracknames_continuous before data when Genome was not used as a
+  context manager.
+* Created a uniform interface for loading Genomedata archives, whether they
+  are a directory or a single file (untested). This includes calling improving
+  the handling of non-context-manager Genome objects by requiring a call
+  to Genome.close() when finished.
 
 1.0.1:
 * Fixed OSX bug that caused installer to crash on sys.stdin.flush

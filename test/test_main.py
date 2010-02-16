@@ -118,6 +118,41 @@ class TestGenomedata(unittest.TestCase):
                 break
             self.assertArraysEqual(supercontig.continuous[0, 3], NAN)
 
+    def test_repr(self):
+        genome = Genome(self.genomedatadir, mode="r")
+        self.assertEqual(repr(genome), "Genome('%s', **{'mode': 'r'})" %
+                         self.genomedatadir)
+        chr = genome["chr1"]
+        self.assertEqual(repr(chr),
+                         "Chromosome('%s/chr1.genomedata', **{'mode': 'r'})" %
+                         self.genomedatadir)
+        genome.close()
+
+    def test_no_context(self):
+        genome = Genome(self.genomedatadir)
+        self.assertEqual(repr(genome), "Genome('%s')" % self.genomedatadir)
+        chr1 = genome["chr1"]
+        tracknames = genome.tracknames_continuous
+        data = chr1[100:1000]  # Used to segfault
+        chr2 = genome["chrY"]
+        chr2.close()  # Make sure manual close doesn't break it
+        self.assertTrue(chr1._open)
+        self.assertFalse(chr2._open)
+        genome.close()
+        self.assertFalse(chr1._open)
+        self.assertRaises(Exception, chr1.tracknames_continuous)
+
+    def test_open_chromosomes(self):
+        genome = Genome(self.genomedatadir)
+        with genome:
+            chr1 = genome["chr1"]
+            chr2 = genome["chr1"]  # Memoized
+            self.assertEqual(chr1, chr2)
+            chr3 = genome["chrY"]
+            self.assertEqual(len(genome.open_chromosomes), 2)
+
+        self.assertEqual(genome.open_chromosomes, {})
+
     def test_delete_tracks(self):
         # Test ability to delete a track
 

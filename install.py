@@ -96,7 +96,7 @@ class InteractiveShell(object):
         self.env.update(env)
         self.old_cwd = os.getcwd()
 
-    def execute(self, command, verbose=False):
+    def execute(self, command, shell="/bin/bash", verbose=False):
         """Execute the given string command and return the retcode."""
 
         if verbose:
@@ -116,7 +116,7 @@ class InteractiveShell(object):
             os.chdir(dest)
             return 0
         else:
-            return call(str(command), shell=True,
+            return call(str(command), executable=shell, shell=True,
                         env=self.env, cwd=os.getcwd())
 
     def run_script(self, script, verbose=False):

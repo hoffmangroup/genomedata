@@ -18,12 +18,14 @@ from __future__ import division, with_statement
 __version__ = "$Revision$"
 
 import sys
+import tables
 
 from functools import partial
 from numpy import add, amin, amax, array, empty, float32, NAN, square, uint8
 from os import extsep
 from path import path
-from tables import Float32Atom, openFile, NoSuchNodeError, UInt8Atom
+from tables import Float32Atom, NoSuchNodeError, UInt8Atom, \
+    openFile as openH5File
 from warnings import warn
 
 FORMAT_VERSION = 0
@@ -53,43 +55,73 @@ class _InactiveDict(dict):
 class Genome(object):
     """The root level of the genomedata object hierarchy.
 
-    Implemented via a file system directory.
-    If you use this as a context manager, it will keep track of open
-    Chromosomes and close them for you later when the context is left::
+    If you use this as a context manager, it will keep track of any open
+    Chromosomes and close them (and the Genome object) for you later when
+    the context is left::
 
       with Genome("/path/to/genomedata") as genome:
         chromosome = genome["chr1"]
         [...]
 
     If not used as a context manager, you are responsible for closing
-    chromosomes when you are done with them:
+    the Genomedata archive once you are done:
 
     >>> genome = Genome("/path/to/genomedata")
     >>> chromosome = genome["chr1"]
     [...]
-    >>> chromosome.close()
+    >>> genome.close()
 
     """
-    def __init__(self, dirname):
+    def __init__(self, rootpath, *args, **kwargs):
         """Create a Genome object from a genomdata archive.
 
-        :param dirname: directory containing any chomosome files to include
-                        (usually just the genomedata archive).
-        :type dirname: string
+        :param rootpath: path to the root of the Genomedata object
+                         hierarchy. This can either be a .genomedata
+                         file that contains the entire genome or a
+                         directory containing multiple chromosome files.
+        :type rootpath: string
+        :param \*args: args passed on to openFile if single file or to
+                       Chromosome if directory
+        :param \*\*kwargs: keyword args passed on to openFile if single file
+                           or to Chromosome if directory
 
         Example:
 
         >>> genome = Genome("./genomedata.ctcf.pol2b/")
         >>> genome
         Genome("./genomedata.ctcf.pol2b/")
+        >>> genome.close()
+        >>> genome = Genome("./cat_chipseq.genomedata", mode="r")
+        Genome("./cat_chipseq.genomedata", mode="r")
+        >>> genome.close()
 
         """
-        self.dirpath = path(dirname)
+        self.path = rootpath
+        self.args = args
+        self.kwargs = kwargs
 
-        # used when the Genome instance is not used as a context
-        # manager. replaced by __enter__()
-        self.open_chromosomes = _InactiveDict()
+        # Process path for internal use (and follow symbolic links)
+        self._path = path(rootpath).expand()
+        while self._path.islink():
+            self._path = self._path.readlinkabs()
 
+        if not self._path.exists():
+            raise IOError("Could not find Genomedata archive: %s" % self._path)
+
+        if self._path.isfile():
+            # Open the Genomedata file
+            self._isfile = True
+            self._h5file = openFile(self._path, *self.args, **self.kwargs)
+        elif self._path.isdir():
+            # Genomedata directory
+            self._isfile = False
+        else:
+            raise NotImplementedError("Unknown Genomedata archive format: %r" %
+                                      self._path)
+
+        self._open = True
+        # Keep track of open chromosomes
+        self.open_chromosomes = {}
         # a kind of refcounting for context managers
         self._context_count = 0
 
@@ -104,17 +136,25 @@ class Genome(object):
               [...]
 
         """
-        # sorted so that the order is always the same
-        for filepath in sorted(self.dirpath.files("*" + SUFFIX)):
-
-            # pass through __getitem__() to allow memoization
-            yield self[filepath.namebase]
+        assert self._open
+        if self._isfile:  # Chromosomes are files
+            # Iterate over child group of root
+            for group in self._h5file.iterNodes("/", classname="Group"):
+                groupname = group._v_name
+                yield self[groupname]
+        else:  # Chromosomes are groups
+            # sorted so that the order is always the same
+            for filepath in sorted(self._path.files("*" + SUFFIX)):
+                # pass through __getitem__() to allow memoization
+                yield self[filepath.namebase]
 
     def __getitem__(self, name):
         """Return a reference to a chromosome of the given name.
 
         :param name: name of the chromosome file (e.g. "chr1" if
-                     chr1.genomedata is a file in the genomedata archive)
+                     chr1.genomedata is a file in the Genomedata archive
+                     or chr1 is a top-level group in the single-file
+                     Genomedata archive)
         :type name: string
         :returns: :class:`Chromosome`
 
@@ -126,6 +166,7 @@ class Genome(object):
         KeyError: 'Could not find chromosome: chrZ'
 
         """
+        assert self._open
         try:
             # memoization
             return self.open_chromosomes[name]
@@ -133,36 +174,59 @@ class Genome(object):
             pass
 
         try:
-            res = Chromosome(self.dirpath / (name + SUFFIX))
-        except IOError:
+            if self._isfile:
+                res = Chromosome(self._h5file, where="/" + name)
+            else:
+                res = Chromosome(self._path.joinpath(name + SUFFIX),
+                                 *self.args, **self.kwargs)
+        except (IOError, NoSuchNodeError):
             raise KeyError("Could not find chromosome: %s" % name)
 
         self.open_chromosomes[name] = res
         return res
 
     def __enter__(self):
-        if self._context_count == 0:
-            self.open_chromosomes = {}
-
+        assert self._open
         self._context_count += 1
-
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         # XXX: this and __enter__ have potential race conditions, if
         # _context_count is changed simultaneously by different
         # threads. should be synchronized
-
-        if self._context_count == 1:
-            for name, chromosome in self.open_chromosomes.iteritems():
-                chromosome.close()
-
-            self.open_chromosomes = _InactiveDict()
-
         self._context_count -= 1
+        if self._context_count == 0:
+            self.close()
+
+    def close(self):
+        """Close this Genomedata archive and any open chromosomes
+
+        If the Genomedata archive is a directory, this closes all open
+        chromosomes. If it is a single file, this closes that file.
+        This should only be used if Genome is not a context manager
+        (see :class:`Genome`). The behavior is undefined if this is
+        called while Genome is being used as a context manager.
+
+        """
+        assert self._open
+        self._open = False
+        if self._isfile:
+            self._h5file.close()
+        else:
+            for name, chromosome in self.open_chromosomes.iteritems():
+                # Only close those not closed manually by the user
+                if chromosome._open:
+                    chromosome.close()
+
+        self.open_chromosomes = {}
 
     def __repr__(self):
-        return "Genome('%s')" % self.dirpath
+        items = ["'%s'" % self.path]
+        if self.args:
+            items.append("*%r" % self.args)
+        if self.kwargs:
+            items.append("**%r" % self.kwargs)
+        return "Genome(%s)" % ", ".join(items)
 
     def __str__(self):
         return repr(self)
@@ -170,48 +234,56 @@ class Genome(object):
     def _accum_extrema(self, name, accumulator):
         res = None
 
-        with self:
-            self.tracknames_continuous # for assertion check
+        self.tracknames_continuous # for assertion check
 
-            for chromosome in self:
-                new_extrema = getattr(chromosome, name)
+        for chromosome in self:
+            new_extrema = getattr(chromosome, name)
 
-                if res is None:
-                    res = new_extrema
-                else:
-                    res = accumulator([res, new_extrema])
+            if res is None:
+                res = new_extrema
+            else:
+                res = accumulator([res, new_extrema])
 
         return res
+
+
+    @property
+    def attrs(self):
+        """Return the attributes of the single-file Genomedata archive
+
+        This will return None if the archive is a directory
+
+        """
+        assert self._open
+        if self._isfile:
+            return self._h5file.root._v_attrs
+        else:
+            return None
 
     @property
     def tracknames_continuous(self):
         """Return a list of the names of all data tracks stored."""
-        res = None
 
-        # check that all chromosomes have the same tracknames_continuous
-        with self:
+        # Handle separately if the archive is a file or a directory, since
+        # the tracknames are stored at file-level, whether that is a whole
+        # genome or just one chromosomes.
+        if self._isfile:
+            return self.attrs.tracknames.tolist()
+        else:
+            # check that all chromosomes have the same tracknames_continuous
+            res = None
             for chromosome in self:
                 if res is None:
                     res = chromosome.tracknames_continuous
                 else:
                     assert res == chromosome.tracknames_continuous
 
-        return res
+            return res
 
     @property
     def num_tracks_continuous(self):
         """Returns the number of continuous data tracks."""
-        res = None
-
-        # check that all chromosomes have the same tracknames_continuous
-        with self:
-            for chromosome in self:
-                if res is None:
-                    res = chromosome.num_tracks_continuous
-                else:
-                    assert res == chromosome.num_tracks_continuous
-
-        return res
+        return len(self.tracknames_continuous)
 
     # XXX: should memoize these with an off-the-shelf decorator
     @property
@@ -266,8 +338,7 @@ class Genome(object):
         :returns: numpy.array
 
         """
-        with self:
-            return self.sums / self.num_datapoints
+        return self.sums / self.num_datapoints
 
     @property
     def vars(self):
@@ -281,14 +352,11 @@ class Genome(object):
         # Numerical Recipes in C, Eqn 14.1.7
         # XXX: best would be to switch to the pairwise parallel method
         # (see Wikipedia)
-        with self:
-            return (self.sums_squares / self.num_datapoints) - \
-                square(self.means)
+        return (self.sums_squares / self.num_datapoints) - \
+            square(self.means)
 
 class Chromosome(object):
-    """The genomedata object corresponding to data for a given chromosome.
-
-    Implemented via an HDF5 File
+    """The Genomedata object corresponding to data for a given chromosome.
 
     Usually created by keying into a Genome object with the name of a
     chromosome, as in:
@@ -300,52 +368,50 @@ class Chromosome(object):
     Chromosome('/path/to/genomedata/chrX.genomedata')
 
     """
-    default_mode = "r"
-    def __init__(self, filename, mode=default_mode, *args, **kwargs):
+    default_where = "/"
+    def __init__(self, file, where=default_where, *args, **kwargs):
         """
-        :param filename: name of the chromosome file in the
-                         genomedata archive
+        :param file: Genomedata file containing the given
+                     chromosome. If the Genomedata archive is a directory,
+                     this should be the path of a .genomedata file
+                     within that directory.
+                     If the Genomedata archive is a single
+                     file, this should be that file, and :param where:
+                     should be set appropriately.
 
-        :param mode: mode of interaction with the chromosome file,
-                     with ``r``: read, ``w``: write
-
-        :type mode: string
+        :param where: The path or Node to the root of the chromosome within
+                      the Genomedata file.
         :param \*args: args passed on to openFile
         :param \*\*kwargs: keyword args passed on to openFile
+        :type file: string or tables.File
+        :type where: string or tables.Node
 
         """
+        self.file = file
+        self.where = where
+        self.args = args
+        self.kwargs = kwargs
 
-        # disabled possibilities:
-        # , ``a``: append, ``r+``: append but force file to exist
-        # already. See documentation for tables.openFile().
-
-        h5file = openFile(filename, mode, *args, **kwargs)
-        attrs = h5file.root._v_attrs
-
-        # set or check file format version and dirty flag
-        # XXX: need to handle the dirty case better, to allow "+" in mode
-        assert mode in set("rw") # others not allowed yet
-
-        if "w" in mode:
-            attrs.genomedata_format_version = FORMAT_VERSION
-            attrs.dirty = True
+        # If file is a string, open the h5 file
+        if isinstance(file, basestring):
+            file = path(file).expand()
+            if not file.exists():
+                raise IOError("Could not find file: %r" % file)
+            h5file = openFile(file, *args, **kwargs)
+            self._isfile = True
+        elif isinstance(file, tables.File):
+            h5file = file
+            self._isfile = False
         else:
-            # XXX: the first version did not necessarily include this
-            # attribute; after everything does this exception handling
-            # should be removed
-            try:
-                assert attrs.genomedata_format_version == FORMAT_VERSION
-            except AttributeError:
-                if FORMAT_VERSION != 0:
-                    raise
+            raise NotImplementedError("Chromosome file of unsupported"
+                                      " type: %r" % file)
 
-            assert not attrs.dirty
-
-        self.filename = filename
-        self.mode = mode
-        self.h5file = h5file
+        # Now, open the group that is the root of the chromosome
+        self._root = h5file.getNode(where, classname="Group")
+        self._h5file = h5file
         self._seq = _ChromosomeSeqSlice(self)
         self._supercontigs = _Supercontigs(self)
+        self._open = True
 
     def __iter__(self):
         """Return next supercontig in chromosome.
@@ -363,13 +429,8 @@ class Chromosome(object):
         <Supercontig('supercontig_2', 94987544:199501827)>
 
         """
-        h5file = self.h5file
-        root = h5file.root
-
-        for group in h5file.walkGroups():
-            if group == root:
-                continue
-
+        assert self._open
+        for group in self._root:
             yield Supercontig(group)
 
     def __getitem__(self, key):
@@ -394,6 +455,7 @@ class Chromosome(object):
         >>> chromosome[100, "ctcf"]  # Get "ctcf" track value at chr4:100
 
         """
+        assert self._open
         # XXX: Allow variable/negative steps, negative starts/stops, etc.
 
         # XXX: The problem with missing start or end indices is that
@@ -486,10 +548,14 @@ class Chromosome(object):
         return str(self.name)
 
     def __repr__(self):
-        if self.mode == self.default_mode:
-            return "Chromosome('%s')" % (self.filename)
-        else:
-            return "Chromosome('%s', '%s')" % (self.filename, self.mode)
+        items = ["'%s'" % self.file]
+        if self.where != self.default_where:
+            items.append("'%s'" % self.where)
+        if self.args:
+            items.append("*%r" % self.args)
+        if self.kwargs:
+            items.append("**%r" % self.kwargs)
+        return "Chromosome(%s)" % ", ".join(items)
 
     def itercontinuous(self):
         """Return a generator over all supercontig, continuous pairs.
@@ -502,6 +568,7 @@ class Chromosome(object):
                 [...]
 
         """
+        assert self._open
         for supercontig in self:
             try:
                 yield supercontig, supercontig.continuous
@@ -526,6 +593,7 @@ class Chromosome(object):
         >>> data = chromosome[100:150, "sample_track"]
 
         """
+        assert self._open
         try:
             return self.tracknames_continuous.index(trackname)
         except ValueError:
@@ -534,13 +602,21 @@ class Chromosome(object):
     def close(self):
         """Close the current chromosome file.
 
-        This only needs to be called when genomedata is not being used as
-        a context manager. Using genomedata as a context manager makes
+        This only needs to be called when Genomedata files are manually
+        opened as Chromosomes. Otherwise, :meth:`Genome.close`
+        should be called to close any open chromosomes or Genomedata files.
+        The behavior is undefined if this is called on a Chromosome accessed
+        through a Genome object.
+        Using Genomedata as a context manager makes
         life easy by memoizing chromosome access and guaranteeing the
         proper cleanup. See :class:`Genome`.
 
         """
-        return self.h5file.close()
+        assert self._open
+        if self._isfile:
+            self._h5file.close()
+
+        self._open = False
 
     @property
     def _continuous_dtype(self):
@@ -557,12 +633,18 @@ class Chromosome(object):
     @property
     def name(self):
         """Return the name of this chromosome (same as __str__())."""
-        return path(self.filename).name.rpartition(SUFFIX)[0]
+        return path(self.file).name.rpartition(SUFFIX)[0]
 
     @property
     def attrs(self):
-        """Return the attributes of this chromosome."""
-        return self.h5file.root._v_attrs
+        """Return the attributes of the chromosome.
+
+        This could either be genome-wide or specific to this chromosome,
+        depending upon the Genomedata archive format (directory or one file).
+
+        """
+        assert self._open
+        return self._h5file.root._v_attrs
 
     @property
     def tracknames_continuous(self):
@@ -624,8 +706,11 @@ class Chromosome(object):
         >>> chromosome.supercontigs[100]
         [<Supercontig('supercontig_0', 0:66115833)>]
         >>> chromosome.supercontigs[1:100000000]
-        [<Supercontig('supercontig_0', 0:66115833)>, <Supercontig('supercontig_1', 66375833:90587544)>, <Supercontig('supercontig_2', 94987544:199501827)>]
-        >>> chromosome.supercontigs[66115833:66375833]  # Between two supercontigs
+        [<Supercontig('supercontig_0', 0:66115833)>, \
+<Supercontig('supercontig_1', 66375833:90587544)>, \
+<Supercontig('supercontig_2', 94987544:199501827)>]
+        >>> chromosome.supercontigs[66115833:66375833]  \
+# Between two supercontigs
         []
 
         """
@@ -828,6 +913,42 @@ def _key_to_tuple(key):
         raise IndexError("Start index can be at most the end index")
 
     return start, end
+
+def openFile(filename, mode="r", *args, **kwargs):
+    """Open the specified Genomedata file
+
+    :param filename: path to Genomedata file
+    :param mode: disabled possibilities:
+                 ``a``: append,
+                 ``r+``: append but force file to exist
+                 already. See documentation for tables.openFile().
+    :param \*args: other arguments passed to tables.openFile()
+    :param \*\*kwargs: other keyword arguments passed to tables.openFile()
+    """
+
+    h5file = openH5File(filename, mode, *args, **kwargs)
+    attrs = h5file.root._v_attrs
+
+    # set or check file format version and dirty flag
+    # XXX: need to handle the dirty case better, to allow "+" in mode
+    assert mode in set("rw") # others not allowed yet
+
+    if "w" in mode:
+        attrs.genomedata_format_version = FORMAT_VERSION
+        attrs.dirty = True
+    else:
+        # XXX: the first version did not necessarily include this
+        # attribute; after everything does this exception handling
+        # should be removed
+        try:
+            assert attrs.genomedata_format_version == FORMAT_VERSION
+        except AttributeError:
+            if FORMAT_VERSION != 0:
+                raise
+
+        assert not attrs.dirty
+
+    return h5file
 
 def main(args=sys.argv[1:]):
     pass

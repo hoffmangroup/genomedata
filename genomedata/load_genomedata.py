@@ -151,9 +151,8 @@ def parse_options(args):
                       dest="seqfile", default=[],
                       help="Add the sequence data in the specified file")
     parser.add_option("-t", "--track", action="append",
-                      dest="track", default=[],
-                      help="Add data for the given track. TRACK"
-                      " should be specified in the form: NAME=FILE,"
+                      dest="track", default=[], metavar="NAME=FILE",
+                      help="Add data from FILE as the track NAME,"
                       " such as: -t signal=signal.wig")
 
     options, args = parser.parse_args(args)

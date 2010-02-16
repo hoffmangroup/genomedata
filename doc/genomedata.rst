@@ -118,8 +118,8 @@ it is most easily used as a contextmanager::
 
 .. note:: 
     If used as a context manager, chromosome access is memoized. 
-    If not, chromosomes should be closed manually with 
-    :meth:`Chromosome.close`.
+    If not, the Genome object (and all opened chromosomes) should be 
+    closed manually with a call to :meth:`Genome.close`.
 
 Basic usage
 -----------
