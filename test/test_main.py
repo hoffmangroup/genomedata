@@ -140,7 +140,7 @@ class TestGenomedata(unittest.TestCase):
         self.assertFalse(chr2._open)
         genome.close()
         self.assertFalse(chr1._open)
-        self.assertRaises(Exception, chr1.tracknames_continuous)
+        self.assertRaises(Exception, iter(chr1).next)
 
     def test_open_chromosomes(self):
         genome = Genome(self.genomedatadir)
