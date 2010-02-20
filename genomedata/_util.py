@@ -7,14 +7,16 @@ __version__ = "$Revision$"
 
 from contextlib import closing
 from gzip import open as _gzip_open
+from os import extsep
 import sys
 
 from numpy import array, empty
-from tables import Filters, NoSuchNodeError
+from tables import Filters
 
 FILTERS_GZIP = Filters(complevel=1)
 
 EXT_GZ = "gz"
+SUFFIX_GZ = extsep + EXT_GZ
 
 class LightIterator(object):
     def __init__(self, handle):
@@ -63,9 +65,12 @@ def fill_array(scalar, shape, dtype=None, *args, **kwargs):
 def gzip_open(*args, **kwargs):
     return closing(_gzip_open(*args, **kwargs))
 
-# XXX: replace with genomedata.Chromosome.tracknames_continuous
-def get_tracknames(chromosome):
-    return chromosome.root._v_attrs.tracknames.tolist()
+def maybe_gzip_open(filename, *args, **kwargs):
+    if filename.endswith(SUFFIX_GZ):
+        return gzip_open(filename, *args, **kwargs)
+    else:
+        return open(filename, *args, **kwargs)
+
 
 def init_num_obs(num_obs, continuous):
     curr_num_obs = continuous.shape[1]
@@ -77,24 +82,6 @@ def new_extrema(func, data, extrema):
     curr_extrema = func(data, 0)
 
     return func([extrema, curr_extrema], 0)
-
-# XXX: replace with iter(genomedata.Chromosome)
-def walk_supercontigs(h5file):
-    root = h5file.root
-
-    for supercontig in h5file.walkGroups():
-        if supercontig == root:
-            continue
-
-        yield supercontig
-
-# XXX: replace with genomedata.Chromosome.itercontinuous
-def walk_continuous_supercontigs(h5file):
-    for supercontig in walk_supercontigs(h5file):
-        try:
-            yield supercontig, supercontig.continuous
-        except NoSuchNodeError:
-            continue
 
 def main(args=sys.argv[1:]):
     pass

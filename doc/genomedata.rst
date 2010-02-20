@@ -1,6 +1,7 @@
 ========================
-Genomedata documentation
+Genomedata |version| documentation
 ========================
+:Website: http://noble.gs.washington.edu/proj/genomedata
 :Author: Michael M. Hoffman <mmh1 at washington dot edu>
 :Organization: University of Washington
 :Address: Department of Genome Sciences, PO Box 355065, Seattle, WA 98195-5065, United States of America
@@ -117,7 +118,8 @@ it is most easily used as a contextmanager::
         [...]
 
 .. note:: 
-    If used as a context manager, chromosome access is memoized. 
+    If Genome is used as a context manager, it will clean up any opened
+    Chromosomes automatically.
     If not, the Genome object (and all opened chromosomes) should be 
     closed manually with a call to :meth:`Genome.close`.
 

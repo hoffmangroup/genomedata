@@ -12,28 +12,30 @@ __version__ = "$Revision$"
 import sys
 
 from numpy import array
-from path import path
-from tables import openFile
+import warnings
 
-def open_data(dirname, tracknames, verbose=False):
-    dirpath = path(dirname)
-    for filepath in dirpath.walkfiles():
-        with openFile(filepath, "r+") as h5file:
-            attrs = h5file.root._v_attrs
+from . import Genome
 
+def open_data(gdfilename, tracknames, verbose=False):
+    warnings.simplefilter("ignore")
+    with Genome(gdfilename, "r+") as genome:
+        for chromosome in genome:
+            attrs = chromosome.attrs
             if "tracknames" in attrs:
-                raise ValueError("%s already has named tracks" % filepath)
+                raise ValueError("%s already has named tracks" % gdfilename)
 
             attrs.dirty = True
             attrs.tracknames = array(tracknames)
 
+    warnings.resetwarnings()
+
 def parse_options(args):
     from optparse import OptionParser
 
-    usage = "%prog [OPTION]... GENOMEDATADIR TRACKNAME..."
+    usage = "%prog [OPTION]... GENOMEDATAFILE TRACKNAME..."
     version = "%%prog %s" % __version__
     description = ("Specify the tracks that will be in this Genomedata"
-                   " collection")
+                   " archive")
     parser = OptionParser(usage=usage, version=version,
                           description=description)
 
@@ -50,10 +52,10 @@ def parse_options(args):
 
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
-    genomedatadir = args[0]
+    gdfilename = args[0]
     tracknames = args[1:]
     kwargs = {"verbose": options.verbose}
-    return open_data(genomedatadir, tracknames, **kwargs)
+    return open_data(gdfilename, tracknames, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

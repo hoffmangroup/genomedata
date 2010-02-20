@@ -11,24 +11,23 @@ __version__ = "$Revision$"
 
 import sys
 
-from numpy import (amin, amax, array, diff, empty, hstack, isfinite, NAN,
+from numpy import (amin, amax, array, diff, hstack, isfinite, NAN,
                    NINF, PINF, square)
-from path import path
-from tables import NoSuchNodeError, openFile
+from tables import NoSuchNodeError
 
-from . import CONTINUOUS_ATOM, CONTINUOUS_CHUNK_SHAPE, CONTINUOUS_DTYPE
+from . import CONTINUOUS_ATOM, CONTINUOUS_CHUNK_SHAPE, CONTINUOUS_DTYPE, Genome
 from ._load_seq import MIN_GAP_LEN
-from ._util import (fill_array, get_tracknames, init_num_obs, new_extrema,
-                    walk_supercontigs)
+from ._util import fill_array, init_num_obs, new_extrema
 
 def update_extrema(func, extrema, data, col_index):
     extrema[col_index] = new_extrema(func, data, extrema[col_index])
 
 def write_metadata(chromosome, verbose=False):
     if verbose:
-        print >>sys.stderr, "writing metadata for %s" % chromosome.title
+        print >>sys.stderr, "writing metadata for %s" % chromosome
 
-    tracknames = get_tracknames(chromosome)
+    h5file = chromosome.h5file
+    tracknames = chromosome.tracknames_continuous
     num_obs = len(tracknames)
     row_shape = (num_obs,)
     mins = fill_array(PINF, row_shape)
@@ -37,9 +36,9 @@ def write_metadata(chromosome, verbose=False):
     sums_squares = fill_array(0.0, row_shape)
     num_datapoints = fill_array(0, row_shape)
 
-    for supercontig in walk_supercontigs(chromosome):
+    for supercontig in chromosome:
         if verbose:
-            print >>sys.stderr, " scanning %s" % supercontig._v_name
+            print >>sys.stderr, " scanning %s" % supercontig
 
         try:
             continuous = supercontig.continuous
@@ -48,9 +47,9 @@ def write_metadata(chromosome, verbose=False):
             continuous_shape = (supercontig.seq.shape[0], num_obs)
             continuous_array = fill_array(NAN, continuous_shape,
                                           dtype=CONTINUOUS_DTYPE)
-            chromosome.createCArray(supercontig, "continuous",
-                                    CONTINUOUS_ATOM, continuous_shape,
-                                    chunkshape=CONTINUOUS_CHUNK_SHAPE)
+            h5file.createCArray(supercontig.h5group, "continuous",
+                                CONTINUOUS_ATOM, continuous_shape,
+                                chunkshape=CONTINUOUS_CHUNK_SHAPE)
             supercontig.continuous[...] = continuous_array
             continue
 
@@ -94,8 +93,8 @@ def write_metadata(chromosome, verbose=False):
         indices_present = mask_rows_any_present.nonzero()[0]
 
         if not len(indices_present):
-            # remove continuous of empty supercontigs
-            continuous._f_remove()
+            # Don't split it up into groups if it's all NaNs (should compress)
+            # Keep the continuous, however, so that all supercontigs have one
             continue
 
         # make a mask of whether the difference from one index to the
@@ -121,11 +120,11 @@ def write_metadata(chromosome, verbose=False):
             starts = array([0])
             ends = array([num_rows])
 
-        supercontig_attrs = supercontig._v_attrs
+        supercontig_attrs = supercontig.attrs
         supercontig_attrs.chunk_starts = starts
         supercontig_attrs.chunk_ends = ends
 
-    chromosome_attrs = chromosome.root._v_attrs
+    chromosome_attrs = chromosome.attrs
     chromosome_attrs.mins = mins
     chromosome_attrs.maxs = maxs
     chromosome_attrs.sums = sums
@@ -133,18 +132,21 @@ def write_metadata(chromosome, verbose=False):
     chromosome_attrs.num_datapoints = num_datapoints
     chromosome_attrs.dirty = False
 
-def close_data(dirname, verbose=False):
-    dirpath = path(dirname)
-    for filepath in dirpath.walkfiles():
-        with openFile(filepath, "r+") as chromosome:
-            write_metadata(chromosome, verbose=verbose)
+def close_data(gdfilename, verbose=False):
+    with Genome(gdfilename, mode="r+") as genome:
+        for chromosome in genome:
+            if chromosome.attrs.dirty:
+                write_metadata(chromosome, verbose=verbose)
 
 def parse_options(args):
     from optparse import OptionParser
 
-    usage = "%prog [OPTION]... GENOMEDATADIR"
+    usage = "%prog [OPTION]... GENOMEDATAFILE"
     version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version)
+    description = ("Compute summary statistics for data in Genomedata archive"
+                   " and ready for accessing.")
+    parser = OptionParser(usage=usage, version=version,
+                          description=description)
 
     parser.add_option("-v", "--verbose", dest="verbose",
                       default=False, action="store_true",
@@ -159,9 +161,9 @@ def parse_options(args):
 
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
-    genomedatadir = args[0]
+    gdfilename = args[0]
     kwargs = {"verbose": options.verbose}
-    return close_data(genomedatadir, **kwargs)
+    return close_data(gdfilename, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

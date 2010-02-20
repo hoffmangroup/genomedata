@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <hdf5.h>
 
@@ -74,12 +75,19 @@ typedef struct {
 } supercontig_t;
 
 typedef struct {
-  hid_t h5file; /* handle to the file; invalid if <0 */
+  hid_t h5file; /* handle to the paerent file; invalid if <0;
+                   will be invalid if genome is single-file */
+  hid_t h5group; /* handle to the base chromosome group; invalid if <0 */
   char *chrom; /* name of chromosome */
   size_t num_supercontigs;
   supercontig_t *supercontigs;
   supercontig_t *supercontig_curr;
 } chromosome_t;
+
+typedef struct {
+  hid_t h5file; /* handle to the file; invalid if <0; will be invalid if dir */
+  char *dirname; /* name of dir if archive is a directory; invalid if NULL; */
+} genome_t;
 
 typedef struct {
   H5E_auto2_t old_func;
@@ -218,16 +226,64 @@ void close_file(hid_t h5file) {
   }
 }
 
+/** genome functions **/
+
+int is_valid_genome(genome_t * genome) {
+  return (genome->h5file >= 0) || genome->dirname;
+}
+
+void init_genome(genome_t *genome) {
+  genome->h5file = -1;
+  genome->dirname = NULL;
+}
+
+int load_genome(genome_t *genome, char *filename) {
+  err_state_t err_state;
+
+  struct stat file_stat;
+  if (stat(filename, &file_stat) == 0) {
+    if (S_ISDIR(file_stat.st_mode)) {
+      /* save the path of the genome dir */
+      genome->dirname = filename;
+    } else if (S_ISREG(file_stat.st_mode)) {
+      /* open the genome file */
+      disable_h5_errors(&err_state);
+      genome->h5file = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);
+      enable_h5_errors(&err_state);
+    }
+  }
+
+  /* if opening failed, then return -1 with h5file set bad */
+  if (!is_valid_genome(genome)) {
+    fputs("Can't open Genomedata archive\n", stderr);
+    return -1;
+  }
+
+  return 0;
+}
+
+void close_genome(genome_t *genome) {
+  if (!is_valid_genome(genome)) {
+    return;
+  }
+
+  if (genome->h5file >= 0) {
+    close_file(genome->h5file);
+  }
+}
+
+
 /** chromosome functions **/
 
 int is_valid_chromosome(chromosome_t *chromosome) {
-  return chromosome->h5file >= 0;
+  return chromosome->h5group >= 0;
 }
 
 void init_chromosome(chromosome_t *chromosome) {
   chromosome->chrom = xmalloc(sizeof(char));
   *(chromosome->chrom) = '\0';
   chromosome->h5file = -1;
+  chromosome->h5group = -1;
 }
 
 void init_supercontig_array(size_t num_supercontigs, chromosome_t *chromosome)
@@ -263,44 +319,6 @@ supercontig_t *last_supercontig(chromosome_t *chromosome) {
   return chromosome->supercontigs + chromosome->num_supercontigs - 1;
 }
 
-int open_chromosome(chromosome_t *chromosome, const char *h5filename) {
-  hid_t root = -1;
-  H5G_info_t root_info;
-
-  /* must be specified to H5Literate; allows interruption and
-     resumption, but I don't use it */
-  hsize_t idx = 0;
-
-  err_state_t err_state;
-
-  /* open the chromosome file */
-  disable_h5_errors(&err_state);
-  chromosome->h5file = H5Fopen(h5filename, H5F_ACC_RDWR, H5P_DEFAULT);
-  enable_h5_errors(&err_state);
-
-  /* if opening failed, then return -1 with h5file set bad */
-  if (!is_valid_chromosome(chromosome)) {
-    fputs(" can't open chromosome\n", stderr);
-    return -1;
-  }
-
-  /* open the root group */
-  root = H5Gopen(chromosome->h5file, "/", H5P_DEFAULT);
-  assert(root >= 0);
-
-  /* allocate supercontig metadata array */
-  assert(H5Gget_info(root, &root_info) >= 0);
-  init_supercontig_array(root_info.nlinks, chromosome);
-
-  /* populate supercontig metadata array */
-  assert(H5Literate(root, H5_INDEX_NAME, H5_ITER_INC, &idx,
-                    supercontig_visitor, chromosome) == 0);
-
-  assert(H5Gclose(root) >= 0);
-
-  return 0;
-}
-
 void close_chromosome(chromosome_t *chromosome) {
   free(chromosome->chrom);
 
@@ -310,26 +328,115 @@ void close_chromosome(chromosome_t *chromosome) {
 
   for (supercontig_t *supercontig = chromosome->supercontigs;
        supercontig <= last_supercontig(chromosome); supercontig++) {
-    assert(H5Gclose(supercontig->group) >= 0);
+    close_group(supercontig->group);
   }
   free(chromosome->supercontigs);
 
-  close_file(chromosome->h5file);
+  close_group(chromosome->h5group);
+  /* if chromosome is independent file, close the file as well */
+  if (chromosome->h5file >= 0) {
+    close_file(chromosome->h5file);
+  }
 }
+
+int seek_chromosome(char *chrom, genome_t *genome,
+                    chromosome_t *chromosome, bool verbose) {
+  hid_t h5file = -1;
+  hid_t h5group = -1;
+  H5G_info_t h5group_info;
+  char *where = NULL;
+
+  /* must be specified to H5Literate; allows interruption and
+     resumption, but I don't use it */
+  hsize_t idx = 0;
+
+  err_state_t err_state;
+
+  if (verbose) {
+    fprintf(stderr, "%s\n", chrom);
+  }
+
+  assert(is_valid_genome(genome));
+
+  /* close old chromosome and start creating the new one */
+  close_chromosome(chromosome);
+  chromosome->chrom = chrom;
+
+  if (genome->dirname) {
+    /* if genome is a directory, compute path and open h5file */
+    char *h5filename = NULL;
+    char *h5filename_suffix;
+
+    /* allocate space for h5filename, including 2 bytes for '/' and '\0' */
+    h5filename = alloca(strlen(genome->dirname) + strlen(chrom) +
+                        strlen(SUFFIX_H5) + 2);
+    assert(h5filename);
+
+    /* set h5filename */
+    h5filename_suffix = stpcpy(h5filename, genome->dirname);
+    h5filename_suffix = stpcpy(h5filename_suffix, "/");
+    h5filename_suffix = stpcpy(h5filename_suffix, chrom);
+    strcpy(h5filename_suffix, SUFFIX_H5);
+
+    /* open the chromosome file */
+    disable_h5_errors(&err_state);
+    h5file = H5Fopen(h5filename, H5F_ACC_RDWR, H5P_DEFAULT);
+    enable_h5_errors(&err_state);
+
+    /* read chromosome from the root group */
+    chromosome->h5file = h5file;
+    where = "/";
+  } else {
+    /* if genome is a file, compute internal path and open group */
+    if (genome->h5file >= 0) {
+      h5file = genome->h5file;
+      char *where_suffix;
+
+      /* allocate space for where, including 2 bytes for '/' and '\0' */
+      where = alloca(strlen(chrom) + 2);
+
+      /* read chromosome from subgroup of h5file */
+      where_suffix = stpcpy(where, "/");
+      strcpy(where_suffix, chrom);
+    }
+  }
+
+  if (h5file >= 0) {
+    h5group = H5Gopen(h5file, where, H5P_DEFAULT);
+    chromosome->h5group = h5group;
+  }
+
+  /* if opening failed, then return -1 with h5file set bad */
+  if (!is_valid_chromosome(chromosome)) {
+    fputs(" can't open chromosome\n", stderr);
+    return -1;
+  }
+
+  /* allocate supercontig metadata array */
+  assert(H5Gget_info(h5group, &h5group_info) >= 0);
+  init_supercontig_array(h5group_info.nlinks, chromosome);
+
+  /* populate supercontig metadata array */
+  assert(H5Literate(h5group, H5_INDEX_NAME, H5_ITER_INC, &idx,
+                    supercontig_visitor, chromosome) == 0);
+
+  return 0;
+}
+
 
 /** specific auxiliary functions **/
 
 /* fetch num_cols and the col for a particular trackname */
 void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
               hsize_t *col) {
-  hid_t attr, root, dataspace, datatype;
+  hid_t attr, h5group, dataspace, datatype;
   hsize_t data_size, cell_size, num_cells;
   char *attr_data;
 
-  root = H5Gopen(chromosome->h5file, "/", H5P_DEFAULT);
-  assert(root >= 0);
+  h5group = chromosome->h5group;
+  assert(h5group >= 0);
 
-  attr = H5Aopen_name(root, "tracknames");
+  attr = H5Aopen_name(h5group, "tracknames");
   assert(attr >= 0);
 
   dataspace = H5Aget_space(attr);
@@ -370,7 +477,6 @@ void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
   }
 
   assert(H5Aclose(attr) >= 0);
-  assert(H5Gclose(root) >= 0);
 }
 
 /* make existing dataset into a PyTables CArray by setting appropriate
@@ -664,33 +770,6 @@ void write_buf(chromosome_t *chromosome, char *trackname,
   }
 }
 
-int seek_chromosome(char *chrom, char *h5dirname, chromosome_t *chromosome,
-                    bool verbose) {
-  char *h5filename = NULL;
-  char *h5filename_suffix;
-
-  if (verbose) {
-    fprintf(stderr, "%s\n", chrom);
-  }
-
-  /* allocate space for h5filename, including 2 extra bytes for '/' and '\0' */
-  h5filename = alloca(strlen(h5dirname) + strlen(chrom) + strlen(SUFFIX_H5)
-                      + 2);
-  assert(h5filename);
-
-  /* set h5filename */
-  h5filename_suffix = stpcpy(h5filename, h5dirname);
-  h5filename_suffix = stpcpy(h5filename_suffix, "/");
-  h5filename_suffix = stpcpy(h5filename_suffix, chrom);
-  strcpy(h5filename_suffix, SUFFIX_H5);
-
-  close_chromosome(chromosome);
-
-  chromosome->chrom = chrom;
-
-  return open_chromosome(chromosome, h5filename);
-}
-
 void malloc_chromosome_buf(chromosome_t *chromosome,
                            float **buf_start, float **buf_end) {
   /* allocate enough space to assign values from 0 to the end of the
@@ -720,7 +799,7 @@ void malloc_chromosome_buf(chromosome_t *chromosome,
 
 /* returns true if valid/success */
 /* false otherwise */
-bool load_chromosome(char *chrom, char *h5dirname, chromosome_t *chromosome,
+bool load_chromosome(char *chrom, genome_t *genome, chromosome_t *chromosome,
                      char *trackname, float **buf_start, float **buf_end,
                      long chunk_nrows, bool verbose) {
   hsize_t num_cols, col;
@@ -732,7 +811,7 @@ bool load_chromosome(char *chrom, char *h5dirname, chromosome_t *chromosome,
   hsize_t select_start[CARDINALITY];
 
   /* seek chromosome and test validity */
-  if (seek_chromosome(chrom, h5dirname, chromosome, verbose) != 0) {
+  if (seek_chromosome(chrom, genome, chromosome, verbose) != 0) {
     return false;
   }
 
@@ -808,7 +887,7 @@ void fill_buffer(float *buf_start, float *buf_end, long start, long end,
 
 /** wigFix **/
 
-void proc_wigfix_header(char *line, char *h5dirname, chromosome_t *chromosome,
+void proc_wigfix_header(char *line, genome_t *genome, chromosome_t *chromosome,
                         float **buf_start, float **buf_end, float **fill_start,
                         long *step, long *span, bool verbose) {
   long start = -1;
@@ -827,14 +906,14 @@ void proc_wigfix_header(char *line, char *h5dirname, chromosome_t *chromosome,
     /* XXX: need to read in with load_chromosome() once that invariant
        is abandoned */
 
-    seek_chromosome(chrom, h5dirname, chromosome, verbose);
+    seek_chromosome(chrom, genome, chromosome, verbose);
     malloc_chromosome_buf(chromosome, buf_start, buf_end);
   }
 
   *fill_start = *buf_start + start;
 }
 
-void proc_wigfix(char *h5dirname, char *trackname, char **line,
+void proc_wigfix(genome_t *genome, char *trackname, char **line,
                  size_t *size_line, long chunk_nrows, bool verbose) {
   char *tailptr;
 
@@ -850,7 +929,7 @@ void proc_wigfix(char *h5dirname, char *trackname, char **line,
 
   init_chromosome(&chromosome);
 
-  proc_wigfix_header(*line, h5dirname, &chromosome,
+  proc_wigfix_header(*line, genome, &chromosome,
                      &buf_start, &buf_end, &fill_start,
                      &step, &span, verbose);
 
@@ -888,7 +967,7 @@ void proc_wigfix(char *h5dirname, char *trackname, char **line,
     } else {
       write_buf(&chromosome, trackname, buf_start, buf_end,
                 buf_filled_start, fill_start, chunk_nrows, verbose);
-      proc_wigfix_header(*line, h5dirname, &chromosome,
+      proc_wigfix_header(*line, genome, &chromosome,
                          &buf_start, &buf_end, &fill_start,
                          &step, &span, verbose);
       buf_filled_start = fill_start;
@@ -904,7 +983,7 @@ void proc_wigfix(char *h5dirname, char *trackname, char **line,
 
 /** wigVar **/
 
-void proc_wigvar_header(char *line, char *h5dirname, chromosome_t *chromosome,
+void proc_wigvar_header(char *line, genome_t *genome, chromosome_t *chromosome,
                         char *trackname, float **buf_start, float **buf_end,
                         long *span, long chunk_nrows, bool verbose) {
   char *chrom = NULL;
@@ -919,13 +998,13 @@ void proc_wigvar_header(char *line, char *h5dirname, chromosome_t *chromosome,
      than an if */
   if (strcmp(chrom, chromosome->chrom)) {
     /* only reseek and malloc if it is different */
-    load_chromosome(chrom, h5dirname, chromosome, trackname,
+    load_chromosome(chrom, genome, chromosome, trackname,
                     buf_start, buf_end, chunk_nrows, verbose);
   }
 }
 
 
-void proc_wigvar(char *h5dirname, char *trackname, char **line,
+void proc_wigvar(genome_t *genome, char *trackname, char **line,
                  size_t *size_line, long chunk_nrows, bool verbose) {
   char *tailptr;
 
@@ -940,7 +1019,7 @@ void proc_wigvar(char *h5dirname, char *trackname, char **line,
 
   init_chromosome(&chromosome);
 
-  proc_wigvar_header(*line, h5dirname, &chromosome, trackname,
+  proc_wigvar_header(*line, genome, &chromosome, trackname,
                      &buf_start, &buf_end, &span, chunk_nrows, verbose);
 
   while (getline(line, size_line, stdin) >= 0) {
@@ -970,7 +1049,7 @@ void proc_wigvar(char *h5dirname, char *trackname, char **line,
     } else {
       write_buf(&chromosome, trackname, buf_start, buf_end,
                 buf_start, buf_end, chunk_nrows, verbose);
-      proc_wigvar_header(*line, h5dirname, &chromosome, trackname,
+      proc_wigvar_header(*line, genome, &chromosome, trackname,
                          &buf_start, &buf_end, &span, chunk_nrows, verbose);
     }
   }
@@ -987,7 +1066,7 @@ void proc_wigvar(char *h5dirname, char *trackname, char **line,
 /*
   The only difference with bedGraph is that the first line is not passed in
  */
-void proc_bed(char *h5dirname, char *trackname, char **line, size_t *size_line,
+void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
               long chunk_nrows, bool verbose)
 {
   size_t chrom_len;
@@ -1026,7 +1105,7 @@ void proc_bed(char *h5dirname, char *trackname, char **line, size_t *size_line,
                 buf_start, buf_end, chunk_nrows, verbose);
 
       /* strdup(chrom) will be freed by close_chromosome */
-      load_chromosome(strdup(chrom), h5dirname, &chromosome, trackname,
+      load_chromosome(strdup(chrom), genome, &chromosome, trackname,
                       &buf_start, &buf_end, chunk_nrows, verbose);
     }
 
@@ -1059,12 +1138,14 @@ void proc_bed(char *h5dirname, char *trackname, char **line, size_t *size_line,
 
 /** programmatic interface **/
 
-void load_data(char *h5dirname, char *trackname, long chunk_nrows,
+void load_data(char *gdfilename, char *trackname, long chunk_nrows,
                bool verbose) {
   char *line = NULL;
   size_t size_line = 0;
 
   file_format fmt;
+
+  genome_t genome;
 
   /* XXXopt: would be faster to just read a big block and do repeated
      strtof rather than using getline */
@@ -1076,27 +1157,31 @@ void load_data(char *h5dirname, char *trackname, long chunk_nrows,
 
   fmt = sniff_header_line(line);
 
+  init_genome(&genome);
+  load_genome(&genome, gdfilename);
+
   /* XXX: allow mixing and matching later on, if that is what UCSC
      intends (check with them first). for now, once you pick a format,
      you are stuck */
   switch (fmt) {
   case FMT_WIGFIX:
-    proc_wigfix(h5dirname, trackname, &line, &size_line, chunk_nrows, verbose);
+    proc_wigfix(&genome, trackname, &line, &size_line, chunk_nrows, verbose);
     break;
   case FMT_WIGVAR:
-    proc_wigvar(h5dirname, trackname, &line, &size_line, chunk_nrows, verbose);
+    proc_wigvar(&genome, trackname, &line, &size_line, chunk_nrows, verbose);
     break;
   case FMT_BEDGRAPH:
     /* don't need to process line because the first line is unimportant */
     *line = '\0';
   case FMT_BED:
-    proc_bed(h5dirname, trackname, &line, &size_line, chunk_nrows, verbose);
+    proc_bed(&genome, trackname, &line, &size_line, chunk_nrows, verbose);
     break;
   default:
     fatal("only fixedStep, variableStep, bedGraph, BED formats supported");
     break;
   }
 
+  close_genome(&genome);
   /* free heap variables */
   free(line);
 }
@@ -1108,7 +1193,7 @@ const char *argp_program_bug_address = "Michael Hoffman <mmh1@washington.edu>";
 
 static char doc[] = "Loads data into genomedata format \
 \nTakes track data in on stdin";
-static char args_doc[] = "GENOMEDATADIR TRACKNAME";
+static char args_doc[] = "GENOMEDATAFILE TRACKNAME";
 static struct argp_option options[] = {
   {"chunk-size", 'c', "NROWS", 0, "Chunk hdf5 data into blocks of NROWS. \
 A higher value increases compression but slows random access. \
@@ -1166,7 +1251,7 @@ static struct argp argp = {options, parse_opt, args_doc, doc};
 
 int main(int argc, char **argv) {
   struct arguments arguments;
-  char *h5dirname, *trackname;
+  char *gdfilename, *trackname;
   long chunk_nrows;
   bool verbose;
 
@@ -1176,12 +1261,12 @@ int main(int argc, char **argv) {
 
   assert(argp_parse(&argp, argc, argv, 0, 0, &arguments) == 0);
 
-  h5dirname = arguments.args[0];
+  gdfilename = arguments.args[0];
   trackname = arguments.args[1];
   chunk_nrows = arguments.chunk_nrows;
   verbose = arguments.verbose;
 
-  load_data(h5dirname, trackname, chunk_nrows, verbose);
+  load_data(gdfilename, trackname, chunk_nrows, verbose);
 
   return EXIT_SUCCESS;
 }

@@ -2,7 +2,7 @@
 from __future__ import division, with_statement
 
 """
-report: report some summary statistics on a genomedata store that
+report: report some summary statistics on a genomedata archive that
 already has save_metadata() run
 """
 
@@ -15,10 +15,10 @@ import sys
 from genomedata import Genome
 from tabdelim import ListWriter
 
-def report(genomedatadirname):
+def report(genomedata):
     writer = ListWriter()
 
-    with Genome(genomedatadirname) as genome:
+    with Genome(genomedata) as genome:
         writer.writerow(["measurement"] + genome.tracknames_continuous)
         writer.writerow(["mean"] + list(genome.means))
         writer.writerow(["var"] + list(genome.vars))

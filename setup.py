@@ -39,8 +39,9 @@ genomedata-load-seq = genomedata._load_seq:main
 genomedata-open-data = genomedata._open_data:main
 genomedata-close-data = genomedata._close_data:main
 genomedata-report = genomedata._report:main
+genomedata-erase-data = genomedata._erase_data:main
 """
-#genomedata-erase-track = genomedata._erase_track:main
+
 
 install_requires = ["numpy", "path", "tables>2.0.4", "textinput"]
 
@@ -51,7 +52,7 @@ class DirSet(object):
 
     add_dir: add the given directory to the set
     add_env: add the given ':'-separated environment variable to the set
-    
+
     """
     def __init__(self):
         self._set = set()

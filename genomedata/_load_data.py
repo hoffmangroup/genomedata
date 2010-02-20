@@ -11,7 +11,7 @@ import sys
 
 from subprocess import PIPE, Popen
 
-from ._util import EXT_GZ
+from ._util import SUFFIX_GZ
 
 DEFAULT_CHUNK_SIZE = 10000
 LOAD_DATA_CMD = "genomedata-load-data"
@@ -20,11 +20,11 @@ def die(msg="Unexpected error!"):
     print >>sys.stderr, msg
     sys.exit(1)
 
-def load_data(genomedatadir, trackname, datafile,
+def load_data(gdfilename, trackname, datafile,
               chunk_size=None, verbose=False):
-    """Loads data from datafile into specific track of Genomedata collection
+    """Loads data from datafile into specific track of Genomedata archive
 
-    genomedatadir: genomedata collection path
+    gdfilename: genomedata archive path
     trackname: name of track (as specified in open_data) to load data for
     datafile: file to read data from
     chunk_size: number of rows in each hdf5 data chunk
@@ -33,7 +33,7 @@ def load_data(genomedatadir, trackname, datafile,
     if verbose:
         print ">> Loading data for track: %s" % trackname
 
-    if datafile.endswith(EXT_GZ):
+    if datafile.endswith(SUFFIX_GZ):
         read_cmd = ["zcat"]
     else:
         read_cmd = ["cat"]
@@ -44,7 +44,7 @@ def load_data(genomedatadir, trackname, datafile,
         load_cmd.append("-v")
     if chunk_size:
         load_cmd.append("--chunk-size=%d" % chunk_size)
-    load_cmd.extend([genomedatadir, trackname])
+    load_cmd.extend([gdfilename, trackname])
 
     # Pipe read command into load command
     reader = Popen(read_cmd, stdout=PIPE)
@@ -56,10 +56,10 @@ def load_data(genomedatadir, trackname, datafile,
 
 def parse_args(args):
     from optparse import OptionParser
-    usage = "%prog [OPTION]... GENOMEDATADIR TRACKNAME DATAFILE"
+    usage = "%prog [OPTION]... GENOMEDATAFILE TRACKNAME DATAFILE"
     version = "%%prog %s" %__version__
     description = ("Load data from DATAFILE into the specified TRACKNAME"
-                   " of the Genomedata collection")
+                   " of the Genomedata archive")
     parser = OptionParser(usage=usage, version=version,
                           description=description)
 

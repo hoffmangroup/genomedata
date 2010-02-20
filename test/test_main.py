@@ -2,7 +2,7 @@
 from __future__ import division, with_statement
 
 """
-test.py: DESCRIPTION
+DESCRIPTION
 """
 
 __version__ = "$Revision: $"
@@ -23,7 +23,7 @@ from genomedata import Genome
 from genomedata.load_genomedata import load_genomedata
 from genomedata._load_data import load_data
 from genomedata._close_data import close_data
-from genomedata._erase_track import erase_track
+from genomedata._erase_data import erase_data
 
 test_filename = lambda filename: os.path.join("data", filename)
 
@@ -118,28 +118,28 @@ class TestGenomedata(unittest.TestCase):
                 break
             self.assertArraysEqual(supercontig.continuous[0, 3], NAN)
 
-    def test_repr(self):
+    def test_repr_str(self):
         genome = Genome(self.genomedatadir, mode="r")
         self.assertEqual(repr(genome), "Genome('%s', **{'mode': 'r'})" %
                          self.genomedatadir)
         chr = genome["chr1"]
         self.assertEqual(repr(chr),
-                         "Chromosome('%s/chr1.genomedata', **{'mode': 'r'})" %
+                         "<Chromosome 'chr1', file='%s/chr1.genomedata'>" %
                          self.genomedatadir)
+        self.assertEqual(str(chr), "chr1")
         genome.close()
 
     def test_no_context(self):
         genome = Genome(self.genomedatadir)
-        self.assertEqual(repr(genome), "Genome('%s')" % self.genomedatadir)
         chr1 = genome["chr1"]
         tracknames = genome.tracknames_continuous
         data = chr1[100:1000]  # Used to segfault
         chr2 = genome["chrY"]
         chr2.close()  # Make sure manual close doesn't break it
-        self.assertTrue(chr1._open)
-        self.assertFalse(chr2._open)
+        self.assertTrue(chr1.isopen)
+        self.assertFalse(chr2.isopen)
         genome.close()
-        self.assertFalse(chr1._open)
+        self.assertFalse(chr1.isopen)
         self.assertRaises(Exception, iter(chr1).next)
 
     def test_open_chromosomes(self):
@@ -155,20 +155,19 @@ class TestGenomedata(unittest.TestCase):
 
     def test_delete_tracks(self):
         # Test ability to delete a track
-
         trackname = "primate"
         old_entry = (290, -2.327)
         new_entry = (290, NAN)
 
         # Test value before deleting track
-        with Genome(self.genomedatadir) as genome:
+        warnings.simplefilter("ignore")
+        with Genome(self.genomedatadir, "r+") as genome:
             chromosome = genome["chr1"]
             self.assertArraysEqual(chromosome[old_entry[0], trackname],
                                    old_entry[1])
+            chromosome._erase_data(trackname)
 
-        # Remove track
-        erase_track(self.genomedatadir, trackname, verbose=self.verbose)
-
+        warnings.resetwarnings()
         # Re-close data
         close_data(self.genomedatadir, verbose=self.verbose)
 
@@ -193,7 +192,7 @@ class TestGenomedata(unittest.TestCase):
                                    old_entry[1])
 
         # Remove track
-        erase_track(self.genomedatadir, old_trackname,
+        erase_data(self.genomedatadir, old_trackname,
                       verbose=self.verbose)
 
         # Now replace it with the data from a different track
