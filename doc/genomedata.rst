@@ -1,6 +1,6 @@
-========================
+==================================
 Genomedata |version| documentation
-========================
+==================================
 :Website: http://noble.gs.washington.edu/proj/genomedata
 :Author: Michael M. Hoffman <mmh1 at washington dot edu>
 :Organization: University of Washington
@@ -32,6 +32,10 @@ simple as downloading and running this script! For instance::
 .. note:: 
   The following are prerequisites:
 
+  - Linux
+      Linux is the only system currently supported. 
+      We would love to add support for other systems in the future and
+      will gladly accept any contributions toward this end.
   - Python 2.X | X >= 5
   - Zlib
 
@@ -49,10 +53,12 @@ genomics data in a format which is both space-efficient and allows
 efficient random-access. Genomedata archives are currently write-once, 
 although we are working to fix this.
 
-Under the surface, Genomedata is implemented as a collection of HDF5 files,
+Under the surface, Genomedata is implemented_ as one or more HDF5 files,
 but Genomedata provides a transparent interface to interact with your
 underlying data without having to worry about the mess of repeatedly parsing
 large data files or having to keep them in memory for random access.
+
+.. _implemented: :ref:`Implementation`
 
 The Genomedata hierarchy:
 
@@ -90,7 +96,7 @@ fine-grained control is required. The commands and required ordering are:
 #. :ref:`genomedata-load-data`
 #. :ref:`genomedata-close-data`
 
-Although Genomedata collections are currently write-once, this 
+Although Genomedata archives are currently write-once, this 
 restriction only applies on the per-chromosome basis. Thus, the above
 workflow can be repeated to store sequence and data for new chromosomes,
 but old chromosomes cannot be modified.
@@ -99,13 +105,46 @@ but old chromosomes cannot be modified.
           :ref:`genomedata-close-data` may be used to
           transparently compress the data.
 
+Implementation
+==============
+Genomedata archives are implemented as one or more HDF5 files. In version 1.1,
+we added the option to create an archive as a single file rather
+than a directory of files. The :ref:`API <python-api>` handles both single-file
+and directory archives transparently, but the implementation options
+exist for several performance reasons.
+
+Use a **directory** with few chromosomes/scaffolds:
+  * Parallel load/access
+  * Smaller file sizes
+
+Use a **single file** with many chromosomes/scaffolds:
+  * More efficient access with many chromosomes/scaffolds
+  * Easier archive distribution
+
+Implementing the archive as a directory makes it easier to 
+parallelize access to the data. In particular, it makes it easy to 
+create the archives in parallel with one chromosome on each 
+machine. It also reduces the likelihood of running into the 
+2 GB file limit applicable to older applications and older versions 
+of 32-bit UNIX. We are currently using an 81-track Genomedata 
+archive for our research which has a total size of 18 GB, but the 
+largest single file (chr1) is only 1.6 GB.
+
+A directory-based Genomedata archive is not ideal for all circumstances,
+however, such as when working with genomes with many chromosomes, contigs,
+or scaffolds. In these situations, a single file implementation would be much
+more efficient. Additionally, having the archive as a single file allows 
+the archive to be distributed much more easily (without tar/zip/etc).
+
+.. note:: The default behavior is to implement the Genomedata archive as a
+          directory if there are fewer than 100 sequences being loaded and as
+          a single file otherwise.
 
 Genomedata usage
 ================
 
 Python interface
 ~~~~~~~~~~~~~~~~
-
 The data in Genomedata is accessed through the hierarchy described in
 :ref:`genomedata-overview`. A full :ref:`Python API <python-api>` is 
 also available. To appreciate the full benefit of Genomedata,
@@ -125,7 +164,6 @@ it is most easily used as a contextmanager::
 
 Basic usage
 -----------
-
 Genomedata is designed to make it easy to get to the data you want.
 Here are a few examples:
 
