@@ -1,18 +1,20 @@
 #!/usr/bin/env perl
 
+# requires the Inline::Python module from CPAN
+# and genomedata installed for Python
 use Inline Python => <<'END';
 
 from genomedata import Genome
 
 def open_genomedata(filename):
-    # fake context manager
+    # hacky fake context manager
     return Genome(filename).__enter__()
 
 def close_genomedata(genome):
-    return genome.__exit__()
+    return genome.__exit__(None, None, None)
 
 def get_genomedata(genome, chrom, index, trackname):
-    return genome[chrom][index, trackname]
+    return float(genome[chrom][index, trackname])
 
 END
 
