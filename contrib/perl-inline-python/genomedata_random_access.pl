@@ -7,7 +7,7 @@ use Inline Python => <<'END';
 from genomedata import Genome
 
 def open_genomedata(filename):
-    # fake context manager
+    # simulate a context manager
     return Genome(filename).__enter__()
 
 def close_genomedata(genome):
