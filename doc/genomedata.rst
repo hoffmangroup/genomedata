@@ -354,7 +354,6 @@ Closes the specified Genomedata object.
 
 .. _python-api:
 
-
 Python API
 ~~~~~~~~~~
 

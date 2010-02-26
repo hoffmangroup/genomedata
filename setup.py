@@ -43,7 +43,7 @@ genomedata-erase-data = genomedata._erase_data:main
 """
 
 
-install_requires = ["numpy", "path", "tables>2.0.4", "textinput"]
+install_requires = ["numpy", "path", "tables>2.0.4,<2.2a0", "textinput"]
 
 arch = "_".join([system(), processor()])
 

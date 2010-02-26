@@ -78,12 +78,24 @@ def read_seq(chromosome, seq):
 def load_seq(gdfilename, filenames, verbose=False, mode=None):
     gdpath = path(gdfilename)
 
-    num_seq = len(filenames)
     if mode is None:
+        # Run through all files once and count the number of sequences
+        num_seq = 0
+        for filename in filenames:
+            with maybe_gzip_open(filename) as infile:
+                for line in infile:
+                    if line.startswith(">"):
+                        num_seq += 1
+
         if num_seq < FILE_MODE_CHROMS:
             mode = "dir"
         else:
             mode = "file"
+
+        if verbose:
+            print >>sys.stderr, ("Implementation unspecified. Found %d"
+                                 " chromosomes/scaffolds, so using: %s"
+                                 % (num_seq, mode))
 
     if mode == "dir":
         if gdpath.exists():

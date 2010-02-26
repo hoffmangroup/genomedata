@@ -261,6 +261,24 @@ class Genome(object):
         for chromosome in self:
             chromosome._erase_data(trackname)
 
+    def _set_tracknames_continuous(self, tracknames):
+        if self._isfile:
+            attrs = self._h5file.root._v_attrs
+            if "tracknames" in attrs:
+                raise ValueError("%s already has named tracks" %
+                                 self.filename)
+            attrs.dirty = True
+            attrs.tracknames = array(tracknames)
+        else:
+            for chromosome in self:
+                attrs = chromosome.attrs
+                if "tracknames" in attrs:
+                    raise ValueError("%s already has named tracks" %
+                                     self.filename)
+
+                attrs.dirty = True
+                attrs.tracknames = array(tracknames)
+
     @property
     def isopen(self):
         """Return a boolean indicating if the Genome is still open"""
@@ -269,14 +287,20 @@ class Genome(object):
     @property
     def tracknames_continuous(self):
         """Return a list of the names of all data tracks stored."""
-
-        # check that all chromosomes have the same tracknames_continuous
-        res = None
-        for chromosome in self:
-            if res is None:
-                res = chromosome.tracknames_continuous
-            else:
-                assert res == chromosome.tracknames_continuous
+        assert self.isopen
+        if self._isfile:
+            # Tracknames are stored at the root of each file, so we can
+            # access them directly in this case
+            attrs = self._h5file.root._v_attrs
+            return attrs.tracknames.tolist()
+        else:
+            # check that all chromosomes have the same tracknames_continuous
+            res = None
+            for chromosome in self:
+                if res is None:
+                    res = chromosome.tracknames_continuous
+                else:
+                    assert res == chromosome.tracknames_continuous
 
         return res
 
@@ -709,7 +733,8 @@ class Chromosome(object):
     @property
     def tracknames_continuous(self):
         """Return a list of the data track names in this Chromosome."""
-        return self.attrs.tracknames.tolist()
+        assert self.isopen
+        return self.h5file.root._v_attrs.tracknames.tolist()
 
     @property
     def num_tracks_continuous(self):

@@ -19,13 +19,7 @@ from . import Genome
 def open_data(gdfilename, tracknames, verbose=False):
     warnings.simplefilter("ignore")
     with Genome(gdfilename, "r+") as genome:
-        for chromosome in genome:
-            attrs = chromosome.attrs
-            if "tracknames" in attrs:
-                raise ValueError("%s already has named tracks" % gdfilename)
-
-            attrs.dirty = True
-            attrs.tracknames = array(tracknames)
+        genome._set_tracknames_continuous(tracknames)
 
     warnings.resetwarnings()
 
