@@ -2,7 +2,11 @@
 
 """genomedata: tools for accessing large amounts of genomic data
 
-LONG_DESCRIPTION
+Genomedata is a format for efficient storage of multiple tracks of
+numeric data anchored to a genome. The format allows fast random
+access to hundreds of gigabytes of data, while retaining a small disk
+space footprint. We have also developed utilities to load data into
+this format.
 """
 
 __version__ = "1.0.2"
