@@ -8,7 +8,7 @@ def open_genomedata(filename):
     # fake context manager
     return Genome(filename).__enter__()
 
-def close_genomedata(genome)
+def close_genomedata(genome):
     return genome.__exit__()
 
 def get_genomedata(genome, chrom, index, trackname):
