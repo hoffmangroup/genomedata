@@ -19,7 +19,7 @@ END
 my $genome = open_genomedata($ARGV[0]);
 shift();
 
-while (<>) {
+while (<STDIN>) {
     chomp();
     my ($chrom, $index) = split();
     foreach my $trackname (@ARGV) {
