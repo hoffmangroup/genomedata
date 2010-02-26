@@ -22,7 +22,7 @@ shift();
 while (<>) {
     chomp();
     my ($chrom, $index) = split();
-    foreach (my $trackname in @ARGV) {
+    foreach my $trackname (@ARGV) {
         print(get_genomedata($genome, $chrom, $index, $trackname), " ");
     }
     print("\n");
