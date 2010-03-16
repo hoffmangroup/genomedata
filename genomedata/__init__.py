@@ -219,17 +219,20 @@ class Genome(object):
 
         """
         assert self.isopen
-        self._isopen = False
+
+        # Whether a single file or a directory, close all the chromosomes
+        # so they know they shouldn't be read. Do this before closing
+        # Genome._h5file in case the chromosomes need access to it in closing.
+        for name, chromosome in self.open_chromosomes.iteritems():
+            # Only close those not closed manually by the user
+            if chromosome.isopen:
+                chromosome.close()
+
         if self._isfile:
             self._h5file.close()
-        else:
-            for name, chromosome in self.open_chromosomes.iteritems():
-                # Only close those not closed manually by the user
-                if chromosome.isopen:
-                    chromosome.close()
 
         self.open_chromosomes = {}
-
+        self._isopen = False
 
     def __repr__(self):
         items = ["'%s'" % self.filename]

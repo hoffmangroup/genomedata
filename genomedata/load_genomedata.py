@@ -12,7 +12,7 @@ __version__ = "$Revision$"
 import os
 import sys
 
-from os import extsep
+from os import close, extsep
 from path import path
 from subprocess import call
 from tempfile import mkdtemp, mkstemp
@@ -54,7 +54,10 @@ def load_genomedata(gdfilename, tracks=None, seqfiles=None, mode=None,
         elif mode == "file":
             tempdatafile, tempdatafilename = mkstemp(suffix=SUFFIX)
             tempdatapath = path(tempdatafilename)
-            tempdatafile.close()
+            # Close the file _descriptor_ (not a file object)
+            close(tempdatafile)
+            # Delete the file to allow load_seq to create it
+            tempdatapath.remove()
             isdir = False
         else:
             raise ValueError("Unknown mode: %s" % mode)
@@ -117,18 +120,23 @@ def load_genomedata(gdfilename, tracks=None, seqfiles=None, mode=None,
 
             for tempfilepath in tempdatapath.files():
                 # Repack file to output dir
-                if verbose:
-                    print ">> Repacking: %s into genomedata" % tempfilepath
-
                 tempfilename = tempfilepath.name
                 outfilepath = gdpath.joinpath(tempfilename)
+                if verbose:
+                    print ">> Repacking: %s -> %s" % \
+                        (tempfilepath, outfilepath)
+
                 cmd_args = ["h5repack", "-f", "GZIP=1",
                             tempfilepath, outfilepath]
                 retcode = call(cmd_args)
                 if retcode != 0:
                     die("HDF5 repacking failed!")
         else:  # Move the .genomedata file over
-            tempdatapath.copy(gdpath)
+            if verbose:
+                print >>sys.stderr, ">> Moving %s -> %s" % \
+                    (tempdatapath, gdpath)
+
+            tempdatapath.copyfile(gdpath)
     except:
         print >>sys.stderr, "Error creating genomedata!"
         raise
@@ -139,7 +147,11 @@ def load_genomedata(gdfilename, tracks=None, seqfiles=None, mode=None,
                 print ">> Cleaning up...",
 
             sys.stdout.flush()
-            tempdatapath.rmtree()
+            if tempdatapath.isfile():
+                tempdatapath.remove()
+            else:
+                tempdatapath.rmtree()
+
             if verbose:
                 print "done"
         except Exception, e:

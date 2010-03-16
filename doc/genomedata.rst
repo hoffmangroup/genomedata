@@ -77,39 +77,10 @@ Why have :class:`Supercontigs <Supercontig>`?
   a convenient chunk since they can usually fit entirely in memory.
 
 
-The workflow
-============
-A Genomedata archive contains sequence and may also contain
-numerical data associated with that sequence. You can easily load
-sequence and numerical data into a Genomedata archive with the
-:ref:`genomedata-load` command (see command details additional details)::
-
-    genomedata-load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATADIR
-
-
-This command is a user-friendly shortcut to the typical workflow.
-The underlying commands are still installed and may be used if more
-fine-grained control is required. The commands and required ordering are:
-
-1. :ref:`genomedata-load-seq`
-#. :ref:`genomedata-open-data`
-#. :ref:`genomedata-load-data`
-#. :ref:`genomedata-close-data`
-
-Although Genomedata archives are currently write-once, this 
-restriction only applies on the per-chromosome basis. Thus, the above
-workflow can be repeated to store sequence and data for new chromosomes,
-but old chromosomes cannot be modified.
-
-.. note:: A call to :program:`h5repack` after
-          :ref:`genomedata-close-data` may be used to
-          transparently compress the data.
-
 Implementation
 ==============
-Genomedata archives are implemented as one or more HDF5 files. In version 1.1,
-we added the option to create an archive as a single file rather
-than a directory of files. The :ref:`API <python-api>` handles both single-file
+Genomedata archives are implemented as one or more HDF5 files. 
+The :ref:`API <python-api>` handles both single-file
 and directory archives transparently, but the implementation options
 exist for several performance reasons.
 
@@ -140,6 +111,103 @@ the archive to be distributed much more easily (without tar/zip/etc).
           directory if there are fewer than 100 sequences being loaded and as
           a single file otherwise.
 
+.. versionadded:: 1.1
+   Single-file-based Genomedata archives
+
+Creation
+========
+A Genomedata archive contains sequence and may also contain
+numerical data associated with that sequence. You can easily load
+sequence and numerical data into a Genomedata archive with the
+:ref:`genomedata-load` command (see command details additional details)::
+
+    genomedata-load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATAFILE
+
+
+This command is a user-friendly shortcut to the typical workflow.
+The underlying commands are still installed and may be used if more
+fine-grained control is required (for instance, parallel data loading). 
+The commands and required ordering are:
+
+1. :ref:`genomedata-load-seq`
+#. :ref:`genomedata-open-data`
+#. :ref:`genomedata-load-data`
+#. :ref:`genomedata-close-data`
+
+Entire data tracks can be replaced with the following pipeline:
+
+1. :ref:`genomedata-erase-data`
+#. :ref:`genomedata-load-data`
+#. :ref:`genomedata-close-data`
+
+.. versionadded:: 1.1
+   The ability to replace data tracks.
+
+.. note:: A call to :program:`h5repack` after
+          :ref:`genomedata-close-data` may be used to
+          transparently compress the data.
+
+.. _genomedata-load-example:
+
+Example
+~~~~~~~
+The following is a brief example for creating a Genomedata archive from
+sequence and signal files. 
+
+Given the following two sequence files:
+
+1. chr1.fa::
+
+     >chr1
+     taaccctaaccctaaccctaaccctaaccctaaccctaaccctaacccta
+     accctaaccctaaccctaaccctaaccct
+
+#. chrY.fa.gz::
+
+     >chrY
+     ctaaccctaaccctaaccctaaccctaaccctaaccctCTGaaagtggac
+
+and the following two signal files:
+
+1. signal_low.wigFix::
+  
+     fixedStep chrom=chr1 start=5 step=1
+     0.372
+     -2.540
+     0.371
+     -2.611
+     0.372
+     -2.320
+
+#. signal_high.bed.gz::
+
+     chrY    0       12      4.67
+     chrY    20      23      9.24
+     chr1    1       3       2.71
+     chr1    3       6       1.61
+     chr1    6       24      3.14
+
+
+A Genomedata archive (``genomedata.test``) could then be created with the 
+following command::
+
+    genomedata-load -s chr1.fa -s chrY.fa.gz -t low=signal_low.wigFix -t high=signal_high.bed.gz genomedata.test
+
+or the following pipeline::
+
+   genomedata-load-seq genomedata.test chr1.fa chrY.fa.gz
+   genomedata-open-data genomedata.test low high
+   cat signal_low.wigFix | genomedata-load-data genomedata.test low
+   zcat signal_high.bed.gz | genomedata-load-data genomedata.test high
+   genomedata-close-data genomedata.test
+
+.. note:: chr1.fa and chrY.fa.gz could als be combined into a single 
+          sequence file with two sequences
+
+.. warning::
+   It is important that the sequence names (`chrY`, `chr1`) in the signal files 
+   match the sequence identifiers in the sequence files exactly.
+
 Genomedata usage
 ================
 
@@ -152,8 +220,8 @@ it is most easily used as a contextmanager::
 
     from genomedata import Genome
     [...]
-    genomedatadir = "/path/to/genomedata"
-    with Genome(genomedatadir) as genome:
+    gdfilename = "/path/to/genomedata/archive"
+    with Genome(gdfilename) as genome:
         [...]
 
 .. note:: 
@@ -201,7 +269,6 @@ array([ 47.], dtype=float32)
           >>> col_index = chromosome.index_continuous("sample_track")
           >>> data = chromosome[0:5, col_index:col_index+1]
 
-
 Command-line interface
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -215,19 +282,17 @@ genomedata-load
 
 Usage information follows, but in summary, this script takes as input:
 
-- sequence files in |sequence file formats| format
+- sequence files in |sequence file formats| format, where the sequence
+  identifiers are the names of the chromosomes/scaffolds to create.
 - trackname, datafile pairs (specified as ``trackname=datafile``), where:
     * trackname is a ``string`` identifier (e.g. ``broad.h3k27me3``) 
-    * datafile contains one column of data for this data track 
+    * datafile contains signal data for this data track 
       in one of the following formats: |signal file formats|
+    * the chromosomes/scaffolds referred to in the datafile MUST be identical
+      to those found in the sequence files
 - the name of the Genomedata archive to create
 
-For example, let's say you have sequence data for chrX (``chrX.fa``) and
-chrY (``chrY.fa.gz``), as well as two signal tracks: high (``signal.high.wig``)
-and low (``signal.low.bed.gz``). You could construct a Genomedata archive
-named ``mygenomedata`` in the current directory with the following command::
-
-    genomedata-load -s chrX.fa -s chrY.fa.gz -t high=signal.high.wig -t low=signal.low.bed.gz mygenomedata
+See the :ref:`full example <genomedata-load-example>` for more details.
 
 .. |signal file formats| replace:: |signal data formats|, or a gzip'd 
                          form of any of the preceding
@@ -238,7 +303,7 @@ named ``mygenomedata`` in the current directory with the following command::
 
 Command-line usage information::
 
- Usage: genomedata-load [OPTIONS] GENOMEDATADIR
+ Usage: genomedata-load [OPTIONS] GENOMEDATAFILE
 
  --track and --sequence may be repeated to specify multiple trackname=trackfile
  pairings and sequence files, respectively
@@ -265,15 +330,19 @@ cluster.
 genomedata-load-seq
 -------------------
 
-This command adds the provided sequence files to the specified genomedatadir,
-creating it if it does not already exist. Sequence files should be in
+This command adds the provided sequence files to the specified Genomedata,
+archive creating it if it does not already exist. Sequence files should be in
 |sequence file formats| format. Gaps of >= 100,000 base pairs 
 (specified as :option:`gap-length`) in the reference sequence,
-are used to divide the sequence into supercontigs.
+are used to divide the sequence into supercontigs. The FASTA sequence 
+identifier will be used as the name for the chromosomes/scaffolds 
+created within the Genomedata archive and must be consistent between these
+sequence files and the data loaded later with :ref:`genomedata-load-data`.
+See :ref:`this example <genomedata-load-example>` for details.
 
 ::
 
- Usage: genomedata-load-seq [OPTION]... GENOMEDATADIR SEQFILE...
+ Usage: genomedata-load-seq [OPTION]... GENOMEDATAFILE SEQFILE...
  
  Options:
    -g, --gap-length  XXX: Implement this.
@@ -286,12 +355,12 @@ are used to divide the sequence into supercontigs.
 genomedata-open-data
 --------------------
 
-This command opens the specified tracknames in the Genomedata object,
+This command opens the specified tracknames in the Genomedata archive,
 allowing data for those tracks to be added with :ref:`genomedata-load-data`.
 
 ::
 
- Usage: genomedata-open-data [OPTION]... GENOMEDATADIR TRACKNAME...
+ Usage: genomedata-open-data [OPTION]... GENOMEDATAFILE TRACKNAME...
  
  Options:
    --version   show program's version number and exit
@@ -305,12 +374,14 @@ genomedata-load-data
 
 This command loads data from stdin into Genomedata under the given trackname.
 The input data must be in one of these supported datatypes: 
-|signal data formats|.
-A :option:`chunk-size` can be specified to control the size of hdf5 chunks
-(the smallest data read size, like a page size). Larger values of 
-:option:`chunk-size` can increase the level of compression, but they also
-increase the minimum amount of data that must be read to access a single
-value.
+|signal data formats|. The chromosome/scaffold references in these files must
+match the sequence identifiers in the sequence files loaded with 
+:ref:`genomedata-load-seq`. See :ref:`this example <genomedata-load-example>` 
+for details. A :option:`chunk-size` can be specified to control the 
+size of hdf5 chunks (the smallest data read size, like a page size). 
+Larger values of :option:`chunk-size` can increase the level 
+of compression, but they also increase the minimum amount of data 
+that must be read to access a single value.
 
 .. |signal data formats| replace:: WIG_, BED_, bedGraph_
 
@@ -320,7 +391,7 @@ value.
 
 ::
 
- Usage: genomedata-load-data [OPTION...] GENOMEDATADIR TRACKNAME
+ Usage: genomedata-load-data [OPTION...] GENOMEDATAFILE TRACKNAME
  Loads data into Genomedata format
  Takes track data in on stdin
  
@@ -341,16 +412,40 @@ value.
 genomedata-close-data
 ---------------------
 
-Closes the specified Genomedata object.
+Closes the specified Genomedata arhive.
 
 ::
 
- Usage: genomedata-close-data [OPTION]... GENOMEDATADIR
+ Usage: genomedata-close-data [OPTION]... GENOMEDATAFILE
  
  Options:
    --version   show program's version number and exit
    -h, --help  show this help message and exit
 
+
+.. _genomedata-erase-data:
+
+genomedata-erase-data
+---------------------
+
+Erases all data associated with the specified tracks, allowing the data to
+then be replaced. The pipeline for replacing a data track is:
+
+1. :ref:`genomedata-erase-data`
+#. :ref:`genomedata-load-data`
+#. :ref:`genomedata-close-data`
+
+::
+
+ Usage: genomedata-erase-data [OPTION]... GENOMEDATAFILE TRACKNAME...
+ 
+ Erase the specified tracks from the Genomedata archive in such a way that
+ the track can be replaced (via genomedata-load-data).
+ 
+ Options:
+   --version      show program's version number and exit
+   -h, --help     show this help message and exit
+   -v, --verbose  Print status updates and diagnostic messages
 
 .. _python-api:
 

@@ -1,5 +1,5 @@
 ============
- genomedata
+ Genomedata
 ============
 by Michael Hoffman <mmh1@washington.edu>
 
@@ -10,28 +10,8 @@ HDF5_ container.
 
 .. _HDF5: http://www.hdfgroup.org/
 
-Prerequisites
-=============
-- Python_ 2.5.1
-- HDF5 1.8
-
-Additionally, the genomedata setup script will automatically install
-the following packages or newer versions:
-
-- NumPy_
-- PyTables_ 2.1
-- path.py 2.2
-
-.. _NumPy: http://numpy.scipy.org/
-.. _Python: http://www.python.org/
-.. _PyTables: http://www.pytables.org/
-
-To run _load_data, you must use a 64-bit machine for now. E-mail
-Michael if running it on a 32-bit system is important to you.
-
-Installation
-============
-python setup.py install
+Please see the following URL (and linked documentation) for information,
+installation, and support: http://noble.gs.washington.edu/proj/genomedata
 
 License
 =======

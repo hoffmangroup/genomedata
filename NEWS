@@ -1,4 +1,4 @@
-1.0.2:
+1.1.0:
 * Fixed format warning on 32-bit systems
 * Fixed Ubuntu format string warnings (switched fprintf to fputs)
 * Fixed bug that caused segmentation fault when accessing
@@ -11,6 +11,8 @@
 * Added an option to genomedata-load-seq and genomedata-load
   to specify the Genomedata archive implementation (directory/file). 
   Default is directory if number of sequences is at least 100.
+* Added support for replacing data in Genomedata tracks.
+* General documentation improvements
 
 1.0.1:
 * Fixed OSX bug that caused installer to crash on sys.stdin.flush

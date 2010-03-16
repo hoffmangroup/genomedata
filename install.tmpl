@@ -11,7 +11,7 @@ genomedata.
 (c) 2009: Orion Buske <stasis {at} uw {dot} edu>
 
 """
-PKG_VERSION = "1.0.2"
+PKG_VERSION = "1.1.0"
 
 ${COMMON_CODE_HEADER}
 
@@ -19,12 +19,8 @@ ${COMMON_CODE_BODY}
 
 ############################## MAIN #########################
 def main(args=sys.argv[1:]):
-    # Set up shell details
-    try:
-        shell_name = os.path.basename(os.environ["SHELL"])
-    except KeyError:
-        shell_name = None
-    shell = ShellManager(shell_name)
+    # Set up shell
+    shell = ShellManager()
 
     try:
         arch_home = setup_arch_home()

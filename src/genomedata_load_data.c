@@ -408,7 +408,7 @@ int seek_chromosome(char *chrom, genome_t *genome,
 
   /* if opening failed, then return -1 with h5file set bad */
   if (!is_valid_chromosome(chromosome)) {
-    fputs(" can't open chromosome\n", stderr);
+    fprintf(stderr, " can't open chromosome: %s\n", chromosome->chrom);
     return -1;
   }
 
@@ -429,14 +429,15 @@ int seek_chromosome(char *chrom, genome_t *genome,
 /* fetch num_cols and the col for a particular trackname */
 void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
               hsize_t *col) {
-  hid_t attr, h5group, dataspace, datatype;
+  hid_t attr, root, dataspace, datatype;
   hsize_t data_size, cell_size, num_cells;
   char *attr_data;
 
-  h5group = chromosome->h5group;
-  assert(h5group >= 0);
+  /* Tracknames are stored in the attributes of the root group of each file */
+  root = H5Gopen(chromosome->h5group, "/", H5P_DEFAULT);
+  assert(root >= 0);
 
-  attr = H5Aopen_name(h5group, "tracknames");
+  attr = H5Aopen_name(root, "tracknames");
   assert(attr >= 0);
 
   dataspace = H5Aget_space(attr);

@@ -16,8 +16,8 @@ import unittest
 import warnings
 
 from numpy import array, isnan, logical_and, logical_not, NAN
-from shutil import rmtree
-from tempfile import mkdtemp
+from path import path
+from tempfile import mkdtemp, mkstemp
 
 from genomedata import Genome
 from genomedata.load_genomedata import load_genomedata
@@ -30,10 +30,16 @@ test_filename = lambda filename: os.path.join("data", filename)
 def seq2str(seq):
     return seq.tostring().lower()
 
-class TestGenomedata(unittest.TestCase):
-    verbose = False
+class GenomedataTester(unittest.TestCase):
+    def init(self):
+        pass
 
     def setUp(self):
+        self.verbose = False
+        self.mode = "dir"
+
+        self.init()  # Call to sub-classed method
+
         # Create Genomedata collection from test files
         seqs = ["chr1.short.fa", "chrY.short.fa"]
         tracks = {"vertebrate": "chr1.phyloP44way.vertebrate.short.wigFix",
@@ -41,7 +47,18 @@ class TestGenomedata(unittest.TestCase):
                   "primate": "chr1.phyloP44way.primate.short.wigFix",
                   "dnase": "chr1.wgEncodeDukeDNaseSeqBaseOverlap" \
                       "SignalK562V2.wig"}
-        self.genomedatadir = mkdtemp(prefix="genomedata")
+        if self.mode == "dir":
+            gdfilename = mkdtemp(prefix="genomedata")
+
+        elif self.mode == "file":
+            tempfile, gdfilename = mkstemp(prefix="genomedata")
+            os.close(tempfile)
+            os.remove(gdfilename)  # Allow load_genomedata to create it
+        else:
+            self.fail("Unrecognized mode: %s" % self.mode)
+
+        self.gdfilepath = path(gdfilename).expand()
+
         self.tracknames = sorted(tracks.keys())
 
         # Get resource paths instead of filenames
@@ -54,18 +71,30 @@ class TestGenomedata(unittest.TestCase):
         tracktuples = [(trackname, trackfile) for trackname, trackfile in
                        zip(self.tracknames, self.trackfiles)]
 
-        load_genomedata(self.genomedatadir, tracktuples, seqfiles,
-                        verbose=self.verbose)
+        load_genomedata(self.gdfilepath, tracktuples, seqfiles,
+                        verbose=self.verbose, mode=self.mode)
 
-        self.chroms = [val.split(".")[0] for val in seqs]
-        for chrom in self.chroms:
-            filename = os.extsep.join([chrom, "genomedata"])
-            filepath = os.path.join(self.genomedatadir, filename)
-            self.assertTrue(os.path.isfile(filepath),
-                            "Missing necessary file: %s" % filepath)
+        if self.mode == "dir":
+            self.chroms = [val.split(".")[0] for val in seqs]
+            for chrom in self.chroms:
+                filename = os.extsep.join([chrom, "genomedata"])
+                filepath = self.gdfilepath.joinpath(filename)
+                self.assertTrue(filepath.isfile(),
+                                "Chromosome file was not found: %s" % filepath)
+        elif self.mode == "file":
+            self.assertTrue(self.gdfilepath.isfile(),
+                            "Genomedata archive was not created: %r" %
+                            self.gdfilepath)
+        else:
+            self.fail("Unrecognized mode: %s" % self.mode)
 
     def tearDown(self):
-        rmtree(self.genomedatadir)
+        if self.mode == "dir":
+            self.gdfilepath.rmtree()
+        elif self.mode == "file":
+            self.gdfilepath.remove()
+        else:
+            self.fail("Unrecognized mode: %s" % self.mode)
 
     def assertArraysEqual(self, observed, expected):
         expected = array(expected, dtype=observed.dtype)
@@ -76,7 +105,7 @@ class TestGenomedata(unittest.TestCase):
             self.fail("%r != %r" % (observed, expected))
 
     def test_interface(self):
-        with Genome(self.genomedatadir) as genome:
+        with Genome(self.gdfilepath) as genome:
             chromosome = genome["chr1"]
 
             # Test tracknames are as expected
@@ -119,18 +148,25 @@ class TestGenomedata(unittest.TestCase):
             self.assertArraysEqual(supercontig.continuous[0, 3], NAN)
 
     def test_repr_str(self):
-        genome = Genome(self.genomedatadir, mode="r")
+        genome = Genome(self.gdfilepath, mode="r")
         self.assertEqual(repr(genome), "Genome('%s', **{'mode': 'r'})" %
-                         self.genomedatadir)
+                         self.gdfilepath)
         chr = genome["chr1"]
-        self.assertEqual(repr(chr),
-                         "<Chromosome 'chr1', file='%s/chr1.genomedata'>" %
-                         self.genomedatadir)
-        self.assertEqual(str(chr), "chr1")
+        if self.mode == "dir":
+            self.assertEqual(repr(chr),
+                             "<Chromosome 'chr1', file='%s/chr1.genomedata'>" %
+                             self.gdfilepath)
+            self.assertEqual(str(chr), "chr1")
+        elif self.mode == "file":
+            self.assertEqual(repr(chr),
+                             "<Chromosome 'chr1', file='%s'>" %
+                             self.gdfilepath)
+            self.assertEqual(str(chr), "chr1")
+
         genome.close()
 
     def test_no_context(self):
-        genome = Genome(self.genomedatadir)
+        genome = Genome(self.gdfilepath)
         chr1 = genome["chr1"]
         tracknames = genome.tracknames_continuous
         data = chr1[100:1000]  # Used to segfault
@@ -143,7 +179,7 @@ class TestGenomedata(unittest.TestCase):
         self.assertRaises(Exception, iter(chr1).next)
 
     def test_open_chromosomes(self):
-        genome = Genome(self.genomedatadir)
+        genome = Genome(self.gdfilepath)
         with genome:
             chr1 = genome["chr1"]
             chr2 = genome["chr1"]  # Memoized
@@ -161,7 +197,7 @@ class TestGenomedata(unittest.TestCase):
 
         # Test value before deleting track
         warnings.simplefilter("ignore")
-        with Genome(self.genomedatadir, "r+") as genome:
+        with Genome(self.gdfilepath, "r+") as genome:
             chromosome = genome["chr1"]
             self.assertArraysEqual(chromosome[old_entry[0], trackname],
                                    old_entry[1])
@@ -169,10 +205,10 @@ class TestGenomedata(unittest.TestCase):
 
         warnings.resetwarnings()
         # Re-close data
-        close_data(self.genomedatadir, verbose=self.verbose)
+        close_data(self.gdfilepath, verbose=self.verbose)
 
         # Test value after deleting track
-        with Genome(self.genomedatadir) as genome:
+        with Genome(self.gdfilepath) as genome:
             chromosome = genome["chr1"]
             self.assertArraysEqual(chromosome[old_entry[0], trackname],
                                    old_entry[1])
@@ -186,29 +222,37 @@ class TestGenomedata(unittest.TestCase):
         new_entry = (290, -2.297)
 
         # Test value before deleting track
-        with Genome(self.genomedatadir) as genome:
+        with Genome(self.gdfilepath) as genome:
             chromosome = genome["chr1"]
             self.assertArraysEqual(chromosome[old_entry[0], old_trackname],
                                    old_entry[1])
 
         # Remove track
-        erase_data(self.genomedatadir, old_trackname,
+        erase_data(self.gdfilepath, old_trackname,
                       verbose=self.verbose)
 
         # Now replace it with the data from a different track
         track_index = self.tracknames.index(new_trackname)
         datafile = self.trackfiles[track_index]
-        load_data(self.genomedatadir, new_trackname, datafile,
+        load_data(self.gdfilepath, new_trackname, datafile,
                   verbose=self.verbose)
 
         # Re-close data
-        close_data(self.genomedatadir, verbose=self.verbose)
+        close_data(self.gdfilepath, verbose=self.verbose)
 
         # Now test that the data matches the new track data
-        with Genome(self.genomedatadir) as genome:
+        with Genome(self.gdfilepath) as genome:
             chromosome = genome["chr1"]
             self.assertArraysEqual(chromosome[new_entry[0], new_trackname],
                                    new_entry[1])
+
+class TestGenomedataDir(GenomedataTester):
+    def init(self):
+        self.mode = "dir"
+
+class TestGenomedataFile(GenomedataTester):
+    def init(self):
+        self.mode = "file"
 
 def suite():
     def is_test_class(member):
