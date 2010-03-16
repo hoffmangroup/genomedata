@@ -12,12 +12,12 @@ __version__ = "$Revision: $"
 import inspect
 import os
 import sys
+from tempfile import mkdtemp, mkstemp
 import unittest
 import warnings
 
 from numpy import array, isnan, logical_and, logical_not, NAN
 from path import path
-from tempfile import mkdtemp, mkstemp
 
 from genomedata import Genome
 from genomedata.load_genomedata import load_genomedata
