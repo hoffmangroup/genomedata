@@ -29,11 +29,11 @@ simple as downloading and running this script! For instance::
 
 .. _script: http://noble.gs.washington.edu/proj/genomedata/install.py
 
-.. note:: 
+.. note::
   The following are prerequisites:
 
   - Linux
-      Linux is the only system currently supported. 
+      Linux is the only system currently supported.
       We would love to add support for other systems in the future and
       will gladly accept any contributions toward this end.
   - Python 2.X | X >= 5
@@ -50,7 +50,7 @@ Overview
 
 Genomedata provides a way to store and access large-scale functional
 genomics data in a format which is both space-efficient and allows
-efficient random-access. Genomedata archives are currently write-once, 
+efficient random-access. Genomedata archives are currently write-once,
 although we are working to fix this.
 
 Under the surface, Genomedata is implemented_ as one or more HDF5 files,
@@ -79,7 +79,7 @@ Why have :class:`Supercontigs <Supercontig>`?
 
 Implementation
 ==============
-Genomedata archives are implemented as one or more HDF5 files. 
+Genomedata archives are implemented as one or more HDF5 files.
 The :ref:`API <python-api>` handles both single-file
 and directory archives transparently, but the implementation options
 exist for several performance reasons.
@@ -92,19 +92,19 @@ Use a **single file** with many chromosomes/scaffolds:
   * More efficient access with many chromosomes/scaffolds
   * Easier archive distribution
 
-Implementing the archive as a directory makes it easier to 
-parallelize access to the data. In particular, it makes it easy to 
-create the archives in parallel with one chromosome on each 
-machine. It also reduces the likelihood of running into the 
-2 GB file limit applicable to older applications and older versions 
-of 32-bit UNIX. We are currently using an 81-track Genomedata 
-archive for our research which has a total size of 18 GB, but the 
+Implementing the archive as a directory makes it easier to
+parallelize access to the data. In particular, it makes it easy to
+create the archives in parallel with one chromosome on each
+machine. It also reduces the likelihood of running into the
+2 GB file limit applicable to older applications and older versions
+of 32-bit UNIX. We are currently using an 81-track Genomedata
+archive for our research which has a total size of 18 GB, but the
 largest single file (chr1) is only 1.6 GB.
 
 A directory-based Genomedata archive is not ideal for all circumstances,
 however, such as when working with genomes with many chromosomes, contigs,
 or scaffolds. In these situations, a single file implementation would be much
-more efficient. Additionally, having the archive as a single file allows 
+more efficient. Additionally, having the archive as a single file allows
 the archive to be distributed much more easily (without tar/zip/etc).
 
 .. note:: The default behavior is to implement the Genomedata archive as a
@@ -126,7 +126,7 @@ sequence and numerical data into a Genomedata archive with the
 
 This command is a user-friendly shortcut to the typical workflow.
 The underlying commands are still installed and may be used if more
-fine-grained control is required (for instance, parallel data loading). 
+fine-grained control is required (for instance, parallel data loading).
 The commands and required ordering are:
 
 1. :ref:`genomedata-load-seq`
@@ -152,7 +152,7 @@ Entire data tracks can be replaced with the following pipeline:
 Example
 ~~~~~~~
 The following is a brief example for creating a Genomedata archive from
-sequence and signal files. 
+sequence and signal files.
 
 Given the following two sequence files:
 
@@ -170,7 +170,7 @@ Given the following two sequence files:
 and the following two signal files:
 
 1. signal_low.wigFix::
-  
+
      fixedStep chrom=chr1 start=5 step=1
      0.372
      -2.540
@@ -188,7 +188,7 @@ and the following two signal files:
      chr1    6       24      3.14
 
 
-A Genomedata archive (``genomedata.test``) could then be created with the 
+A Genomedata archive (``genomedata.test``) could then be created with the
 following command::
 
     genomedata-load -s chr1.fa -s chrY.fa.gz -t low=signal_low.wigFix -t high=signal_high.bed.gz genomedata.test
@@ -197,15 +197,15 @@ or the following pipeline::
 
    genomedata-load-seq genomedata.test chr1.fa chrY.fa.gz
    genomedata-open-data genomedata.test low high
-   cat signal_low.wigFix | genomedata-load-data genomedata.test low
+   genomedata-load-data genomedata.test low < signal_low.wigFix
    zcat signal_high.bed.gz | genomedata-load-data genomedata.test high
    genomedata-close-data genomedata.test
 
-.. note:: chr1.fa and chrY.fa.gz could als be combined into a single 
+.. note:: chr1.fa and chrY.fa.gz could als be combined into a single
           sequence file with two sequences
 
 .. warning::
-   It is important that the sequence names (`chrY`, `chr1`) in the signal files 
+   It is important that the sequence names (`chrY`, `chr1`) in the signal files
    match the sequence identifiers in the sequence files exactly.
 
 Genomedata usage
@@ -214,7 +214,7 @@ Genomedata usage
 Python interface
 ~~~~~~~~~~~~~~~~
 The data in Genomedata is accessed through the hierarchy described in
-:ref:`genomedata-overview`. A full :ref:`Python API <python-api>` is 
+:ref:`genomedata-overview`. A full :ref:`Python API <python-api>` is
 also available. To appreciate the full benefit of Genomedata,
 it is most easily used as a contextmanager::
 
@@ -224,10 +224,10 @@ it is most easily used as a contextmanager::
     with Genome(gdfilename) as genome:
         [...]
 
-.. note:: 
+.. note::
     If Genome is used as a context manager, it will clean up any opened
     Chromosomes automatically.
-    If not, the Genome object (and all opened chromosomes) should be 
+    If not, the Genome object (and all opened chromosomes) should be
     closed manually with a call to :meth:`Genome.close`.
 
 Basic usage
@@ -263,7 +263,7 @@ array([ 47.,  NaN,  NaN,  NaN,  NaN], dtype=float32)
 >>> from numpy import isfinite
 >>> data[isfinite(data)]
 array([ 47.], dtype=float32)
-    
+
 .. note:: Specify a slice for the track to keep the data in column form:
 
           >>> col_index = chromosome.index_continuous("sample_track")
@@ -273,7 +273,7 @@ Command-line interface
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Genomedata archives can be created and loaded from the command line
-with the :ref:`genomedata-load` command. 
+with the :ref:`genomedata-load` command.
 
 .. _genomedata-load:
 
@@ -285,8 +285,8 @@ Usage information follows, but in summary, this script takes as input:
 - sequence files in |sequence file formats| format, where the sequence
   identifiers are the names of the chromosomes/scaffolds to create.
 - trackname, datafile pairs (specified as ``trackname=datafile``), where:
-    * trackname is a ``string`` identifier (e.g. ``broad.h3k27me3``) 
-    * datafile contains signal data for this data track 
+    * trackname is a ``string`` identifier (e.g. ``broad.h3k27me3``)
+    * datafile contains signal data for this data track
       in one of the following formats: |signal file formats|
     * the chromosomes/scaffolds referred to in the datafile MUST be identical
       to those found in the sequence files
@@ -294,7 +294,7 @@ Usage information follows, but in summary, this script takes as input:
 
 See the :ref:`full example <genomedata-load-example>` for more details.
 
-.. |signal file formats| replace:: |signal data formats|, or a gzip'd 
+.. |signal file formats| replace:: |signal data formats|, or a gzip'd
                          form of any of the preceding
 
 .. |sequence file formats| replace:: FASTA_ (``.fa`` or ``.fa.gz``)
@@ -322,7 +322,7 @@ Command-line usage information::
 Alternately, as described in :ref:`genomedata-overview`, the underlying
 Python and C load scripts are also accessible for more finely-grained control.
 This can be especially useful for parallelizing Genomedata loading over a
-cluster. 
+cluster.
 
 
 .. _genomedata-load-seq:
@@ -332,10 +332,10 @@ genomedata-load-seq
 
 This command adds the provided sequence files to the specified Genomedata,
 archive creating it if it does not already exist. Sequence files should be in
-|sequence file formats| format. Gaps of >= 100,000 base pairs 
+|sequence file formats| format. Gaps of >= 100,000 base pairs
 (specified as :option:`gap-length`) in the reference sequence,
-are used to divide the sequence into supercontigs. The FASTA sequence 
-identifier will be used as the name for the chromosomes/scaffolds 
+are used to divide the sequence into supercontigs. The FASTA sequence
+identifier will be used as the name for the chromosomes/scaffolds
 created within the Genomedata archive and must be consistent between these
 sequence files and the data loaded later with :ref:`genomedata-load-data`.
 See :ref:`this example <genomedata-load-example>` for details.
@@ -343,7 +343,7 @@ See :ref:`this example <genomedata-load-example>` for details.
 ::
 
  Usage: genomedata-load-seq [OPTION]... GENOMEDATAFILE SEQFILE...
- 
+
  Options:
    -g, --gap-length  XXX: Implement this.
    --version         show program's version number and exit
@@ -361,7 +361,7 @@ allowing data for those tracks to be added with :ref:`genomedata-load-data`.
 ::
 
  Usage: genomedata-open-data [OPTION]... GENOMEDATAFILE TRACKNAME...
- 
+
  Options:
    --version   show program's version number and exit
    -h, --help  show this help message and exit
@@ -373,14 +373,14 @@ genomedata-load-data
 --------------------
 
 This command loads data from stdin into Genomedata under the given trackname.
-The input data must be in one of these supported datatypes: 
+The input data must be in one of these supported datatypes:
 |signal data formats|. The chromosome/scaffold references in these files must
-match the sequence identifiers in the sequence files loaded with 
-:ref:`genomedata-load-seq`. See :ref:`this example <genomedata-load-example>` 
-for details. A :option:`chunk-size` can be specified to control the 
-size of hdf5 chunks (the smallest data read size, like a page size). 
-Larger values of :option:`chunk-size` can increase the level 
-of compression, but they also increase the minimum amount of data 
+match the sequence identifiers in the sequence files loaded with
+:ref:`genomedata-load-seq`. See :ref:`this example <genomedata-load-example>`
+for details. A :option:`chunk-size` can be specified to control the
+size of hdf5 chunks (the smallest data read size, like a page size).
+Larger values of :option:`chunk-size` can increase the level
+of compression, but they also increase the minimum amount of data
 that must be read to access a single value.
 
 .. |signal data formats| replace:: WIG_, BED_, bedGraph_
@@ -394,7 +394,7 @@ that must be read to access a single value.
  Usage: genomedata-load-data [OPTION...] GENOMEDATAFILE TRACKNAME
  Loads data into Genomedata format
  Takes track data in on stdin
- 
+
    -c, --chunk-size=NROWS     Chunk hdf5 data into blocks of NROWS. A higher
                               value increases compression but slows random
                               access. Must always be smaller than the max size
@@ -402,7 +402,7 @@ that must be read to access a single value.
    -?, --help                 Give this help list
        --usage                Give a short usage message
    -V, --version              Print program version
- 
+
  Mandatory or optional arguments to long options are also mandatory or optional
  for any corresponding short options.
 
@@ -417,7 +417,7 @@ Closes the specified Genomedata arhive.
 ::
 
  Usage: genomedata-close-data [OPTION]... GENOMEDATAFILE
- 
+
  Options:
    --version   show program's version number and exit
    -h, --help  show this help message and exit
@@ -438,10 +438,10 @@ then be replaced. The pipeline for replacing a data track is:
 ::
 
  Usage: genomedata-erase-data [OPTION]... GENOMEDATAFILE TRACKNAME...
- 
+
  Erase the specified tracks from the Genomedata archive in such a way that
  the track can be replaced (via genomedata-load-data).
- 
+
  Options:
    --version      show program's version number and exit
    -h, --help     show this help message and exit
@@ -460,7 +460,7 @@ languages, but currently only exports the following Python API.
 .. autoclass:: Genome
    :members:
    :undoc-members:
-   
+
    .. automethod:: __init__
    .. automethod:: __iter__
    .. automethod:: __getitem__
@@ -468,7 +468,7 @@ languages, but currently only exports the following Python API.
 .. autoclass:: Chromosome
    :members:
    :undoc-members:
-   
+
    .. automethod:: __iter__
    .. automethod:: __getitem__
 
@@ -480,9 +480,9 @@ languages, but currently only exports the following Python API.
 Support
 =======
 
-There is a moderated genomedata-announce mailing list that you can 
+There is a moderated genomedata-announce mailing list that you can
 subscribe to for information on new releases of Genomedata:
-    
+
 https://mailman1.u.washington.edu/mailman/listinfo/genomedata-announce
 
 If you want to report a bug or request a feature, please do so using the
@@ -491,6 +491,6 @@ Genomedata issue tracker:
 http://code.google.com/p/genomedata/issues
 
 For other support with Genomedata, or to provide feedback, please write
-contact the authors directly. We are interested in all comments regarding the 
+contact the authors directly. We are interested in all comments regarding the
 package and the ease of use of installation and documentation.
 
