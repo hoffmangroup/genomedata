@@ -485,6 +485,11 @@ subscribe to for information on new releases of Genomedata:
 
 https://mailman1.u.washington.edu/mailman/listinfo/genomedata-announce
 
+For discussion and questions about the use of the Genomedata system,
+there is a genomedata-users mailing list:
+    
+https://mailman1.u.washington.edu/mailman/listinfo/genomedata-users
+
 If you want to report a bug or request a feature, please do so using the
 Genomedata issue tracker:
 
