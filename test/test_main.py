@@ -106,6 +106,9 @@ class GenomedataTester(unittest.TestCase):
 
     def test_interface(self):
         with Genome(self.gdfilepath) as genome:
+            self.assertTrue("chr1" in genome)
+            self.assertFalse("chrZ" in genome)
+
             chromosome = genome["chr1"]
 
             # Test tracknames are as expected

@@ -160,7 +160,7 @@ class Genome(object):
     def __getitem__(self, name):
         """Return a reference to a chromosome of the given name.
 
-        :param name: name of the chromosome file (e.g. "chr1" if
+        :param name: name of the chromosome (e.g. "chr1" if
                      chr1.genomedata is a file in the Genomedata archive
                      or chr1 is a top-level group in the single-file
                      Genomedata archive)
@@ -194,6 +194,31 @@ class Genome(object):
 
         self.open_chromosomes[name] = res
         return res
+
+    def __contains__(self, name):
+        """Return if there is a chromosome of the given name
+
+        :param name: name of the chromosome (e.g. "chr1" if
+                     chr1.genomedata is a file in the Genomedata archive
+                     or chr1 is a top-level group in the single-file
+                     Genomedata archive)
+        :type name: string
+        :returns: boolean
+
+        Example:
+
+        >>> "chrX" in Genome
+        True
+        >>> "chrZ" in Genome
+        False
+
+        """
+        try:
+            chromosome = self[name]
+        except KeyError:
+            return False  # Couldn't find chromosome
+        else:
+            return True  # No errors opening chromosome
 
     def __enter__(self):
         assert self.isopen
