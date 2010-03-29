@@ -368,8 +368,8 @@ int seek_chromosome(char *chrom, genome_t *genome,
     char *h5filename_suffix;
 
     /* allocate space for h5filename, including 2 bytes for '/' and '\0' */
-    h5filename = alloca(strlen(genome->dirname) + strlen(chrom) +
-                        strlen(SUFFIX_H5) + 2);
+    h5filename = xmalloc((strlen(genome->dirname) + strlen(chrom) +
+                          strlen(SUFFIX_H5) + 2) * sizeof(char));
     assert(h5filename);
 
     /* set h5filename */
@@ -385,7 +385,13 @@ int seek_chromosome(char *chrom, genome_t *genome,
 
     /* read chromosome from the root group */
     chromosome->h5file = h5file;
-    where = "/";
+
+    /* allocate space for where = "/\0" */
+    where = strdup("/");
+    assert(where);
+
+    /* free no-longer-used filename */
+    free(h5filename);
   } else {
     /* if genome is a file, compute internal path and open group */
     if (genome->h5file >= 0) {
@@ -393,7 +399,8 @@ int seek_chromosome(char *chrom, genome_t *genome,
       char *where_suffix;
 
       /* allocate space for where, including 2 bytes for '/' and '\0' */
-      where = alloca(strlen(chrom) + 2);
+      where = xmalloc((strlen(chrom) + 2) * sizeof(char));
+      assert(where);
 
       /* read chromosome from subgroup of h5file */
       where_suffix = stpcpy(where, "/");
@@ -406,21 +413,23 @@ int seek_chromosome(char *chrom, genome_t *genome,
     chromosome->h5group = h5group;
   }
 
+  /* clean up memory before returning */
+  free(where);
+
   /* if opening failed, then return -1 with h5file set bad */
   if (!is_valid_chromosome(chromosome)) {
     fprintf(stderr, " can't open chromosome: %s\n", chromosome->chrom);
     return -1;
+  } else {
+    /* allocate supercontig metadata array */
+    assert(H5Gget_info(h5group, &h5group_info) >= 0);
+    init_supercontig_array(h5group_info.nlinks, chromosome);
+
+    /* populate supercontig metadata array */
+    assert(H5Literate(h5group, H5_INDEX_NAME, H5_ITER_INC, &idx,
+                      supercontig_visitor, chromosome) == 0);
+    return 0;
   }
-
-  /* allocate supercontig metadata array */
-  assert(H5Gget_info(h5group, &h5group_info) >= 0);
-  init_supercontig_array(h5group_info.nlinks, chromosome);
-
-  /* populate supercontig metadata array */
-  assert(H5Literate(h5group, H5_INDEX_NAME, H5_ITER_INC, &idx,
-                    supercontig_visitor, chromosome) == 0);
-
-  return 0;
 }
 
 
@@ -459,7 +468,8 @@ void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
 
     num_cells = data_size / cell_size;
 
-    attr_data = alloca(data_size);
+    /* allocate room for tracknames */
+    attr_data = xmalloc(data_size);
     assert(attr_data);
 
     assert(H5Aread(attr, datatype, attr_data) >= 0);
@@ -468,6 +478,7 @@ void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
     for (*col = 0; *col <= num_cells; (*col)++) {
       if (*col == num_cells) {
         fprintf(stderr, "can't find trackname: %s\n", trackname);
+        free(attr_data);
         exit(EXIT_FAILURE);
       } else {
         if (!strncmp(attr_data + (*col * cell_size), trackname, cell_size)) {
@@ -475,6 +486,9 @@ void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
         }
       }
     }
+
+    /* clean up read tracknames */
+    free(attr_data);
   }
 
   assert(H5Aclose(attr) >= 0);
@@ -575,7 +589,7 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
   char *save_ptr;
   char *token;
   char *tailptr;
-  char *newstring;
+  char *line_no_id;
   char *id_str;
 
   char *loc_eq;
@@ -601,10 +615,12 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
 
   /* I think this is necessary because I reuse this buffer (through
      the chrom pointer, for example) after line is replaced */
-  save_ptr = strdupa(line);
+  /*
+  save_ptr = strdup(line);
   assert(save_ptr);
+  */
 
-  newstring = line + strlen(id_str);
+  line_no_id = line + strlen(id_str);
 
   /* set to defaults */
   *span = 1;
@@ -616,9 +632,11 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
   }
 
   /* extra set of parentheses avoids compiler warning */
-  while ((token = strtok_r(newstring, DELIM_WIG, &save_ptr))) {
+  while ((token = strtok_r(line_no_id, DELIM_WIG, &save_ptr))) {
     loc_eq = strchr(token, '=');
-    key = strndupa(token, loc_eq - token);
+
+    /* key is allocated and must be freed in each loop iteration */
+    key = strndup(token, loc_eq - token);
     assert(key);
 
     val = loc_eq + 1;
@@ -626,6 +644,7 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
     errno = 0;
 
     if (!strcmp(key, KEY_CHROM)) {
+      /* everything after the equal sign in the chromosome token */
       *chrom = strdup(val);
       assert(*chrom);
 
@@ -647,10 +666,15 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
 
     } else {
       fprintf(stderr, "can't understand key: %s\n", key);
+
+      /* clean up before failure */
+      free(key);
       exit(EXIT_FAILURE);
     }
 
-    newstring = NULL;
+    /* free key for the next loop iteration */
+    free(key);
+    line_no_id = NULL;
   }
 }
 
@@ -907,8 +931,12 @@ void proc_wigfix_header(char *line, genome_t *genome, chromosome_t *chromosome,
     /* XXX: need to read in with load_chromosome() once that invariant
        is abandoned */
 
+    /* chrom is saved into chromosome here */
     seek_chromosome(chrom, genome, chromosome, verbose);
     malloc_chromosome_buf(chromosome, buf_start, buf_end);
+  } else {
+    /* chrom wasn't saved, so free it */
+    free(chrom);
   }
 
   *fill_start = *buf_start + start;
@@ -1001,6 +1029,9 @@ void proc_wigvar_header(char *line, genome_t *genome, chromosome_t *chromosome,
     /* only reseek and malloc if it is different */
     load_chromosome(chrom, genome, chromosome, trackname,
                     buf_start, buf_end, chunk_nrows, verbose);
+  } else {
+    /* chrom wasn't saved into chromosome, so free it */
+    free(chrom);
   }
 }
 
