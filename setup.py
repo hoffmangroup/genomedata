@@ -14,6 +14,7 @@ __version__ = "1.1.1"
 # Copyright 2008-2009 Michael M. Hoffman <mmh1@washington.edu>
 
 import os
+import sys
 
 from ez_setup import use_setuptools
 use_setuptools()
@@ -22,6 +23,7 @@ from distutils.command.build_scripts import build_scripts
 from platform import system, processor
 from setuptools import find_packages, setup
 from shutil import rmtree
+from subprocess import call
 
 doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")
@@ -46,10 +48,11 @@ genomedata-report = genomedata._report:main
 genomedata-erase-data = genomedata._erase_data:main
 """
 
-
 install_requires = ["numpy", "path", "tables>2.0.4,<2.2a0", "textinput"]
 
 arch = "_".join([system(), processor()])
+
+include_gnulib = (system() != "Linux")
 
 class DirSet(object):
     """Maintain a set of valid directories.
@@ -70,6 +73,7 @@ class DirSet(object):
     def as_list(self):
         return list(self._set)
 
+
 # Get compile flags/information from environment
 library_dirs = DirSet()
 include_dirs = DirSet()
@@ -82,8 +86,18 @@ if "HDF5_DIR" in os.environ:
     library_dirs.add_dir(os.path.join(hdf5_dir, "lib"))
     include_dirs.add_dir(os.path.join(hdf5_dir, "include"))
 
+if include_gnulib:
+    # Gnulib for OS X dependencies
+    library_dirs.add_dir("src/build-deps/gllib")
+    include_dirs.add_dir("src/build-deps/gllib")
+
 library_dirs = library_dirs.as_list()
 include_dirs = include_dirs.as_list()
+
+
+class InstallationError(Exception):
+    pass
+
 class BuildScriptWrapper(build_scripts):
     """Override the script-building machinery of distutils.
 
@@ -107,6 +121,9 @@ class BuildScriptWrapper(build_scripts):
 
         # Customize compiler options
         compiler.add_library("hdf5")
+        if include_gnulib:
+            compiler.add_library("gnu")
+
         extra_postargs = ["-std=c99"]
 
         # Remove DNDEBUG flag from all compile statements
@@ -155,8 +172,30 @@ class BuildScriptWrapper(build_scripts):
             print "Removing script build dir: %s" % output_dir
             rmtree(output_dir)
 
+def make_gnulib():
+    print "Not a Linux system: configuring and making Gnulib libraries..."
+    deps_dir = "src/build-deps"
+
+    print "> ./configure"
+    retcode = call("./configure", cwd=deps_dir)
+    if retcode != 0:
+        raise InstallationError("Error configuing Gnulib")
+
+    print "> make"
+    retcode = call("make", cwd=deps_dir)
+    if retcode != 0:
+        raise InstallationError("Error making Gnulib")
+
+    print "Gnulib libraries successfully created!"
 
 if __name__ == "__main__":
+    # Configure and make gnulib if not on Linux
+    if system() != "Linux":
+        try:
+            make_gnulib()
+        except InstallationError:
+            sys.exit(1)
+
     setup(name=name,
           version=__version__,
           description=short_description,
