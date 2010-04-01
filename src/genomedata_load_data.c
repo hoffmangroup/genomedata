@@ -973,8 +973,10 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
       if (fill_start < buf_end) {
         fill_end = fill_start + span;
         if (fill_end > buf_end) {
-          fprintf(stderr, " ignoring data at %s:%d+%ld\n",
-                  chromosome.chrom, fill_start - buf_start, span);
+          fprintf(stderr, " ignoring data at %s:%lu+%lu\n",
+                  chromosome.chrom,
+                  (unsigned long)(fill_start - buf_start),
+                  (unsigned long)span);
           fill_end = buf_end;
         }
 
@@ -986,8 +988,9 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
         fill_start += step;
       } else {
         /* else: ignore data until we get to another header line */
-        fprintf(stderr, " ignoring data at %s:%d\n",
-                chromosome.chrom, fill_start - buf_start);
+        fprintf(stderr, " ignoring data at %s:%lu\n",
+                chromosome.chrom,
+                (unsigned long)(fill_start - buf_start));
       }
     } else {
       write_buf(&chromosome, trackname, buf_start, buf_end,
