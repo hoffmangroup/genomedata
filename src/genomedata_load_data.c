@@ -613,12 +613,8 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
   /* strip trailing newline */
   *strchr(line, '\n') = '\0';
 
-  /* I think this is necessary because I reuse this buffer (through
-     the chrom pointer, for example) after line is replaced */
-  /*
-  save_ptr = strdup(line);
-  assert(save_ptr);
-  */
+  /* Initialize to avoid compiler warning */
+  save_ptr = NULL;
 
   line_no_id = line + strlen(id_str);
 
@@ -977,7 +973,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
       if (fill_start < buf_end) {
         fill_end = fill_start + span;
         if (fill_end > buf_end) {
-          fprintf(stderr, " ignoring data at %s:%zd+%ld\n",
+          fprintf(stderr, " ignoring data at %s:%d+%ld\n",
                   chromosome.chrom, fill_start - buf_start, span);
           fill_end = buf_end;
         }
@@ -990,7 +986,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
         fill_start += step;
       } else {
         /* else: ignore data until we get to another header line */
-        fprintf(stderr, " ignoring data at %s:%zd\n",
+        fprintf(stderr, " ignoring data at %s:%d\n",
                 chromosome.chrom, fill_start - buf_start);
       }
     } else {

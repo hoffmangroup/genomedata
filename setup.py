@@ -19,6 +19,7 @@ import sys
 from ez_setup import use_setuptools
 use_setuptools()
 
+from distutils.command.clean import clean
 from distutils.command.build_scripts import build_scripts
 from platform import system, processor
 from setuptools import find_packages, setup
@@ -53,6 +54,8 @@ install_requires = ["numpy", "path", "tables>2.0.4,<2.2a0", "textinput"]
 arch = "_".join([system(), processor()])
 
 include_gnulib = (system() != "Linux")
+GNULIB_BUILD_DIR = "src/build-deps"
+GNULIB_LIB_DIR = "%s/gllib" % GNULIB_BUILD_DIR
 
 class DirSet(object):
     """Maintain a set of valid directories.
@@ -88,8 +91,8 @@ if "HDF5_DIR" in os.environ:
 
 if include_gnulib:
     # Gnulib for OS X dependencies
-    library_dirs.add_dir("src/build-deps/gllib")
-    include_dirs.add_dir("src/build-deps/gllib")
+    library_dirs.add_dir(GNULIB_LIB_DIR)
+    include_dirs.add_dir(GNULIB_LIB_DIR)
 
 library_dirs = library_dirs.as_list()
 include_dirs = include_dirs.as_list()
@@ -97,6 +100,16 @@ include_dirs = include_dirs.as_list()
 
 class InstallationError(Exception):
     pass
+
+class CleanWrapper(clean):
+    """Wraps `python setup.py clean` to also cleans Gnulib installation"""
+    def run(self):
+        clean.run(self)
+        if include_gnulib:
+            print >>sys.stderr, ">> Cleaning Gnulib build directory"
+            retcode = call(["make", "clean"], cwd=GNULIB_BUILD_DIR)
+            if retcode != 0:
+                print >>sys.stderr, ">> WARNING: Failed to clean Gnulib build!"
 
 class BuildScriptWrapper(build_scripts):
     """Override the script-building machinery of distutils.
@@ -173,27 +186,37 @@ class BuildScriptWrapper(build_scripts):
             rmtree(output_dir)
 
 def make_gnulib():
-    print "Not a Linux system: configuring and making Gnulib libraries..."
-    deps_dir = "src/build-deps"
+    print ">> Not a Linux system: configuring and making Gnulib libraries..."
 
-    print "> ./configure"
-    retcode = call("./configure", cwd=deps_dir)
-    if retcode != 0:
-        raise InstallationError("Error configuing Gnulib")
+    libfilename = "%s/libgnu.a" % GNULIB_LIB_DIR
+    if os.path.isfile(libfilename):
+        print ">> Found libgnu.a... skipping configure and make"
+    else:
+        commands = ["./configure", "make"]
+        for command in commands:
+            print ">> %s" % command
+            retcode = call(command, cwd=GNULIB_BUILD_DIR)
+            if retcode != 0:
+                raise InstallationError("Error compiling Gnulib")
 
-    print "> make"
-    retcode = call("make", cwd=deps_dir)
-    if retcode != 0:
-        raise InstallationError("Error making Gnulib")
+    if not os.path.isfile(libfilename):
+        raise InstallationError("Expected to find: %s" % libfilename)
 
-    print "Gnulib libraries successfully created!"
+    to_rm = ["%s/getopt.h" % GNULIB_LIB_DIR]
+    for filename in to_rm:
+        if os.path.isfile(filename):
+            print ">> Removing: %s" % filename
+            os.remove(filename)
+
+    print ">> Gnulib libraries successfully created!"
 
 if __name__ == "__main__":
     # Configure and make gnulib if not on Linux
     if system() != "Linux":
         try:
             make_gnulib()
-        except InstallationError:
+        except InstallationError, e:
+            print >>sys.stderr, ">> ERROR: %s" % e
             sys.exit(1)
 
     setup(name=name,
@@ -213,5 +236,6 @@ if __name__ == "__main__":
           packages=find_packages(".", exclude="test"),
           entry_points=entry_points,
           scripts={"genomedata-load-data": ["src/genomedata_load_data.c"]},
-          cmdclass={"build_scripts": BuildScriptWrapper}
+          cmdclass={"build_scripts": BuildScriptWrapper,
+                    "clean": CleanWrapper}
           )
