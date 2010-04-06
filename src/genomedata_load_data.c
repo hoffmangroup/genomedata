@@ -1100,7 +1100,8 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
         exit(EXIT_FAILURE);
       } else {
         /* no conversion was performed (hit definition line) */
-        assert(start == 0 && tailptr == *line);
+        /* start == -1 because of the 1-based correction */
+        assert(start == -1 && tailptr == *line);
       }
     }
 
