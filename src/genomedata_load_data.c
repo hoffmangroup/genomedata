@@ -675,16 +675,16 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
 
       /* correct 1-based coordinate */
       *start = xstrtol(val, &tailptr, BASE) - 1;
-      assert(!errno && !*tailptr);
+      assert(!*tailptr);
 
     } else if (!strcmp(key, KEY_STEP)) {
       assert(step); /* don't write a null pointer */
       *step = xstrtol(val, &tailptr, BASE);
-      assert(!errno && !*tailptr);
+      assert(!*tailptr);
 
     } else if (!strcmp(key, KEY_SPAN)) {
       *span = xstrtol(val, &tailptr, BASE);
-      assert(!errno && !*tailptr);
+      assert(!*tailptr);
 
     } else {
       fprintf(stderr, "can't understand key: %s\n", key);
@@ -1081,24 +1081,7 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
 
   while (getline(line, size_line, stdin) >= 0) {
     /* correcting 1-based coordinate */
-    errno = 0;
     start = xstrtol(*line, &tailptr, BASE) - 1;
-    if (errno) {
-      fprintf(stderr, "Error parsing chromStart from line: %s...\n", *line);
-      if (errno == ERANGE) {
-        if (start == LONG_MAX) {
-          fputs("Value overflow. ", stderr);
-        } else if (start == LONG_MIN) {
-          fputs("Value underflow. ", stderr);
-        } else {
-          fputs("Unknown conversion error. ", stderr);
-        }
-      } else {
-        fputs("Unknown conversion error. ", stderr);
-      }
-      fprintf(stderr, "chromStart parsed as: %ld\n", start);
-      exit(EXIT_FAILURE);
-    }
 
     /* next char must be space */
     if (tailptr != *line && isblank(*tailptr)) {
@@ -1185,16 +1168,15 @@ void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
       continue;
     }
 
-    errno = 0;
-
     start = xstrtol(*line + chrom_len + 1, &tailptr, BASE); /* 0-based */
-    assert(!errno && isblank(*tailptr));
+    assert(isblank(*tailptr));
 
     end = xstrtol(tailptr, &tailptr, BASE); /* 0-based */
-    assert(!errno && isblank(*tailptr));
+    assert(isblank(*tailptr));
 
     /* printf("%s[%ld:%ld]\n", chrom, start, end); */
 
+    errno = 0;
     datum = strtof(tailptr, &tailptr);
     assert(!errno && *tailptr == '\n');
 
