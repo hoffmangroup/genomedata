@@ -989,7 +989,16 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
   while (getline(line, size_line, stdin) >= 0) {
     errno = 0;
     datum = strtof(*line, &tailptr);
-    assert(!errno);
+    if (errno) {
+      if (errno == ERANGE) {
+        fprintf(stderr, "Error parsing value from line: %s\n", *line);
+        fputs("Value over/underflows float.\n", stderr);
+        exit(EXIT_FAILURE);
+      } else {
+        /* no conversion was performed (hit definition line) */
+        assert(datum == 0 && tailptr == *line);
+      }
+    }
 
     if (*tailptr == '\n') {
       if (!is_valid_chromosome(&chromosome)) {
@@ -1019,6 +1028,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
                 (unsigned long)(fill_start - buf_start));
       }
     } else {
+      assert(tailptr == *line);
       write_buf(&chromosome, trackname, buf_start, buf_end,
                 buf_filled_start, fill_start, chunk_nrows, verbose);
       proc_wigfix_header(*line, genome, &chromosome,
@@ -1081,7 +1091,18 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
 
   while (getline(line, size_line, stdin) >= 0) {
     /* correcting 1-based coordinate */
-    start = xstrtol(*line, &tailptr, BASE) - 1;
+    errno = 0;
+    start = strtol(*line, &tailptr, BASE) - 1;
+    if (errno) {
+      if (errno == ERANGE) {
+        fprintf(stderr, "Error parsing value from line: %s\n", *line);
+        fputs("Value over/underflows long integer.\n", stderr);
+        exit(EXIT_FAILURE);
+      } else {
+        /* no conversion was performed (hit definition line) */
+        assert(start == 0 && tailptr == *line);
+      }
+    }
 
     /* next char must be space */
     if (tailptr != *line && isblank(*tailptr)) {
