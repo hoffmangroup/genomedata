@@ -498,7 +498,7 @@ fixedStep chrom=chr1 start=477 step=1
 0.000
 0.000
 0.000
-fixedStep chrom=chrY start=3179 step=1
+fixedStep chrom=chrY start=1 step=1
 0.301
 0.301
 0.301
