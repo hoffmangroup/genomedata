@@ -42,8 +42,9 @@ class GenomedataTester(unittest.TestCase):
 
         # Create Genomedata collection from test files
         seqs = ["chr1.short.fa", "chrY.short.fa"]
+        # Placental includes data for chr1 and chrY
         tracks = {"vertebrate": "chr1.phyloP44way.vertebrate.short.wigFix",
-                  "placental": "chr1.phyloP44way.placental.short.wigFix",
+                  "placental": "phyloP44way.placental.short.wigFix",
                   "primate": "chr1.phyloP44way.primate.short.wigFix",
                   "dnase": "chr1.wgEncodeDukeDNaseSeqBaseOverlap" \
                       "SignalK562V2.wig"}
