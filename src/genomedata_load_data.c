@@ -111,6 +111,32 @@ void *xmalloc(size_t size)
   return value;
 }
 
+long xstrtol(const char *nptr, char **endptr, int base) {
+  long value;
+
+  errno = 0;
+  value = strtol(nptr, endptr, base);
+
+  if (errno) {
+    fprintf(stderr, "Error parsing value from string: %s...\n", nptr);
+    if (errno == ERANGE) {
+      if (value == LONG_MAX) {
+        fputs("Value overflow.", stderr);
+      } else if (value == LONG_MIN) {
+        fputs("Value underflow.", stderr);
+      } else {
+        fputs("Unknown conversion error.", stderr);
+      }
+    } else {
+      fputs("Unknown conversion error.", stderr);
+    }
+    fprintf(stderr, " Value parsed as: %ld\n", value);
+    exit(EXIT_FAILURE);
+  }
+
+  return value;
+}
+
 /** general-purpose HDF5 attribute helper functions **/
 
 void disable_h5_errors(err_state_t *err_state) {
@@ -648,16 +674,16 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
       assert(start); /* don't write a null pointer */
 
       /* correct 1-based coordinate */
-      *start = strtol(val, &tailptr, BASE) - 1;
+      *start = xstrtol(val, &tailptr, BASE) - 1;
       assert(!errno && !*tailptr);
 
     } else if (!strcmp(key, KEY_STEP)) {
       assert(step); /* don't write a null pointer */
-      *step = strtol(val, &tailptr, BASE);
+      *step = xstrtol(val, &tailptr, BASE);
       assert(!errno && !*tailptr);
 
     } else if (!strcmp(key, KEY_SPAN)) {
-      *span = strtol(val, &tailptr, BASE);
+      *span = xstrtol(val, &tailptr, BASE);
       assert(!errno && !*tailptr);
 
     } else {
@@ -1056,8 +1082,23 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
   while (getline(line, size_line, stdin) >= 0) {
     /* correcting 1-based coordinate */
     errno = 0;
-    start = strtol(*line, &tailptr, BASE) - 1;
-    assert(!errno);
+    start = xstrtol(*line, &tailptr, BASE) - 1;
+    if (errno) {
+      fprintf(stderr, "Error parsing chromStart from line: %s...\n", *line);
+      if (errno == ERANGE) {
+        if (start == LONG_MAX) {
+          fputs("Value overflow. ", stderr);
+        } else if (start == LONG_MIN) {
+          fputs("Value underflow. ", stderr);
+        } else {
+          fputs("Unknown conversion error. ", stderr);
+        }
+      } else {
+        fputs("Unknown conversion error. ", stderr);
+      }
+      fprintf(stderr, "chromStart parsed as: %ld\n", start);
+      exit(EXIT_FAILURE);
+    }
 
     /* next char must be space */
     if (tailptr != *line && isblank(*tailptr)) {
@@ -1146,10 +1187,10 @@ void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
 
     errno = 0;
 
-    start = strtol(*line + chrom_len + 1, &tailptr, BASE); /* 0-based */
+    start = xstrtol(*line + chrom_len + 1, &tailptr, BASE); /* 0-based */
     assert(!errno && isblank(*tailptr));
 
-    end = strtol(tailptr, &tailptr, BASE); /* 0-based */
+    end = xstrtol(tailptr, &tailptr, BASE); /* 0-based */
     assert(!errno && isblank(*tailptr));
 
     /* printf("%s[%ld:%ld]\n", chrom, start, end); */
