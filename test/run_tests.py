@@ -299,5 +299,12 @@ def suite():
     tests = map(unittest.TestLoader().loadTestsFromTestCase, classes)
     return unittest.TestSuite(tests)
 
+def main():
+    cur_dir = os.path.dirname(__file__)
+    if cur_dir:
+        os.chdir(cur_dir)
+
+    unittest.TextTestRunner(verbosity=1).run(suite())
+
 if __name__ == "__main__":
-    unittest.main()
+    sys.exit(main())
