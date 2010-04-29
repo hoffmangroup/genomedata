@@ -35,19 +35,21 @@ class GenomedataTester(unittest.TestCase):
         pass
 
     def setUp(self):
+        # Defaults
         self.verbose = False
         self.mode = "dir"
-
-        self.init()  # Call to sub-classed method
-
-        # Create Genomedata collection from test files
-        seqs = ["chr1.short.fa", "chrY.short.fa"]
-        # Placental includes data for chr1 and chrY
-        tracks = {"vertebrate": "chr1.phyloP44way.vertebrate.short.wigFix",
-                  "placental": "phyloP44way.placental.short.wigFix",
+        self.tracks = {"vertebrate": "chr1.phyloP44way.vertebrate.short.wigFix",
+                  "placental": "chr1.phyloP44way.placental.short.wigFix",
                   "primate": "chr1.phyloP44way.primate.short.wigFix",
                   "dnase": "chr1.wgEncodeDukeDNaseSeqBaseOverlap" \
                       "SignalK562V2.wig"}
+
+        # Potentially override defaults
+        self.init()  # Call to sub-classed method
+
+        # Create Genomedata collection from test files
+        seqs = ["chr1.short.fa", "chrY.short.fa.gz"]
+        # Placental includes data for chr1 and chrY
         if self.mode == "dir":
             gdfilename = mkdtemp(prefix="genomedata")
 
@@ -60,11 +62,11 @@ class GenomedataTester(unittest.TestCase):
 
         self.gdfilepath = path(gdfilename).expand()
 
-        self.tracknames = sorted(tracks.keys())
+        self.tracknames = sorted(self.tracks.keys())
 
         # Get resource paths instead of filenames
         seqfiles = [test_filename(file) for file in seqs]
-        trackfiles = [test_filename(tracks[trackname])
+        trackfiles = [test_filename(self.tracks[trackname])
                       for trackname in self.tracknames]
         self.seqfiles = seqfiles
         self.trackfiles = trackfiles
@@ -257,6 +259,31 @@ class TestGenomedataDir(GenomedataTester):
 class TestGenomedataFile(GenomedataTester):
     def init(self):
         self.mode = "file"
+
+class TestParseWigVar(GenomedataTester):
+    def init(self):
+        self.mode = "file"
+        self.tracks = {"vertebrate": "chr1.phyloP44way.vertebrate.short.wigFix",
+                  "placental": "phyloP44way.placental.short.wigFix",
+                  "primate": "chr1.phyloP44way.primate.short.wigFix",
+                  "dnase": "wgEncodeDukeDNaseSeqBaseOverlapSignalK562V2.wigVar"}
+
+class TestParseBed(GenomedataTester):
+    def init(self):
+        self.mode = "file"
+        self.tracks = {"vertebrate": "chr1.phyloP44way.vertebrate.short.wigFix",
+                  "placental": "phyloP44way.placental.short.wigFix",
+                  "primate": "chr1.phyloP44way.primate.short.wigFix",
+                  "dnase": "wgEncodeDukeDNaseSeqBaseOverlapSignalK562V2.bed"}
+
+class TestParseBedGraph(GenomedataTester):
+    def init(self):
+        self.mode = "file"
+        self.tracks = {"vertebrate": "chr1.phyloP44way.vertebrate.short.wigFix",
+                  "placental": "phyloP44way.placental.short.wigFix",
+                  "primate": "chr1.phyloP44way.primate.short.wigFix",
+                  "dnase": "wgEncodeDukeDNaseSeqBaseOverlap" \
+                           "SignalK562V2.bedGraph"}
 
 def suite():
     def is_test_class(member):

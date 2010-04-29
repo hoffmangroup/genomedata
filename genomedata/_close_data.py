@@ -75,7 +75,7 @@ def write_metadata(chromosome, verbose=False):
             mask_present = isfinite(col)
             mask_rows_any_present[mask_present] = True
             col_finite = col[mask_present]
-            # XXXopt: should be able to overwrite col, not needed anymore
+            del col  # col not needed anymore (optimization)
 
             num_datapoints_col = len(col_finite)
             if num_datapoints_col:

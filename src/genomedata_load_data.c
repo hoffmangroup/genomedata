@@ -435,7 +435,11 @@ int seek_chromosome(char *chrom, genome_t *genome,
   }
 
   if (h5file >= 0) {
+    /* Open the chromosome group, regardless of dir/file implementation */
+    disable_h5_errors(&err_state);
     h5group = H5Gopen(h5file, where, H5P_DEFAULT);
+    enable_h5_errors(&err_state);
+
     chromosome->h5group = h5group;
   }
 
@@ -444,7 +448,9 @@ int seek_chromosome(char *chrom, genome_t *genome,
 
   /* if opening failed, then return -1 with h5file set bad */
   if (!is_valid_chromosome(chromosome)) {
-    fprintf(stderr, " can't open chromosome: %s\n", chromosome->chrom);
+    if (verbose) {
+      fprintf(stderr, " can't open chromosome: %s\n", chromosome->chrom);
+    }
     return -1;
   } else {
     /* allocate supercontig metadata array */

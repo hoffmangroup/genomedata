@@ -47,6 +47,7 @@ genomedata-open-data = genomedata._open_data:main
 genomedata-close-data = genomedata._close_data:main
 genomedata-report = genomedata._report:main
 genomedata-erase-data = genomedata._erase_data:main
+genomedata-test = test.run_tests:main
 """
 
 install_requires = ["numpy", "path", "tables>2.0.4,<2.2a0", "textinput"]
@@ -231,9 +232,9 @@ if __name__ == "__main__":
           dependency_links=dependency_links,
           install_requires=install_requires,
           zip_safe=False,
-
           # XXX: this should be based off of __file__ instead
-          packages=find_packages(".", exclude="test"),
+          packages=find_packages("."),  # including "test"
+          include_package_data = True,
           entry_points=entry_points,
           scripts={"genomedata-load-data": ["src/genomedata_load_data.c"]},
           cmdclass={"build_scripts": BuildScriptWrapper,
