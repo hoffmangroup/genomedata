@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 from __future__ import with_statement, division
 
-"""
-Usage: ./genomedata_random_access.py GENOMEDATADIR TRACKNAME...
+"""Looks up track data in a Genomedata archive at positions on stdin
+
+Usage: cat POSITIONS | ./genomedata_random_access.py GENOMEDATADIR TRACKNAME...
 
 Expects lines on stdin of the form: chrom<whitespace>index
 
@@ -17,21 +18,14 @@ from genomedata import Genome
 
 with Genome(sys.argv[1]) as genome:
     tracknames = sys.argv[2:]
-    if tracknames:
-        # Make sure all tracks can be found
-        for trackname in tracknames:
-            assert trackname in genome.tracknames_continuous
-    else:
+    if not tracknames:
         print >>sys.stderr, "Using all tracks..."
         tracknames = genome.tracknames_continuous
 
     warnings.simplefilter("ignore")  # Ignore supercontig warnings
     for line in sys.stdin:
         chrom, index = line.strip().split()
-        chromosome = genome[chrom]
-        values = []
         for trackname in tracknames:
-            col_index = chromosome.index_continuous(trackname)
-            values.append(str(chromosome[int(index), col_index]))
+            print str(genome[chrom][int(index), trackname]),
 
-        print " ".join(values)
+        print

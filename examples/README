@@ -1,0 +1,18 @@
+genomedata_offline_random_access.py:
+  Lookup genomic positions supplied on stdin *not inorder* in a provided
+  Genomedata archive. Since the output is not inorder, this is not useful
+  except as a proof of concept.
+
+genomedata_random_access.py:
+  Lookup data at genomic positions supplied on stdin inorder in a 
+  provided Genomedata archive.
+
+genomedata_random_access.pl:
+  A sample perl version of genomedata_random_access.py.
+
+genomedata_fill_random.py:
+  Fill a genomedata track with random data.
+
+random_genomic_positions.py:
+  Generate random genomic positions given certain constraints (such as
+  always appearing inside of supercontigs).
