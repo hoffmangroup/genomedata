@@ -17,63 +17,30 @@ ${COMMON_CODE_HEADER}
 
 ${COMMON_CODE_BODY}
 
+class GenomedataInstaller(EasyInstaller):
+    name = "Genomedata"
+    min_version = PKG_VERSION
+    get_version = EasyInstaller.get_egg_version
+
 ############################## MAIN #########################
 def main(args=sys.argv[1:]):
-    # Set up shell
-    shell = ShellManager()
+    env = Environment()
+    env.initialize()
 
-    try:
-        arch_home = setup_arch_home()
-        prompt_set_env(shell, "ARCHHOME", fix_path(arch_home))
+    installers = [SetuptoolsInstaller(env),
+                  Hdf5Installer(env),
+                  NumpyInstaller(),
+                  GenomedataInstaller()]
 
-        python_home, default_python_home = setup_python_home(arch_home)
-        # Add python_home to PYTHONPATH
-        prompt_add_to_env(shell, "PYTHONPATH", python_home)
+    for installer in installers:
+        installer.run()
+        # Next step may need just-installed eggs, so update site list
+        env.refresh_packages()
 
-        script_home, default_script_home = setup_script_home(arch_home)
-        # Add script_home to PATH
-        prompt_add_to_env(shell, "PATH", script_home)
+    # DONE: Test package installations?
+    TestSuite().run([PytablesTester()])
 
-        # Maybe create pydistutils.cfg
-        prompt_create_cfg(arch_home, python_home, default_python_home,
-                          script_home, default_script_home)
-
-        prompt_install_setuptools(python_home)
-
-        hdf5_dir = setup_hdf5_installation(shell, arch_home)
-
-        prompt_install_numpy()
-
-        prompt_install_genomedata()
-
-        # Done: Test package installations?
-        prompt_test_packages(python_home)
-
-        print >>sys.stderr, "Installation complete"
-        print >>sys.stderr, ("* Source your ~/.*rc file to update your"
-                             " environment *")
-    finally:  # Clean up
-        shell.close()
-
-########################### GET VERSION ########################
-def get_genomedata_version():
-    """Returns Genomedata version as a string or None if not found or installed
-
-    Since genomedata __version__ is currently a revision number, get the full
-    number from pkg_resources
-    """
-    return get_egg_version("genomedata")
-
-##################### SPECIFIC PROGRAM INSTALLERS ################
-def prompt_install_genomedata(min_version=PKG_VERSION):
-    return _installer("genomedata", install_genomedata,
-                      get_genomedata_version,
-                      install_prompt = EASY_INSTALL_PROMPT,
-                      min_version=min_version)
-
-def install_genomedata(min_version=PKG_VERSION, *args, **kwargs):
-    return easy_install("genomedata", min_version=min_version)
-
+    env.close()
 
 if __name__ == "__main__":
     sys.exit(main())

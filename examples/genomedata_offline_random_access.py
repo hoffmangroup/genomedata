@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Looks up the data value for the given tracks at each position on stdin
+"""
+Looks up the data value for the given tracks at each position on stdin.
 
 Usage: ./genomedata_random_access.py GENOMEDATADIR TRACKNAME...
 
