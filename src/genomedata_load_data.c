@@ -69,6 +69,7 @@ typedef enum {
 } file_format;
 
 typedef struct {
+  /* XXX: int might not be sufficient for start and end */
   int start;
   int end;
   hid_t group;
@@ -359,9 +360,11 @@ void close_chromosome(chromosome_t *chromosome) {
   free(chromosome->supercontigs);
 
   close_group(chromosome->h5group);
+  chromosome->h5group = -1;
   /* if chromosome is independent file, close the file as well */
   if (chromosome->h5file >= 0) {
     close_file(chromosome->h5file);
+    chromosome->h5file = -1;
   }
 }
 
@@ -439,28 +442,27 @@ int seek_chromosome(char *chrom, genome_t *genome,
     disable_h5_errors(&err_state);
     h5group = H5Gopen(h5file, where, H5P_DEFAULT);
     enable_h5_errors(&err_state);
-
-    chromosome->h5group = h5group;
   }
+  chromosome->h5group = h5group;
 
   /* clean up memory before returning */
   free(where);
 
   /* if opening failed, then return -1 with h5file set bad */
-  if (!is_valid_chromosome(chromosome)) {
+  if (is_valid_chromosome(chromosome)) {
+    /* allocate supercontig metadata array */
+    assert(H5Gget_info(chromosome->h5group, &h5group_info) >= 0);
+    init_supercontig_array(h5group_info.nlinks, chromosome);
+
+    /* populate supercontig metadata array */
+    assert(H5Literate(chromosome->h5group, H5_INDEX_NAME, H5_ITER_INC, &idx,
+                      supercontig_visitor, chromosome) == 0);
+    return 0;
+  } else {
     if (verbose) {
       fprintf(stderr, " can't open chromosome: %s\n", chromosome->chrom);
     }
     return -1;
-  } else {
-    /* allocate supercontig metadata array */
-    assert(H5Gget_info(h5group, &h5group_info) >= 0);
-    init_supercontig_array(h5group_info.nlinks, chromosome);
-
-    /* populate supercontig metadata array */
-    assert(H5Literate(h5group, H5_INDEX_NAME, H5_ITER_INC, &idx,
-                      supercontig_visitor, chromosome) == 0);
-    return 0;
   }
 }
 
@@ -742,8 +744,8 @@ void write_buf(chromosome_t *chromosome, char *trackname,
   }
 
   /* correct for overshoot */
-  if (*buf_filled_end > *buf_end) { /* XXX: valgrind complains about this because *buf_filled_end points to something unallocated */
-    *buf_filled_end = *buf_end;
+  if (buf_filled_end > buf_end) {
+    buf_filled_end = buf_end;
   }
 
   for (supercontig_t *supercontig = chromosome->supercontigs;
@@ -824,7 +826,7 @@ void write_buf(chromosome_t *chromosome, char *trackname,
 }
 
 void malloc_chromosome_buf(chromosome_t *chromosome,
-                           float **buf_start, float **buf_end) {
+                           float **buf_start, float **buf_end, bool verbose) {
   /* allocate enough space to assign values from 0 to the end of the
      last supercontig, and fill with NAN */
 
@@ -834,12 +836,22 @@ void malloc_chromosome_buf(chromosome_t *chromosome,
     return;
   }
 
-  /* XXX: last_supercontig(chromosome) might not return the maximum
+  /* last_supercontig(chromosome) might not return the maximum
      value; you really need to iterate through all of them */
-  buf_len = last_supercontig(chromosome)->end;
+  buf_len = 0;
+  for (supercontig_t *supercontig = chromosome->supercontigs;
+       supercontig <= last_supercontig(chromosome); supercontig++) {
+    if (supercontig->end > buf_len) {
+      buf_len = supercontig->end;
+    }
+  }
 
   if (*buf_start) {
     free(*buf_start);
+  }
+  if (verbose) {
+    fprintf(stderr, " allocating memory for %lu floats\n",
+            (unsigned long)buf_len);
   }
   *buf_start = xmalloc(buf_len * sizeof(float));
   *buf_end = *buf_start + buf_len;
@@ -869,7 +881,7 @@ bool load_chromosome(char *chrom, genome_t *genome, chromosome_t *chromosome,
   }
 
   /* allocate data buffer */
-  malloc_chromosome_buf(chromosome, buf_start, buf_end);
+  malloc_chromosome_buf(chromosome, buf_start, buf_end, verbose);
 
   /* calc dimensions */
   get_cols(chromosome, trackname, &num_cols, &col);
@@ -915,19 +927,23 @@ bool load_chromosome(char *chrom, genome_t *genome, chromosome_t *chromosome,
 }
 
 void fill_buffer(float *buf_start, float *buf_end, long start, long end,
-                 float datum) {
+                 float datum, bool verbose) {
   float *fill_start, *fill_end;
 
   fill_start = buf_start + start;
   if (fill_start >= buf_end) {
-    /* XXX: use of %ld here is not portable to 32-bit systems */
-    fprintf(stderr, " ignoring some data at %ld\n", start);
+    if (verbose) {
+      /* XXX: use of %ld here is not portable to 32-bit systems */
+      fprintf(stderr, " ignoring some data at %ld\n", start);
+    }
     return;
   }
 
   fill_end = buf_start + end;
   if (fill_end > buf_end) {
-    fprintf(stderr, " ignoring some data at %ld:%ld\n", start, end);
+    if (verbose) {
+      fprintf(stderr, " ignoring some data at %ld:%ld\n", start, end);
+    }
     fill_end = buf_end;
   }
 
@@ -961,7 +977,7 @@ void proc_wigfix_header(char *line, genome_t *genome, chromosome_t *chromosome,
 
     /* chrom is saved into chromosome here */
     seek_chromosome(chrom, genome, chromosome, verbose);
-    malloc_chromosome_buf(chromosome, buf_start, buf_end);
+    malloc_chromosome_buf(chromosome, buf_start, buf_end, verbose);
   } else {
     /* chrom wasn't saved, so free it */
     free(chrom);
@@ -983,6 +999,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
   long step = 1;
   long span = 1;
   float datum;
+  bool warned = false;
 
   init_chromosome(&chromosome);
 
@@ -1014,10 +1031,12 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
       if (fill_start < buf_end) {
         fill_end = fill_start + span;
         if (fill_end > buf_end) {
-          fprintf(stderr, " ignoring data at %s:%lu+%lu\n",
-                  chromosome.chrom,
-                  (unsigned long)(fill_start - buf_start),
-                  (unsigned long)span);
+          if (verbose) {
+            fprintf(stderr, " ignoring data at %s:%lu+%lu\n",
+                    chromosome.chrom,
+                    (unsigned long)(fill_start - buf_start),
+                    (unsigned long)span);
+          }
           fill_end = buf_end;
         }
 
@@ -1029,9 +1048,12 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
         fill_start += step;
       } else {
         /* else: ignore data until we get to another header line */
-        fprintf(stderr, " ignoring data at %s:%lu\n",
-                chromosome.chrom,
-                (unsigned long)(fill_start - buf_start));
+        if (verbose && !warned) {
+          fprintf(stderr, " ignoring data at %s:%lu\n",
+                  chromosome.chrom,
+                  (unsigned long)(fill_start - buf_start));
+          warned = true;
+        }
       }
     } else {
       assert(tailptr == *line);
@@ -1041,6 +1063,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
                          &buf_start, &buf_end, &fill_start,
                          &step, &span, verbose);
       buf_filled_start = fill_start;
+      warned = false;
     }
   }
 
@@ -1127,7 +1150,7 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
       assert(*tailptr == '\n');
 
       end = start + span;
-      fill_buffer(buf_start, buf_end, start, end, datum);
+      fill_buffer(buf_start, buf_end, start, end, datum, verbose);
 
     } else {
       write_buf(&chromosome, trackname, buf_start, buf_end,
@@ -1208,7 +1231,7 @@ void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
     datum = strtof(tailptr, &tailptr);
     assert(!errno && *tailptr == '\n');
 
-    fill_buffer(buf_start, buf_end, start, end, datum);
+    fill_buffer(buf_start, buf_end, start, end, datum, verbose);
   } while (getline(line, size_line, stdin) >= 0);
 
   write_buf(&chromosome, trackname, buf_start, buf_end, buf_start,
