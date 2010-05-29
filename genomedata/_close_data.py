@@ -11,11 +11,11 @@ __version__ = "$Revision$"
 
 import sys
 
-from numpy import (amin, amax, array, diff, hstack, isfinite, NAN,
+from numpy import (amin, amax, array, diff, hstack, isfinite,
                    NINF, PINF, square)
 from tables import NoSuchNodeError
 
-from . import CONTINUOUS_ATOM, CONTINUOUS_CHUNK_SHAPE, CONTINUOUS_DTYPE, Genome
+from . import Genome
 from ._load_seq import MIN_GAP_LEN
 from ._util import fill_array, init_num_obs, new_extrema
 
@@ -43,15 +43,7 @@ def write_metadata(chromosome, verbose=False):
         try:
             continuous = supercontig.continuous
         except NoSuchNodeError:
-            # Create empty continuous array
-            continuous_shape = (supercontig.seq.shape[0], num_obs)
-            continuous_array = fill_array(NAN, continuous_shape,
-                                          dtype=CONTINUOUS_DTYPE)
-            h5file.createCArray(supercontig.h5group, "continuous",
-                                CONTINUOUS_ATOM, continuous_shape,
-                                chunkshape=CONTINUOUS_CHUNK_SHAPE)
-            supercontig.continuous[...] = continuous_array
-            continue
+            raise NoSuchNodeError("Supercontig found missing continuous")
 
         # only runs when assertions checked
         if __debug__:

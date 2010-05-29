@@ -21,11 +21,14 @@ import sys
 
 import tables
 from functools import partial
-from numpy import add, amin, amax, array, empty, float32, NAN, square, uint8
+from numpy import (add, amin, amax, append, array, empty, float32,
+                   NAN, square, uint8)
 from os import extsep
 from path import path
 from tables import Float32Atom, NoSuchNodeError, openFile, UInt8Atom
 from warnings import warn
+
+from ._util import fill_array
 
 FORMAT_VERSION = 0
 SEQ_DTYPE = uint8
@@ -117,7 +120,7 @@ class Genome(object):
         if filepath.isfile():
             # Open the Genomedata file
             isfile = True
-            self._h5file = openFile(filepath, *args, **kwargs)
+            self.h5file = openFile(filepath, *args, **kwargs)
         elif filepath.isdir():
             # Genomedata directory
             isfile = False
@@ -148,7 +151,7 @@ class Genome(object):
         assert self.isopen
         if self._isfile:  # Chromosomes are groups
             # Iterate over child group of root
-            for group in self._h5file.iterNodes("/", classname="Group"):
+            for group in self.h5file.iterNodes("/", classname="Group"):
                 groupname = group._v_name
                 yield self[groupname]
         else:  # Chromosomes are files
@@ -184,7 +187,7 @@ class Genome(object):
 
         try:
             if self._isfile:
-                res = Chromosome(self._h5file, where="/" + name)
+                res = Chromosome(self.h5file, where="/" + name)
             else:
                 res = Chromosome._fromfilename(
                     self._path.joinpath(name + SUFFIX),
@@ -233,6 +236,10 @@ class Genome(object):
         if self._context_count == 0:
             self.close()
 
+    def __del__(self):
+        if self.isopen:
+            self.close()
+
     def close(self):
         """Close this Genomedata archive and any open chromosomes
 
@@ -247,14 +254,14 @@ class Genome(object):
 
         # Whether a single file or a directory, close all the chromosomes
         # so they know they shouldn't be read. Do this before closing
-        # Genome._h5file in case the chromosomes need access to it in closing.
+        # Genome.h5file in case the chromosomes need access to it in closing.
         for name, chromosome in self.open_chromosomes.iteritems():
             # Only close those not closed manually by the user
             if chromosome.isopen:
                 chromosome.close()
 
         if self._isfile:
-            self._h5file.close()
+            self.h5file.close()
 
         self.open_chromosomes = {}
         self._isopen = False
@@ -276,36 +283,49 @@ class Genome(object):
         extrema = [getattr(chromosome, name) for chromosome in self]
         return accumulator(extrema)
 
-    def _erase_data(self, trackname):
+    def erase_data(self, trackname):
         """Erase all data for the given track across all chromosomes
 
         The Genome object must have been created with
         :param mode:="r+". Behavior is undefined if this is not the case.
 
         Currently sets the dirty bit, which can only be erased with
-        genomedata-close-data GENOMEDATA
+        genomedata-close-data
 
         """
+        assert self.isopen
         for chromosome in self:
             chromosome._erase_data(trackname)
 
-    def _set_tracknames_continuous(self, tracknames):
-        if self._isfile:
-            attrs = self._h5file.root._v_attrs
-            if "tracknames" in attrs:
-                raise ValueError("%s already has named tracks" %
-                                 self.filename)
-            attrs.dirty = True
-            attrs.tracknames = array(tracknames)
-        else:
-            for chromosome in self:
-                attrs = chromosome.attrs
-                if "tracknames" in attrs:
-                    raise ValueError("%s already has named tracks" %
-                                     self.filename)
+    def add_track_continuous(self, trackname):
+        """Add a new track
 
-                attrs.dirty = True
-                attrs.tracknames = array(tracknames)
+        The Genome object must have been created with
+        :param mode:="r+". Behavior is undefined if this is not the case.
+
+        Currently sets the dirty bit, which can only be erased with
+        genomedata-close-data
+
+        """
+        assert self.isopen
+
+        if self._isfile:
+            # Update tracknames attribute on file
+            attrs = self.h5file.root._v_attrs
+            if "tracknames" in attrs:
+                tracknames = attrs.tracknames
+                if trackname in tracknames:
+                    raise ValueError("%s already has a track of name: %s"
+                                     % (self.filename, trackname))
+            else:
+                tracknames = array([])
+
+            attrs.dirty = True
+            attrs.tracknames = append(tracknames, trackname)
+
+        # Otherwise, just let the chromosomes handle it
+        for chromosome in self:
+            chromosome._add_track_continuous(trackname)
 
     @property
     def isopen(self):
@@ -319,7 +339,7 @@ class Genome(object):
         if self._isfile:
             # Tracknames are stored at the root of each file, so we can
             # access them directly in this case
-            attrs = self._h5file.root._v_attrs
+            attrs = self.h5file.root._v_attrs
             return attrs.tracknames.tolist()
         else:
             # check that all chromosomes have the same tracknames_continuous
@@ -720,10 +740,58 @@ class Chromosome(object):
         genomedata-close-data GENOMEDATA
 
         """
+        assert self.isopen
         col_index = self.index_continuous(trackname)
         for supercontig, continuous in self.itercontinuous():
             self.attrs.dirty = True
             continuous[:, col_index] = NAN
+
+    def _add_track_continuous(self, trackname):
+        """Add a new track
+
+        The Genome object must have been created with
+        :param mode:="r+". Behavior is undefined if this is not the case.
+
+        Currently sets the dirty bit, which can only be erased with
+        genomedata-close-data
+
+        """
+        assert self.isopen
+        if self._isfile:
+            # Update tracknames attribute with new trackname
+            attrs = self.h5file.root._v_attrs
+            if "tracknames" in attrs:
+                tracknames = attrs.tracknames
+                if trackname in tracknames:
+                    raise ValueError("%s already has a track of name: %s"
+                                     % (self.filename, trackname))
+            else:
+                tracknames = array([])
+
+            attrs.tracknames = append(tracknames, trackname)
+        # else: hope the Genome object updated its own tracknames
+
+        self.attrs.dirty = True  # dirty specific to chromosome
+
+        # Extend supercontigs by a column (or create them)
+        for supercontig in self:
+            supercontig_length = supercontig.seq.shape[0]
+            try:
+                continuous = supercontig.continuous
+            except NoSuchNodeError:
+                # Define an extendible array in the second dimension (0)
+                supercontig_shape = (supercontig_length, 0)
+                self.h5file.createEArray(supercontig.h5group, "continuous",
+                                         CONTINUOUS_ATOM, supercontig_shape,
+                                         chunkshape=CONTINUOUS_CHUNK_SHAPE)
+
+            # Create empty continuous array
+            continuous_array = fill_array(NAN, (supercontig_length, 1),
+                                          dtype=CONTINUOUS_DTYPE)
+            # Add column to supercontig continuous array
+            supercontig.continuous.append(continuous_array)
+
+
 
     @property
     def isopen(self):

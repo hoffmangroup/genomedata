@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
 
 """
-_open_data: recursively set up HDF5 files to have named tracks
+Open one or more tracks in the specified Genomedata archive.
+These tracks can then be loaded with data using genomedata-load-data.
 """
+
+from __future__ import division, with_statement
 
 __version__ = "$Revision$"
 
@@ -11,7 +13,6 @@ __version__ = "$Revision$"
 
 import sys
 
-from numpy import array
 import warnings
 
 from . import Genome
@@ -19,7 +20,8 @@ from . import Genome
 def open_data(gdfilename, tracknames, verbose=False):
     warnings.simplefilter("ignore")
     with Genome(gdfilename, "r+") as genome:
-        genome._set_tracknames_continuous(tracknames)
+        for trackname in tracknames:
+            genome.add_track_continuous(trackname)
 
     warnings.resetwarnings()
 
@@ -28,10 +30,8 @@ def parse_options(args):
 
     usage = "%prog [OPTION]... GENOMEDATAFILE TRACKNAME..."
     version = "%%prog %s" % __version__
-    description = ("Specify the tracks that will be in this Genomedata"
-                   " archive")
     parser = OptionParser(usage=usage, version=version,
-                          description=description)
+                          description=__doc__.strip())
 
     parser.add_option("-v", "--verbose", dest="verbose",
                       default=False, action="store_true",

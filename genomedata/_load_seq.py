@@ -120,7 +120,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None):
                     if mode == "dir":
                         chromosome = genome[name]
                     else: # mode == "file"
-                        h5file = genome._h5file
+                        h5file = genome.h5file
                         h5group = h5file.createGroup("/", name,
                                                      filters=FILTERS_GZIP)
                         chromosome = genome[name]
