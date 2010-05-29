@@ -792,7 +792,6 @@ class Chromosome(object):
             supercontig.continuous.append(continuous_array)
 
 
-
     @property
     def isopen(self):
         """Return a boolean indicating if the Chromosome is still open"""

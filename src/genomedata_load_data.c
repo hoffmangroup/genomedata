@@ -164,59 +164,6 @@ void get_attr(hid_t loc, const char *name, hid_t mem_type_id, void *buf) {
   assert(H5Aclose(attr) >= 0);
 }
 
-void set_attr(hid_t loc, const char *name, hid_t datatype, hid_t dataspace,
-              hid_t mem_type_id, const void *buf) {
-  hid_t attr;
-
-  attr = H5Acreate(loc, name, datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT);
-  assert(attr >= 0);
-
-  assert(H5Awrite(attr, mem_type_id, buf) >= 0);
-
-  assert(H5Aclose(attr) >= 0);
-}
-
-/* set an attr from a C integer */
-void set_attr_int(hid_t loc, const char *name, const int val) {
-  hid_t datatype, dataspace, mem_type_id;
-
-  datatype = H5T_NATIVE_UINT;
-  mem_type_id = H5T_NATIVE_UINT;
-
-  /* create dataspace */
-  dataspace = H5Screate(H5S_SCALAR);
-  assert(dataspace >= 0);
-
-  fputs("setting int attr\n", stderr);
-  set_attr(loc, name, datatype, dataspace, mem_type_id, &val);
-}
-
-/* set an attr from a C string */
-void set_attr_str(hid_t loc, const char *name, const char *buf) {
-  hid_t datatype, dataspace, mem_type_id;
-  hsize_t buf_len;
-
-  /* create datatype */
-  datatype = H5Tcopy(H5T_C_S1);
-  assert(datatype >= 0);
-
-  buf_len = strlen(buf);
-  /* 0 length in datatype size not supported */
-  if (buf_len == 0) {
-    buf_len = 1;
-  }
-  assert(H5Tset_size(datatype, buf_len) >= 0);
-
-  /* create dataspace */
-  dataspace = H5Screate(H5S_SCALAR);
-  assert(dataspace >= 0);
-
-  mem_type_id = H5T_STRING;
-
-  fputs("setting string attr\n", stderr);
-  set_attr(loc, name, datatype, dataspace, datatype, buf);
-}
-
 /** dataset **/
 
 /* suppresses errors */
@@ -544,95 +491,20 @@ void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
   assert(H5Aclose(attr) >= 0);
 }
 
-/* make existing dataset into a PyTables EArray by setting appropriate
-   attrs */
-void make_pytables_earray(hid_t dataset) {
-  set_attr_str(dataset, "CLASS", "EARRAY");
-  set_attr_int(dataset, "EXTDIM", 1);
-  set_attr_str(dataset, "TITLE", "");
-  set_attr_str(dataset, "VERSION", "1.3");
-}
-
-hid_t open_supercontig_dataset(supercontig_t *supercontig, hsize_t col,
-                               hsize_t num_cols, long chunk_nrows,
-                               bool verbose) {
-  /* creates it if it doesn't already exist;
+hid_t open_supercontig_dataset(supercontig_t *supercontig, char *trackname) {
+  /* it must already exist;
      returns a handle for H5Dread or H5Dwrite */
 
   hid_t dataset = -1;
-  hid_t dataset_creation_plist = -1;
-  hid_t file_dataspace = -1;
-  hsize_t max_dataspace_dims[CARDINALITY] = {-1, H5S_UNLIMITED};
-
-  hsize_t file_dataspace_dims[CARDINALITY];
-  hsize_t chunk_dims[CARDINALITY] = {chunk_nrows, 1};
-
-  /* set up creation options */
-  dataset_creation_plist = H5Pcreate(H5P_DATASET_CREATE);
-  assert(dataset_creation_plist >= 0);
-
-  assert(H5Pset_fill_value(dataset_creation_plist, DTYPE, &nan_float) >= 0);
-
   /* open dataset if it already exists */
   dataset = open_dataset(supercontig->group, DATASET_NAME, H5P_DEFAULT);
 
   if (dataset < 0) {
-    /* create dataspace */
-    file_dataspace_dims[0] = supercontig->end - supercontig->start;
-    file_dataspace_dims[1] = num_cols;
-    max_dataspace_dims[0] = file_dataspace_dims[0];
-
-    file_dataspace = H5Screate_simple(CARDINALITY, file_dataspace_dims,
-                                      max_dataspace_dims);
-    assert(file_dataspace >= 0);
-
-    /* create chunkspace */
-    assert(H5Pset_chunk(dataset_creation_plist, CARDINALITY, chunk_dims) >= 0);
-
-    /* create dataset */
-    if (verbose) {
-      fprintf(stderr, " creating %lld x %lld dataset...",
-              file_dataspace_dims[0], file_dataspace_dims[1]);
-    }
-    dataset = H5Dcreate(supercontig->group, DATASET_NAME, DTYPE,
-                        file_dataspace, H5P_DEFAULT, dataset_creation_plist,
-                        H5P_DEFAULT);
-    assert(dataset >= 0);
-    if (verbose) {
-      fputs(" done\n", stderr);
-    }
-
-    make_pytables_earray(dataset);
-  } else if (col > num_cols) {
-    /* The data column for the destination track does not exist yet.
-       We need to extend the dataset to make room. */
-
-    /* get file dataspace */
-    file_dataspace = get_file_dataspace(dataset);
-
-    /* get dataspace dimensions */
-    assert(H5Sget_simple_extent_dims(file_dataspace, file_dataspace_dims,
-                                     max_dataspace_dims) == CARDINALITY);
-
-    /* extend dataspace dimensions */
-    if (verbose) {
-      fprintf(stderr, " extending width of dataset from %lld -> %lld...",
-              file_dataspace_dims[1], col);
-    }
-    file_dataspace_dims[1] = col;
-    assert(H5Sset_extent_simple(file_dataspace, CARDINALITY,
-                                file_dataspace_dims, max_dataspace_dims));
-    if (verbose) {
-      fputs(" done\n", stderr);
-    }
-
-    close_dataspace(file_dataspace);
+    fprintf(stderr, "ERROR: Missing supercontig dataset for track: %s\
+\nMake sure to open data tracks with genomedata-open-data before trying \
+to load data.", trackname);
+    fatal("missing supercontig dataset");
   }
-
-  /* XXX: set dirty attribute */
-  /* XXX: need to look up in documentation: boolean attributes, etc. */
-
-  assert(H5Pclose(dataset_creation_plist) >= 0);
 
   return dataset;
 }
@@ -838,9 +710,8 @@ void write_buf(chromosome_t *chromosome, char *trackname,
     /* calc dimensions */
     get_cols(chromosome, trackname, &num_cols, &col);
 
-    /* open or create dataset */
-    dataset = open_supercontig_dataset(supercontig, col, num_cols, chunk_nrows,
-                                       verbose);
+    /* open dataset */
+    dataset = open_supercontig_dataset(supercontig, trackname);
 
     /* get file dataspace */
     file_dataspace = get_file_dataspace(dataset);
@@ -937,9 +808,8 @@ bool load_chromosome(char *chrom, genome_t *genome, chromosome_t *chromosome,
     mem_dataspace_dims[0] = supercontig->end - supercontig->start;
     mem_dataspace = get_col_dataspace(mem_dataspace_dims);
 
-    /* open or create dataset */
-    dataset = open_supercontig_dataset(supercontig, col, num_cols, chunk_nrows,
-                                       verbose);
+    /* open dataset */
+    dataset = open_supercontig_dataset(supercontig, trackname);
 
     /* get file dataspace */
     file_dataspace = get_file_dataspace(dataset);

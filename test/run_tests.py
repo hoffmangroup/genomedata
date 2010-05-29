@@ -39,10 +39,10 @@ class GenomedataTester(unittest.TestCase):
         self.verbose = False
         self.mode = "dir"
         self.tracks = {"vertebrate": "chr1.phyloP44way.vertebrate.short.wigFix",
-                  "placental": "chr1.phyloP44way.placental.short.wigFix",
-                  "primate": "chr1.phyloP44way.primate.short.wigFix",
-                  "dnase": "chr1.wgEncodeDukeDNaseSeqBaseOverlap" \
-                      "SignalK562V2.wig"}
+                       "placental": "chr1.phyloP44way.placental.short.wigFix",
+                       "primate": "chr1.phyloP44way.primate.short.wigFix",
+                       "dnase": "chr1.wgEncodeDukeDNaseSeqBaseOverlap" \
+                           "SignalK562V2.wig"}
 
         # Potentially override defaults
         self.init()  # Call to sub-classed method
