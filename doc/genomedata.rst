@@ -9,8 +9,9 @@ Genomedata |version| documentation
 
 For a broad overview, see the paper:
 
-    Hoffman MM, Buske OJ, Noble WS. 2010. `The Genomedata format for storing
-    large-scale functional genomics data`__. *Bioinformatics*.
+    Hoffman MM, Buske OJ, Noble WS. (2010). `The Genomedata format for storing
+    large-scale functional genomics data`__. 
+    *Bioinformatics*, **26**\(11):1458-1459; doi:10.1093/bioinformatics/btq164 
 
 .. __: http://bioinformatics.oxfordjournals.org/cgi/content/abstract/btq164
 
@@ -76,6 +77,7 @@ Why have :class:`Supercontigs <Supercontig>`?
   when regions of defined data are far enough apart. They also serve as
   a convenient chunk since they can usually fit entirely in memory.
 
+.. _Implementation:
 
 Implementation
 ==============
