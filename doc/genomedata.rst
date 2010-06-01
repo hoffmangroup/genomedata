@@ -9,11 +9,12 @@ Genomedata |version| documentation
 
 For a broad overview, see the paper:
 
-    Hoffman MM, Buske OJ, Noble WS, "The Genomedata format for storing
-    large-scale functional genomics data." Submitted.
+    Hoffman MM, Buske OJ, Noble WS. 2010. `The Genomedata format for storing
+    large-scale functional genomics data`__. *Bioinformatics*.
 
-Michael <mmh1 at washington dot edu> can send you a copy of the latest
-manuscript. Please cite this paper if you use Genomedata.
+.. __: http://bioinformatics.oxfordjournals.org/cgi/content/abstract/btq164
+
+Please cite this paper if you use Genomedata.
 
 .. currentmodule:: genomedata
 
