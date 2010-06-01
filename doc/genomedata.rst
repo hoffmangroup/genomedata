@@ -125,7 +125,8 @@ sequence and numerical data into a Genomedata archive with the
 
 This command is a user-friendly shortcut to the typical workflow.
 The underlying commands are still installed and may be used if more
-fine-grained control is required (for instance, parallel data loading).
+fine-grained control is required (for instance, parallel data loading or
+adding additional tracks later).
 The commands and required ordering are:
 
 1. :ref:`genomedata-load-seq`
@@ -133,7 +134,7 @@ The commands and required ordering are:
 #. :ref:`genomedata-load-data`
 #. :ref:`genomedata-close-data`
 
-Entire data tracks can be replaced with the following pipeline:
+Entire data tracks can later be replaced with the following pipeline:
 
 1. :ref:`genomedata-erase-data`
 #. :ref:`genomedata-load-data`
@@ -141,6 +142,27 @@ Entire data tracks can be replaced with the following pipeline:
 
 .. versionadded:: 1.1
    The ability to replace data tracks.
+
+Additional data tracks can be added to an existing archive with the
+following pipeline:
+
+1. :ref:`genomedata-open-data`
+#. :ref:`genomedata-load-data`
+#. :ref:`genomedata-close-data`
+
+.. versionadded:: 1.2
+   The ability to add data tracks.
+
+As of the current version, Genomedata archives must include the
+underlying genomic sequence and can only be created with
+:ref:`genomedata-load-seq`. A Genomedata archive can be created
+without any tracks, however, using the following pipeline:
+
+1. :ref:`genomedata-load-seq`
+#. :ref:`genomedata-close-data`
+
+.. versionadded:: 1.2
+   The ability to create an archive without any data tracks.
 
 .. note:: A call to :program:`h5repack` after
           :ref:`genomedata-close-data` may be used to
@@ -201,7 +223,7 @@ or the following pipeline::
    genomedata-close-data genomedata.test
 
 .. note:: chr1.fa and chrY.fa.gz could als be combined into a single
-          sequence file with two sequences
+          sequence file with two sequences.
 
 .. warning::
    It is important that the sequence names (`chrY`, `chr1`) in the signal files
@@ -354,8 +376,8 @@ See :ref:`this example <genomedata-load-example>` for details.
 genomedata-open-data
 --------------------
 
-This command opens the specified tracknames in the Genomedata archive,
-allowing data for those tracks to be added with :ref:`genomedata-load-data`.
+This command opens the specified tracks in the Genomedata archive,
+allowing data for those tracks to be loaded with :ref:`genomedata-load-data`.
 
 ::
 

@@ -16,7 +16,7 @@ from numpy import frombuffer
 from path import path
 import warnings
 
-from . import SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, Genome
+from . import SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, FORMAT_VERSION, Genome
 from ._util import FILTERS_GZIP, LightIterator, maybe_gzip_open
 
 MIN_GAP_LEN = 100000
@@ -64,6 +64,10 @@ re_gap_segment = compile(r"""
 
 def read_seq(chromosome, seq):
     supercontig_index = 0
+
+    chromosome.attrs.start = 0
+    chromosome.attrs.end = len(seq)
+    chromosome._file_attrs.genomedata_format_version = FORMAT_VERSION
 
     for m_segment in re_gap_segment.finditer(seq):
         seq_unambig = m_segment.group(2)
@@ -124,6 +128,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None):
                         h5group = h5file.createGroup("/", name,
                                                      filters=FILTERS_GZIP)
                         chromosome = genome[name]
+
                     chromosome.attrs.dirty = True
                     read_seq(chromosome, seq)
 

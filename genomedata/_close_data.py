@@ -26,8 +26,13 @@ def write_metadata(chromosome, verbose=False):
     if verbose:
         print >>sys.stderr, "writing metadata for %s" % chromosome
 
+    if chromosome.num_tracks_continuous == 0:
+        chromosome.attrs.dirty = False
+        return
+
     h5file = chromosome.h5file
     tracknames = chromosome.tracknames_continuous
+
     num_obs = len(tracknames)
     row_shape = (num_obs,)
     mins = fill_array(PINF, row_shape)

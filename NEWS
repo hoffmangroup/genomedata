@@ -1,6 +1,14 @@
-1.1.2:
-
-
+1.2.0:
+* Added support for adding additional tracks using genomedata-open-data and
+  Genome.add_track_continuous().
+* Added support for creating Genomedata archives without any tracks.
+* Made chromosome.start and chromosome.end be based upon sequence instead
+  of supercontigs.
+* Made iter(chromosome) and chromosome.itercontinuous() yield supercontigs
+  sorted by start index (instead of dictionary order).
+* Fixed pointer dereference bug that could cause segfault in
+  genomedata-load-data.
+* Improved installation script robustness and clarity.
 
 1.1.1:
 * Fixed format string warnings on Mac OS X

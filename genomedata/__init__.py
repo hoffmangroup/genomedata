@@ -30,7 +30,7 @@ from warnings import warn
 
 from ._util import fill_array
 
-FORMAT_VERSION = 0
+FORMAT_VERSION = 1
 SEQ_DTYPE = uint8
 SEQ_ATOM = UInt8Atom()
 
@@ -121,6 +121,7 @@ class Genome(object):
             # Open the Genomedata file
             isfile = True
             self.h5file = openFile(filepath, *args, **kwargs)
+            self._file_attrs = self.h5file.root._v_attrs
         elif filepath.isdir():
             # Genomedata directory
             isfile = False
@@ -308,10 +309,13 @@ class Genome(object):
 
         """
         assert self.isopen
+        if self.format_version < 1:
+            raise NotImplementedError("""Adding tracks is only supported \
+for archives created with Genomedata version 1.2.0 or later.""")
 
         if self._isfile:
             # Update tracknames attribute on file
-            attrs = self.h5file.root._v_attrs
+            attrs = self._file_attrs
             if "tracknames" in attrs:
                 tracknames = attrs.tracknames
                 if trackname in tracknames:
@@ -320,10 +324,9 @@ class Genome(object):
             else:
                 tracknames = array([])
 
-            attrs.dirty = True
             attrs.tracknames = append(tracknames, trackname)
 
-        # Otherwise, just let the chromosomes handle it
+        # Let the chromosomes handle the rest
         for chromosome in self:
             chromosome._add_track_continuous(trackname)
 
@@ -339,8 +342,7 @@ class Genome(object):
         if self._isfile:
             # Tracknames are stored at the root of each file, so we can
             # access them directly in this case
-            attrs = self.h5file.root._v_attrs
-            return attrs.tracknames.tolist()
+            return self._file_attrs.tracknames.tolist()
         else:
             # check that all chromosomes have the same tracknames_continuous
             res = None
@@ -355,7 +357,30 @@ class Genome(object):
     @property
     def num_tracks_continuous(self):
         """Returns the number of continuous data tracks."""
-        return len(self.tracknames_continuous)
+        try:
+            return len(self.tracknames_continuous)
+        except AttributeError:
+            return 0
+
+    @property
+    def format_version(self):
+        """Genomedata format version"""
+        assert self.isopen
+        if self._isfile:
+            try:
+                return self._file_attrs.genomedata_format_version
+            except AttributeError:
+                pass
+
+        version = None
+        for chromosome in self:
+            cur_version = chromosome._format_version
+            if version is None:
+                version = cur_version
+            else:
+                assert version == cur_version
+
+        return version
 
     # XXX: should memoize these with an off-the-shelf decorator
     @property
@@ -440,6 +465,9 @@ class Chromosome(object):
     <Chromosome 'chrX', file='/path/to/genomedata/chrX.genomedata'>
 
     """
+    class ChromosomeDirtyError(Exception):
+        pass
+
     default_where = "/"
     default_mode = "r"
 
@@ -477,19 +505,18 @@ class Chromosome(object):
         # the user changes.
         attrs = h5group._v_attrs
         if h5file.mode in set(["w", "r+", "a"]):
-            attrs.dirty = True
-            attrs.genomedata_format_version = FORMAT_VERSION
-        else:
-            # XXX: the first version did not necessarily include this
-            # attribute; after everything does this exception handling
-            # should be removed
-            try:
-                assert attrs.genomedata_format_version == FORMAT_VERSION
-            except AttributeError:
-                if FORMAT_VERSION != 0:
-                    raise
+            # Make sure there is a genomedata_format_version
+            file_attrs = h5file.root._v_attrs
+            if "genomedata_format_version" not in file_attrs:
+                # Set as first version (before it was standard)
+                file_attrs.genomedata_format_version = 0
 
-            assert not attrs.dirty
+            attrs.dirty = True
+        else:
+            if attrs.dirty:
+                raise self.ChromosomeDirtyError("""
+Chromosome has been modified (or loaded with a mode of "w", "r+", or "a")
+since being closed with genomedata-close-data.""")
 
         self.filename = h5file.filename
         self._name = name
@@ -529,6 +556,9 @@ class Chromosome(object):
     def __iter__(self):
         """Return next supercontig in chromosome.
 
+        .. versionadded:: 1.2
+           Supercontigs are ordered by start index
+
         Seldom used in favor of the more direct:
         :meth:`Chromosome.itercontinuous`
 
@@ -543,8 +573,14 @@ class Chromosome(object):
 
         """
         assert self.isopen
+        supercontigs = []
         for group in self.h5group:
-            yield Supercontig(group)
+            supercontig = Supercontig(group)
+            supercontigs.append((supercontig.start, supercontig))
+
+        supercontigs.sort()
+        for start, supercontig in supercontigs:
+            yield supercontig
 
     def __getitem__(self, key):
         """Return the continuous data corresponding to this bp slice
@@ -616,7 +652,7 @@ class Chromosome(object):
         dtype = self._continuous_dtype
         if nrows < 1 or ncols < 1:
             # Return empty array (matches numpy behavior)
-            return array((), dtype=dtype)
+            return array([], dtype=dtype)
 
         # At this point, base_key and track_key are guaranteed to be slices
         # with both start and end >= 0
@@ -665,6 +701,9 @@ class Chromosome(object):
 
     def itercontinuous(self):
         """Return a generator over all supercontig, continuous pairs.
+
+        .. versionadded:: 1.2
+           Supercontigs are ordered by increasing supercontig.start.
 
         This is the best way to efficiently iterate over the data since
         all specified data is in supercontigs::
@@ -742,8 +781,8 @@ class Chromosome(object):
         """
         assert self.isopen
         col_index = self.index_continuous(trackname)
+        self.attrs.dirty = True
         for supercontig, continuous in self.itercontinuous():
-            self.attrs.dirty = True
             continuous[:, col_index] = NAN
 
     def _add_track_continuous(self, trackname):
@@ -759,7 +798,7 @@ class Chromosome(object):
         assert self.isopen
         if self._isfile:
             # Update tracknames attribute with new trackname
-            attrs = self.h5file.root._v_attrs
+            attrs = self._file_attrs
             if "tracknames" in attrs:
                 tracknames = attrs.tracknames
                 if trackname in tracknames:
@@ -816,25 +855,33 @@ class Chromosome(object):
 
     @property
     def attrs(self):
-        """Return the attributes of the chromosome.
+        """Return the attributes for this Chromosome.
 
-        This could either be genome-wide or specific to this chromosome,
-        depending upon the Genomedata archive format (directory or one file).
+        This may also include Genome-wide attributes if the archive
+        is implemented as a directory.
 
         """
         assert self.isopen
         return self.h5group._v_attrs
 
     @property
+    def _file_attrs(self):
+        assert self.isopen
+        return self.h5file.root._v_attrs
+
+    @property
     def tracknames_continuous(self):
         """Return a list of the data track names in this Chromosome."""
         assert self.isopen
-        return self.h5file.root._v_attrs.tracknames.tolist()
+        return self._file_attrs.tracknames.tolist()
 
     @property
     def num_tracks_continuous(self):
-        """Returns the number of tracks in this chromosome"""
-        return len(self.tracknames_continuous)
+        """Return the number of tracks in this chromosome"""
+        try:
+            return len(self.tracknames_continuous)
+        except AttributeError:
+            return 0
 
     @property
     def mins(self):
@@ -862,17 +909,73 @@ class Chromosome(object):
         return self.attrs.num_datapoints
 
     @property
+    def _format_version(self):
+        """See :attr:`Genome.format_version`"""
+        try:
+            return self._file_attrs.genomedata_format_version
+        except AttributeError:
+            return self.attrs.genomedata_format_version
+
+    @property
     def start(self):
-        """Return the position of the first base in this chromosome."""
-        return min(supercontig.start for supercontig in self)
+        """Return the index of the first base in this chromosome.
+
+        For :attr:`Genome.format_version` > 0, this will always be 0.
+        For == 0, this will be the start of the first supercontig.
+
+        """
+        if self._format_version == 0:
+            return min(supercontig.start for supercontig in self)
+        else:
+            return self.attrs.start
 
     @property
     def end(self):
-        """Return the position of the last base in this chromosome."""
-        return max(supercontig.end for supercontig in self)
+        """Return the index past the last base in this chromosome.
+
+        For :attr:`Genome.format_version` > 0, this will be
+        the number of bases of sequence in the chromosome. For == 0,
+        this will be the end of the last supercontig.
+
+        This is the end in half-open coordinates, making slicing simple:
+
+        >>> chromosome.seq[chromosome.start:chromosome.end]
+
+        """
+        if self._format_version == 0:
+            return max(supercontig.end for supercontig in self)
+        else:
+            return self.attrs.end
 
     @property
     def seq(self):
+        """Return the genomic sequence of this chromosome.
+
+        If the index or slice spans a non-supercontig range, N's are
+        inserted in place of the missing data and a warning is issued.
+
+        Example:
+
+        >>> chromosome = genome["chr1"]
+        >>> for supercontig in chromosome:
+        ...     print repr(supercontig)
+        ...
+        <Supercontig 'supercontig_0', [0:121186957]>
+        <Supercontig 'supercontig_1', [141476957:143422081]>
+        <Supercontig 'supercontig_2', [143522081:247249719]>
+        >>> chromosome.seq[0:10].tostring()  # Inside supercontig
+        'taaccctaac'
+        >>> chromosome.seq[121186950:121186970].tostring() # Supercontig boundary
+        'agAATTCNNNNNNNNNNNNN'
+        >>> chromosome.seq[121186957:121186960].tostring() # Not in supercontig
+        UserWarning: slice of chromosome sequence does not overlap any supercontig (filling with 'N')
+        'NNN'
+
+        The entire sequence for a chromosome can be retrieved with:
+
+        >>> chromosome.seq[chromosome.start:chromosome.end]
+
+        """
         return self._seq
 
     @property
@@ -968,39 +1071,27 @@ class Supercontig(object):
 
     @property
     def seq(self):
-        """Return the genomic sequence of this supercontig.
-
-        If the index or slice spans a non-supercontig range, N's are
-        inserted in place of the missing data and a warning is issued.
-
-        Example:
-
-        >>> chromosome = genome["chr1"]
-        >>> for supercontig in chromosome:
-        ...     print repr(supercontig)
-        ...
-        <Supercontig 'supercontig_0', [0:121186957]>
-        <Supercontig 'supercontig_1', [141476957:143422081]>
-        <Supercontig 'supercontig_2', [143522081:247249719]>
-        >>> chromosome.seq[0:10].tostring()  # Inside supercontig
-        'taaccctaac'
-        >>> chromosome.seq[121186950:121186970].tostring() # Supercontig boundary
-        'agAATTCNNNNNNNNNNNNN'
-        >>> chromosome.seq[121186957:121186960].tostring() # Not in supercontig
-        UserWarning: slice of chromosome sequence does not overlap any supercontig (filling with 'N')
-        'NNN'
-
-        """
+        """See :attr:`Chromosome.seq`."""
         return self.h5group.seq
 
     @property
     def start(self):
-        """Return the start position of this supercontig."""
+        """Return the index of the first base in this supercontig.
+
+        The first base is index 0.
+
+        """
         return int(self.attrs.start)
 
     @property
     def end(self):
-        """Return the end position of this supercontig."""
+        """Return the index past the last base in this supercontig.
+
+        This is the end in half-open coordinates, making slicing simpler:
+
+        >>> supercontig.seq[supercontig.start:supercontig:end]
+
+        """
         return int(self.attrs.end)
 
 class _ChromosomeSeqSlice(object):
@@ -1031,7 +1122,7 @@ class _ChromosomeSeqSlice(object):
         length = end - start
         dtype = self._chromosome._seq_dtype
         if length <= 0:  # Handle degenerate case quickly
-            return array((), dtype=dtype)
+            return array([], dtype=dtype)
 
         seq = empty((length,), dtype=dtype)
         seq.fill(ord("N"))  # Assumes dtype is numeric type
