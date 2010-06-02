@@ -213,7 +213,7 @@ def make_gnulib():
 
 if __name__ == "__main__":
     # Configure and make gnulib if not on Linux
-    if system() != "Linux":
+    if include_gnulib:
         try:
             make_gnulib()
         except InstallationError, e:
