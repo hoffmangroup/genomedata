@@ -367,7 +367,7 @@ class Environment(object):
             arch = "-".join([sysname, machine])
 
         arch = os.path.expanduser("%s/arch/%s" % (root, arch))
-        arch.replace(" ", "_")  # Spaces cause issues
+        arch = arch.replace(" ", "_")  # Spaces cause issues
         return arch
 
     def get_default_python_home(self, root=None):
