@@ -97,6 +97,10 @@ library_dirnames.add_env("LIBRARY_PATH")
 library_dirnames.add_env("LD_LIBRARY_PATH")
 include_dirnames.add_env("C_INCLUDE_PATH")
 
+## fix types, since distutils does type-sniffing:
+library_dirnames = list(library_dirnames)
+include_dirnames = list(include_dirnames)
+
 class InstallationError(Exception):
     pass
 
