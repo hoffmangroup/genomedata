@@ -58,46 +58,44 @@ include_gnulib = (system() != "Linux")
 GNULIB_BUILD_DIR = "src/build-deps"
 GNULIB_LIB_DIR = "%s/gllib" % GNULIB_BUILD_DIR
 
-class DirSet(object):
-    """Maintain a set of valid directories.
+class DirList(list):
+    """Maintain a unique list of valid directories.
+
+    This is a list, not a set to maintain order.
 
     add_dir: add the given directory to the set
     add_env: add the given ':'-separated environment variable to the set
-
     """
-    def __init__(self):
-        self._set = set()
-    def add_dir(self, dir):
-        if os.path.isdir(dir):
-            self._set.add(dir)
+    def add_dir(self, dirname):
+        if dirname not in self and os.path.isdir(dirname):
+            self.append(dirname)
+
     def add_env(self, env):
         if env in os.environ:
-            for dir in os.environ[env].split(":"):
-                self.add_dir(dir)
-    def as_list(self):
-        return list(self._set)
+            for dirname in os.environ[env].split(":"):
+                self.add_dir(dirname)
 
+    def append(self, item):
+        if item not in self:
+            list.append(self, item)
 
 # Get compile flags/information from environment
-library_dirs = DirSet()
-include_dirs = DirSet()
+library_dirnames = DirList()
+include_dirnames = DirList()
 
-library_dirs.add_env("LIBRARY_PATH")
-library_dirs.add_env("LD_LIBRARY_PATH")
-include_dirs.add_env("C_INCLUDE_PATH")
 if "HDF5_DIR" in os.environ:
     hdf5_dir = os.environ["HDF5_DIR"]
-    library_dirs.add_dir(os.path.join(hdf5_dir, "lib"))
-    include_dirs.add_dir(os.path.join(hdf5_dir, "include"))
+    library_dirnames.add_dir(os.path.join(hdf5_dir, "lib"))
+    include_dirnames.add_dir(os.path.join(hdf5_dir, "include"))
 
 if include_gnulib:
     # Gnulib for OS X dependencies
-    library_dirs.add_dir(GNULIB_LIB_DIR)
-    include_dirs.add_dir(GNULIB_LIB_DIR)
+    library_dirnames.add_dir(GNULIB_LIB_DIR)
+    include_dirnames.add_dir(GNULIB_LIB_DIR)
 
-library_dirs = library_dirs.as_list()
-include_dirs = include_dirs.as_list()
-
+library_dirnames.add_env("LIBRARY_PATH")
+library_dirnames.add_env("LD_LIBRARY_PATH")
+include_dirnames.add_env("C_INCLUDE_PATH")
 
 class InstallationError(Exception):
     pass
