@@ -160,14 +160,14 @@ class BuildScriptWrapper(build_scripts):
                         continue
 
                 objs = compiler.compile(srcs, output_dir=output_dir,
-                                        include_dirs=include_dirs,
+                                        include_dirs=include_dirnames,
                                         extra_postargs=extra_postargs,
                                         debug=False)
 
                 bin_path = os.path.join(output_dir, bin)
 
                 compiler.link_executable(objs, bin_path,
-                                         library_dirs=library_dirs)
+                                         library_dirs=library_dirnames)
                 binaries.append(bin_path)
 
             # Replace dict script with actual before build_scripts.run() call
