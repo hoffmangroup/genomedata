@@ -9,7 +9,7 @@ space footprint. We have also developed utilities to load data into
 this format.
 """
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 # Copyright 2008-2010 Michael M. Hoffman <mmh1@washington.edu>
 
