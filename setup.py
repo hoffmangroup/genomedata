@@ -21,10 +21,11 @@ use_setuptools()
 
 from distutils.command.clean import clean
 from distutils.command.build_scripts import build_scripts
+from distutils.spawn import find_executable
 from platform import system, processor
 from setuptools import find_packages, setup
 from shutil import rmtree
-from subprocess import call
+from subprocess import CalledProcessError, check_call
 
 doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")
@@ -110,8 +111,9 @@ class CleanWrapper(clean):
         clean.run(self)
         if include_gnulib:
             print >>sys.stderr, ">> Cleaning Gnulib build directory"
-            retcode = call(["make", "clean"], cwd=GNULIB_BUILD_DIR)
-            if retcode != 0:
+            try:
+                check_call(["make", "clean"], cwd=GNULIB_BUILD_DIR)
+            except CalledProcessError:
                 print >>sys.stderr, ">> WARNING: Failed to clean Gnulib build!"
 
 class BuildScriptWrapper(build_scripts):
@@ -137,6 +139,21 @@ class BuildScriptWrapper(build_scripts):
 
         # Customize compiler options
         compiler.add_library("hdf5")
+
+        # these two are necessary if a static HDF5 is installed:
+        compiler.add_library("m")
+        compiler.add_library("z")
+
+        # is a static HDF5 is installed with --with-szip?
+        h5dump_filename = find_executable("h5dump")
+        try:
+            # XXX: output should be redirected to /dev/null
+            check_call("objdump %s | fgrep szip" % h5dump_filename, shell=True)
+        except CalledProcessError:
+            pass
+        else:
+            compiler.add_library("sz")
+
         if include_gnulib:
             compiler.add_library("gnu")
 
@@ -198,8 +215,9 @@ def make_gnulib():
         commands = ["./configure", "make"]
         for command in commands:
             print ">> %s" % command
-            retcode = call(command, cwd=GNULIB_BUILD_DIR)
-            if retcode != 0:
+            try:
+                check_call(command, cwd=GNULIB_BUILD_DIR)
+            except CalledProcessError:
                 raise InstallationError("Error compiling Gnulib")
 
     if not os.path.isfile(libfilename):
