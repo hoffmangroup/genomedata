@@ -1053,8 +1053,10 @@ class Supercontig(object):
     @property
     def continuous(self):
         """Return the underlying continuous data in this supercontig.
+        To read the whole dataset into memory as a `numpy.array`, use
+        continuous.read()
 
-        :returns: numpy.array
+        :returns: `tables.EArray`
 
         """
         return self.h5group.continuous
