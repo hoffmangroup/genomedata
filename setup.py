@@ -148,7 +148,7 @@ class BuildScriptWrapper(build_scripts):
         h5dump_filename = find_executable("h5dump")
         try:
             # XXX: output should be redirected to /dev/null
-            check_call("objdump %s | fgrep szip" % h5dump_filename, shell=True)
+            check_call("objdump -t %s | fgrep szip" % h5dump_filename, shell=True)
         except CalledProcessError:
             pass
         else:
