@@ -9,8 +9,7 @@ __version__ = "$Revision$"
 
 # Copyright 2009 Orion Buske <orion.buske@gmail.com>
 
-from glob import iglob
-from itertools import chain
+from glob import glob
 from os import close, extsep
 from path import path
 from subprocess import call
@@ -41,7 +40,8 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
     gdpath = path(gdfilename).expand()
     try:
         if mode is None:
-            if seqfilenames is not None and len(seqfilenames) > FILE_MODE_CHROMS:
+            if (seqfilenames is not None
+                and len(seqfilenames) > FILE_MODE_CHROMS):
                 mode = "file"
             else:
                 mode = "dir"
@@ -233,8 +233,9 @@ def main(args=sys.argv[1:]):
     options, args = parse_options(args)
     gdfilename = args[0]
 
-    # chained iterator of glob results
-    seqfilenames = chain(iglob(filename) for filename in options.sequence)
+    # list of lists
+    seqfilenames_list = [glob(globname) for globname in options.sequence]
+    seqfilenames = sum(seqfilenames_list, start=[])
 
     # Parse tracks into list of tuples
     try:
