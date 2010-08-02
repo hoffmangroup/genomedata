@@ -30,6 +30,7 @@ def main(args=sys.argv[1:]):
     installers = [SetuptoolsInstaller(),
                   Hdf5Installer(env),
                   NumpyInstaller(),
+                  PytablesInstaller(),
                   GenomedataInstaller()]
 
     for installer in installers:
