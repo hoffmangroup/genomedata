@@ -8,6 +8,7 @@ load_genomedata: DESCRIPTION
 __version__ = "$Revision$"
 
 # Copyright 2009 Orion Buske <orion.buske@gmail.com>
+# Copyright 2010 Michael Hoffman <mmh1@uw.edu>
 
 from glob import glob
 from os import close, extsep
@@ -235,7 +236,7 @@ def main(args=sys.argv[1:]):
 
     # list of lists
     seqfilenames_list = [glob(globname) for globname in options.sequence]
-    seqfilenames = sum(seqfilenames_list, start=[])
+    seqfilenames = sum(seqfilenames_list, [])
 
     # Parse tracks into list of tuples
     try:
