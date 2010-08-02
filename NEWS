@@ -1,6 +1,7 @@
 1.2.2:
 
 * genomedata-load: will now support track filenames with "=" in the names
+* genomedata-load: now supports UNIX glob wildcards as arguments to -s
 * installation: move from path.py to forked-path
 * docs: fixed small errors
 * various: removed exclamation marks from error messages. It's not *that* exciting.
