@@ -34,9 +34,6 @@ long_description = "\n".join(doclines[2:])
 url = "http://noble.gs.washington.edu/proj/%s/" % name.lower()
 download_url = "%s%s-%s.tar.gz" % (url, name, __version__)
 
-# XXX: remove these when the upstream packages are updated to fix these issues
-dependency_links = ["http://pypi.python.org/packages/source/p/path.py/path-2.2.zip"]
-
 classifiers = ["Natural Language :: English",
                "Programming Language :: Python"]
 
@@ -51,7 +48,7 @@ genomedata-erase-data = genomedata._erase_data:main
 genomedata-test = test.run_tests:main
 """
 
-install_requires = ["numpy", "path", "tables>2.0.4,<2.2a0", "textinput"]
+install_requires = ["numpy", "forked-path", "tables>2.0.4,<2.2a0", "textinput"]
 
 arch = "_".join([system(), processor()])
 
@@ -249,7 +246,6 @@ if __name__ == "__main__":
           download_url=download_url,
           classifiers=classifiers,
           long_description=long_description,
-          dependency_links=dependency_links,
           install_requires=install_requires,
           zip_safe=False,
           # XXX: this should be based off of __file__ instead

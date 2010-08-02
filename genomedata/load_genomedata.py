@@ -9,12 +9,12 @@ __version__ = "$Revision$"
 
 # Copyright 2009 Orion Buske <orion.buske@gmail.com>
 
-import os
-import sys
-
+from glob import iglob
+from itertools import chain
 from os import close, extsep
 from path import path
 from subprocess import call
+import sys
 from tempfile import mkdtemp, mkstemp
 
 from . import EXT, FILE_MODE_CHROMS, SUFFIX
@@ -23,25 +23,25 @@ from ._open_data import open_data
 from ._load_data import DEFAULT_CHUNK_SIZE, load_data
 from ._close_data import close_data
 
-def die(msg="Unexpected error!"):
+def die(msg="Unexpected error."):
     print >>sys.stderr, msg
     sys.exit(1)
 
-def load_genomedata(gdfilename, tracks=None, seqfiles=None, mode=None,
+def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                     chunk_size=DEFAULT_CHUNK_SIZE, verbose=False):
     """Loads Genomedata collection with given data
 
     gdfilename: name of Genomedata archive to create
     tracks: a list of tracks to add, with a (track_name, track_filename) tuple
       for each track to add
-    seqfiles: list of filenames containing sequence data to add
+    seqfilenames: list of filenames containing sequence data to add
     mode: "dir", "file", or None (decide based upon number of sequences)
     """
 
     gdpath = path(gdfilename).expand()
     try:
         if mode is None:
-            if seqfiles is not None and len(seqfiles) > FILE_MODE_CHROMS:
+            if seqfilenames is not None and len(seqfilenames) > FILE_MODE_CHROMS:
                 mode = "file"
             else:
                 mode = "dir"
@@ -66,15 +66,15 @@ def load_genomedata(gdfilename, tracks=None, seqfiles=None, mode=None,
             print ">> Using temporary Genomedata archive: %s" % tempdatapath
 
         # Load sequences if any are specified
-        if seqfiles is not None and len(seqfiles) > 0:
-            for seqfile in seqfiles:
-                if not os.path.isfile(seqfile):
-                    die("Could not find sequence file: %s" % seqfile)
+        if seqfilenames is not None and len(seqfilenames) > 0:
+            for seqfilename in seqfilenames:
+                if not path(seqfilename).isfile():
+                    die("Could not find sequence file: %s" % seqfilename)
 
             if verbose:
                 print ">> Loading sequence files:"
 
-            load_seq(tempdatapath, seqfiles, verbose=verbose, mode=mode)
+            load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode)
 
         # Load tracks if any are specified
         if tracks is not None and len(tracks) > 0:
@@ -82,7 +82,7 @@ def load_genomedata(gdfilename, tracks=None, seqfiles=None, mode=None,
             try:
                 track_names = []
                 for track_name, track_filename in tracks:
-                    if os.path.isfile(track_filename):
+                    if path(track_filename).isfile():
                         if track_name not in track_names:  # No duplicates
                             track_names.append(track_name)
                     else:
@@ -105,7 +105,7 @@ def load_genomedata(gdfilename, tracks=None, seqfiles=None, mode=None,
         try:
             close_data(tempdatapath, verbose=verbose)
         except:
-            die("Error saving metadata!")
+            die("Error saving metadata.")
 
         # Make output directory
         if verbose:
@@ -130,7 +130,7 @@ def load_genomedata(gdfilename, tracks=None, seqfiles=None, mode=None,
                             tempfilepath, outfilepath]
                 retcode = call(cmd_args)
                 if retcode != 0:
-                    die("HDF5 repacking failed!")
+                    die("HDF5 repacking failed.")
         else:  # Move the .genomedata file over
             if verbose:
                 print >>sys.stderr, ">> Moving %s -> %s" % \
@@ -138,7 +138,7 @@ def load_genomedata(gdfilename, tracks=None, seqfiles=None, mode=None,
 
             tempdatapath.copyfile(gdpath)
     except:
-        print >>sys.stderr, "Error creating genomedata!"
+        print >>sys.stderr, "Error creating genomedata."
         raise
     finally:
         try:
@@ -172,7 +172,7 @@ def parse_options(args):
     version = "%%prog %s" % __version__
     description = ("Create Genomedata archive named GENOMEDATAFILE by loading"
                    " specified track data and sequences. If GENOMEDATAFILE"
-                   " already exists, it will be overwritten!"
+                   " already exists, it will be overwritten."
                    " --track and --sequence may be repeated to specify"
                    " multiple trackname=trackfile pairings and sequence files,"
                    " respectively.")
@@ -194,8 +194,9 @@ def parse_options(args):
 
     group = OptionGroup(parser, "Input data")
     group.add_option("-s", "--sequence", action="append",
-                      dest="seqfile", default=[],
-                      help="Add the sequence data in the specified file")
+                      default=[],
+                      help="Add the sequence data in the specified file or files"
+                      " (may use UNIX glob wildcard syntax)")
     group.add_option("-t", "--track", action="append",
                       dest="track", default=[], metavar="NAME=FILE",
                       help="Add data from FILE as the track NAME,"
@@ -231,13 +232,15 @@ def parse_options(args):
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
     gdfilename = args[0]
-    seqfiles = options.seqfile
+
+    # chained iterator of glob results
+    seqfilenames = chain(iglob(filename) for filename in options.sequence)
 
     # Parse tracks into list of tuples
     try:
         tracks = []
         for track_expr in options.track:
-            track_name, track_filename = track_expr.split("=")
+            track_name, _, track_filename = track_expr.partition("=")
             tracks.append((track_name, track_filename))  # Tuple
     except ValueError:
         die(("Error parsing track expression: %s\nMake sure to specify tracks"
@@ -246,7 +249,7 @@ def main(args=sys.argv[1:]):
     kwargs = {"verbose": options.verbose,
               "mode": options.mode}
 #              "chunk_size": options.chunk_size
-    load_genomedata(gdfilename, tracks, seqfiles, **kwargs)
+    load_genomedata(gdfilename, tracks, seqfilenames, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

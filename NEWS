@@ -1,10 +1,15 @@
 1.2.2:
 
-
+* genomedata-load: will now support track filenames with "=" in the names
+* installation: move from path.py to forked-path
+* docs: fixed small errors
+* various: removed exclamation marks from error messages. It's not *that* exciting.
 
 1.2.1:
 
-
+* Fixed an installation bug where HDF5 installations later in
+  LIBRARY_PATH might override those specified first, leading to
+  linking errors during build.
 
 1.2.0:
 * Added support for adding additional tracks using genomedata-open-data and

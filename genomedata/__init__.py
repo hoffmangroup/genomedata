@@ -611,7 +611,9 @@ since being closed with genomedata-close-data.""")
         # 1) it is unclear if 0 or self.start should be used for the
         #    start, and (preference for 0)
         # 2) the full length of the chromosome is not known, so self.end
-        #    would need to be used, which might not be what is wanted.
+        #    would need to be used, which might not be what is wanted. -OJB
+        # XXX: I think this should no longer be a problem now that
+        # self.end is the full length of the chromsome? need to check this -MMH
 
         # Sanitize the input
         if isinstance(key, tuple):
@@ -681,7 +683,7 @@ since being closed with genomedata-close-data.""")
             # track_key must be a splice
             try:
                 data[data_slice, :] = supercontig.continuous[supercontig_slice,
-                                                          track_key]
+                                                             track_key]
             except NoSuchNodeError:
                 # Allow the supercontig to not have a continuous dataset
                 pass

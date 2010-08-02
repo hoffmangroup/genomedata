@@ -54,12 +54,11 @@ genomics data in a format which is both space-efficient and allows
 efficient random-access. Genomedata archives are currently write-once,
 although we are working to fix this.
 
-Under the surface, Genomedata is implemented_ as one or more HDF5 files,
-but Genomedata provides a transparent interface to interact with your
-underlying data without having to worry about the mess of repeatedly parsing
-large data files or having to keep them in memory for random access.
-
-.. _implemented: :ref:`Implementation`
+Under the surface, Genomedata is :ref:`implemented <Implementation>`
+as one or more HDF5 files, but Genomedata provides a transparent
+interface to interact with your underlying data without having to
+worry about the mess of repeatedly parsing large data files or having
+to keep them in memory for random access.
 
 The Genomedata hierarchy:
 
@@ -215,7 +214,8 @@ and the following two signal files:
 A Genomedata archive (``genomedata.test``) could then be created with the
 following command::
 
-    genomedata-load -s chr1.fa -s chrY.fa.gz -t low=signal_low.wigFix -t high=signal_high.bed.gz genomedata.test
+    genomedata-load -s chr1.fa -s chrY.fa.gz -t low=signal_low.wigFix \
+        -t high=signal_high.bed.gz genomedata.test
 
 or the following pipeline::
 
@@ -225,7 +225,7 @@ or the following pipeline::
    zcat signal_high.bed.gz | genomedata-load-data genomedata.test high
    genomedata-close-data genomedata.test
 
-.. note:: chr1.fa and chrY.fa.gz could als be combined into a single
+.. note:: chr1.fa and chrY.fa.gz could also be combined into a single
           sequence file with two sequences.
 
 .. warning::
@@ -342,12 +342,16 @@ Command-line usage information::
                          specified in the form: NAME=FILE, such as: -t
                          signal=signal.dat
 
-
 Alternately, as described in :ref:`genomedata-overview`, the underlying
 Python and C load scripts are also accessible for more finely-grained control.
 This can be especially useful for parallelizing Genomedata loading over a
 cluster.
 
+You can use wildcards when specifying sequence files, such as in
+``genomedata-load-seq -s 'chr*.fa'``. You must be sure to quote the
+wildcards so that they are not expanded by your shell. For most
+shells, this means using single quotes (``'chr*.fa'``) instead of
+double quotes (``"chr*.fa"``).
 
 .. _genomedata-load-seq:
 

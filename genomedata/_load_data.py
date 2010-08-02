@@ -16,7 +16,7 @@ from ._util import SUFFIX_GZ
 DEFAULT_CHUNK_SIZE = 10000
 LOAD_DATA_CMD = "genomedata-load-data"
 
-def die(msg="Unexpected error!"):
+def die(msg="Unexpected error."):
     print >>sys.stderr, msg
     sys.exit(1)
 
