@@ -55,7 +55,6 @@
 #define CARDINALITY 2
 #define BASE 10
 
-#define DEFAULT_CHUNK_NROWS 10000
 #define MAX_CHROM_LEN 1024
 #define DEFAULT_VERBOSE false
 
@@ -98,17 +97,23 @@ typedef struct {
   void *old_client_data;
 } err_state_t;
 
-/** helper functions **/
+/* GNU extensions */
 
+#ifdef __GNUC__
 #define GCC_VERSION (__GNUC__ * 10000                 \
                      + __GNUC_MINOR__ * 100           \
                      + __GNUC_PATCHLEVEL__)
+
+#define UNUSED __attribute((unused))
 
 #if GCC_VERSION >= 20500
 #define NORETURN __attribute__((noreturn))
 #else
 #define NORETURN
-#endif
+#endif /* GCC_VERSION >= 20500*/
+#endif /* __GNUC__ */
+
+/** helper functions **/
 
 NORETURN void fatal(char *msg) {
   fputs(msg, stderr);
@@ -313,7 +318,7 @@ void init_supercontig_array(size_t num_supercontigs, chromosome_t *chromosome)
 }
 
 herr_t supercontig_visitor(hid_t g_id, const char *name,
-                           const H5L_info_t *info,
+                           UNUSED const H5L_info_t *info,
                            void *op_info) {
   hid_t subgroup;
   supercontig_t *supercontig;
@@ -487,10 +492,10 @@ void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
     assert(H5Tget_class(datatype) == H5T_STRING);
 
     cell_size = H5Tget_size(datatype);
-    assert(cell_size >= 0);
+    assert(cell_size > 0);
 
     data_size = H5Aget_storage_size(attr);
-    assert(data_size >= 0);
+    assert(data_size > 0);
 
     num_cells = data_size / cell_size;
 
@@ -691,7 +696,7 @@ bool has_data(float *buf_start, float *buf_end) {
 void write_buf(chromosome_t *chromosome, char *trackname,
                float *buf_start, float *buf_end,
                float *buf_filled_start, float *buf_filled_end,
-               long chunk_nrows, bool verbose) {
+               bool verbose) {
   float *buf_supercontig_start, *buf_supercontig_end;
 
   size_t start_offset, end_offset;
@@ -831,7 +836,7 @@ void malloc_chromosome_buf(chromosome_t *chromosome,
 /* false otherwise */
 bool load_chromosome(char *chrom, genome_t *genome, chromosome_t *chromosome,
                      char *trackname, float **buf_start, float **buf_end,
-                     long chunk_nrows, bool verbose) {
+                     bool verbose) {
   hsize_t num_cols, col;
 
   hid_t mem_dataspace, file_dataspace;
@@ -950,7 +955,7 @@ void proc_wigfix_header(char **line, size_t *size_line, genome_t *genome, chromo
 }
 
 void proc_wigfix(genome_t *genome, char *trackname, char **line,
-                 size_t *size_line, long chunk_nrows, bool verbose) {
+                 size_t *size_line, bool verbose) {
   char *tailptr;
 
   float *buf_start = NULL;
@@ -1021,7 +1026,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
     } else {
       assert(tailptr == *line);
       write_buf(&chromosome, trackname, buf_start, buf_end,
-                buf_filled_start, fill_start, chunk_nrows, verbose);
+                buf_filled_start, fill_start, verbose);
       proc_wigfix_header(line, size_line, genome, &chromosome,
                          &buf_start, &buf_end, &fill_start,
                          &step, &span, verbose);
@@ -1031,7 +1036,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
   }
 
   write_buf(&chromosome, trackname, buf_start, buf_end,
-            buf_filled_start, fill_start, chunk_nrows, verbose);
+            buf_filled_start, fill_start, verbose);
 
   close_chromosome(&chromosome);
   free(buf_start);
@@ -1040,7 +1045,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
 /** wigVar **/
 void proc_wigvar_header(char **line, size_t *size_line, genome_t *genome, chromosome_t *chromosome,
                         char *trackname, float **buf_start, float **buf_end,
-                        long *span, long chunk_nrows, bool verbose) {
+                        long *span, bool verbose) {
   char *chrom = NULL;
 
   /* do writing if buf_len > 0 */
@@ -1054,7 +1059,7 @@ void proc_wigvar_header(char **line, size_t *size_line, genome_t *genome, chromo
   if (strcmp(chrom, chromosome->chrom)) {
     /* only reseek and malloc if it is different */
     load_chromosome(chrom, genome, chromosome, trackname,
-                    buf_start, buf_end, chunk_nrows, verbose);
+                    buf_start, buf_end, verbose);
   } else {
     /* chrom wasn't saved into chromosome, so free it */
     free(chrom);
@@ -1063,7 +1068,7 @@ void proc_wigvar_header(char **line, size_t *size_line, genome_t *genome, chromo
 
 
 void proc_wigvar(genome_t *genome, char *trackname, char **line,
-                 size_t *size_line, long chunk_nrows, bool verbose) {
+                 size_t *size_line, bool verbose) {
   char *tailptr;
 
   float *buf_start = NULL;
@@ -1078,7 +1083,7 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
   init_chromosome(&chromosome);
 
   proc_wigvar_header(line, size_line, genome, &chromosome, trackname,
-                     &buf_start, &buf_end, &span, chunk_nrows, verbose);
+                     &buf_start, &buf_end, &span, verbose);
 
   while (getline(line, size_line, stdin) >= 0) {
     /* correcting 1-based coordinate */
@@ -1116,14 +1121,14 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
 
     } else {
       write_buf(&chromosome, trackname, buf_start, buf_end,
-                buf_start, buf_end, chunk_nrows, verbose);
+                buf_start, buf_end, verbose);
       proc_wigvar_header(line, size_line, genome, &chromosome, trackname,
-                         &buf_start, &buf_end, &span, chunk_nrows, verbose);
+                         &buf_start, &buf_end, &span, verbose);
     }
   }
 
   write_buf(&chromosome, trackname, buf_start, buf_end, buf_start,
-            buf_end, chunk_nrows, verbose);
+            buf_end, verbose);
 
   close_chromosome(&chromosome);
   free(buf_start);
@@ -1135,7 +1140,7 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
   The only difference with bedGraph is that the first line is not passed in
  */
 void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
-              long chunk_nrows, bool verbose)
+              bool verbose)
 {
   size_t chrom_len;
 
@@ -1170,11 +1175,11 @@ void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
 
     if (strcmp(chrom, chromosome.chrom)) {
       write_buf(&chromosome, trackname, buf_start, buf_end,
-                buf_start, buf_end, chunk_nrows, verbose);
+                buf_start, buf_end, verbose);
 
       /* strdup(chrom) will be freed by close_chromosome */
       load_chromosome(strdup(chrom), genome, &chromosome, trackname,
-                      &buf_start, &buf_end, chunk_nrows, verbose);
+                      &buf_start, &buf_end, verbose);
     }
 
     if (!is_valid_chromosome(&chromosome)) {
@@ -1197,7 +1202,7 @@ void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
   } while (getline(line, size_line, stdin) >= 0);
 
   write_buf(&chromosome, trackname, buf_start, buf_end, buf_start,
-            buf_end, chunk_nrows, verbose);
+            buf_end, verbose);
 
   close_chromosome(&chromosome);
   free(buf_start);
@@ -1205,7 +1210,7 @@ void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
 
 /** process any kind of data: start by sniffing header line **/
 void proc_data(genome_t *genome, char *trackname, char **line,
-               size_t *size_line, long chunk_nrows, bool verbose) {
+               size_t *size_line, bool verbose) {
   file_format fmt;
 
   /* XXXopt: would be faster to just read a big block and do repeated
@@ -1221,19 +1226,19 @@ void proc_data(genome_t *genome, char *trackname, char **line,
   case FMT_WIGUNKNOWN:
     /* XXX: this will allow you to go from track type=wiggle_0 to
        anything else, but I'm not sure how much that matters */
-    proc_data(genome, trackname, line, size_line, chunk_nrows, verbose);
+    proc_data(genome, trackname, line, size_line, verbose);
     break;
   case FMT_WIGFIX:
-    proc_wigfix(genome, trackname, line, size_line, chunk_nrows, verbose);
+    proc_wigfix(genome, trackname, line, size_line, verbose);
     break;
   case FMT_WIGVAR:
-    proc_wigvar(genome, trackname, line, size_line, chunk_nrows, verbose);
+    proc_wigvar(genome, trackname, line, size_line, verbose);
     break;
   case FMT_BEDGRAPH:
     /* don't need to process line because the first line is unimportant */
     *line = '\0';
   case FMT_BED:
-    proc_bed(genome, trackname, line, size_line, chunk_nrows, verbose);
+    proc_bed(genome, trackname, line, size_line, verbose);
     break;
   default:
     fatal("only fixedStep, variableStep, bedGraph, BED formats supported");
@@ -1243,8 +1248,7 @@ void proc_data(genome_t *genome, char *trackname, char **line,
 
 /** programmatic interface **/
 
-void load_data(char *gdfilename, char *trackname, long chunk_nrows,
-               bool verbose) {
+void load_data(char *gdfilename, char *trackname, bool verbose) {
   char *line = NULL;
   size_t size_line = 0;
 
@@ -1253,7 +1257,7 @@ void load_data(char *gdfilename, char *trackname, long chunk_nrows,
   init_genome(&genome);
   load_genome(&genome, gdfilename);
 
-  proc_data(&genome, trackname, &line, &size_line, chunk_nrows, verbose);
+  proc_data(&genome, trackname, &line, &size_line, verbose);
 
   close_genome(&genome);
   /* free heap variables */
@@ -1263,23 +1267,20 @@ void load_data(char *gdfilename, char *trackname, long chunk_nrows,
 /** command-line interface **/
 
 const char *argp_program_version = "$Revision$";
-const char *argp_program_bug_address = "Michael Hoffman <mmh1@washington.edu>";
+const char *argp_program_bug_address = "genomedata-users@uw.edu>";
 
 static char doc[] = "Loads data into genomedata format \
 \nTakes track data in on stdin";
 static char args_doc[] = "GENOMEDATAFILE TRACKNAME";
+
+/* static means that remaining fields are initialized to 0 */
 static struct argp_option options[] = {
-  {"chunk-size", 'c', "NROWS", 0, "Chunk hdf5 data into blocks of NROWS. \
-A higher value increases compression but slows random access. \
-Must always be smaller than the max size for a dataset. [default: "
-   Xstr(DEFAULT_CHUNK_NROWS) "]"},
   {"verbose", 'v', 0, 0, "Print status and diagnostic messages"},
   { 0 }
 };
 
 struct arguments {
   char *args[NARGS];
-  long chunk_nrows;
   bool verbose;
 };
 
@@ -1287,15 +1288,6 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
   struct arguments *arguments = state->input;
 
   switch (key) {
-  case 'c':
-    arguments->chunk_nrows = atol(arg);
-    if (arguments->chunk_nrows <= 0) {
-      printf("Expected positive long integer for chunk size but found: %s\n",
-             arg);
-      argp_usage(state);
-      exit(EXIT_FAILURE);
-    }
-    break;
   case 'v':
     arguments->verbose = true;
     break;
@@ -1320,27 +1312,24 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
   return 0;
 }
 
-
+/* static means that remaining fields are initialized to 0 */
 static struct argp argp = {options, parse_opt, args_doc, doc};
 
 int main(int argc, char **argv) {
   struct arguments arguments;
   char *gdfilename, *trackname;
-  long chunk_nrows;
   bool verbose;
 
   /* default value */
-  arguments.chunk_nrows = DEFAULT_CHUNK_NROWS;
   arguments.verbose = DEFAULT_VERBOSE;
 
   assert(argp_parse(&argp, argc, argv, 0, 0, &arguments) == 0);
 
   gdfilename = arguments.args[0];
   trackname = arguments.args[1];
-  chunk_nrows = arguments.chunk_nrows;
   verbose = arguments.verbose;
 
-  load_data(gdfilename, trackname, chunk_nrows, verbose);
+  load_data(gdfilename, trackname, verbose);
 
   return EXIT_SUCCESS;
 }

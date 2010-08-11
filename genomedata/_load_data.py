@@ -20,15 +20,12 @@ def die(msg="Unexpected error."):
     print >>sys.stderr, msg
     sys.exit(1)
 
-def load_data(gdfilename, trackname, datafile,
-              chunk_size=None, verbose=False):
+def load_data(gdfilename, trackname, datafile, verbose=False):
     """Loads data from datafile into specific track of Genomedata archive
 
     gdfilename: genomedata archive path
     trackname: name of track (as specified in open_data) to load data for
     datafile: file to read data from
-    chunk_size: number of rows in each hdf5 data chunk
-
     """
     if verbose:
         print ">> Loading data for track: %s" % trackname
@@ -42,8 +39,6 @@ def load_data(gdfilename, trackname, datafile,
     load_cmd = [LOAD_DATA_CMD]
     if verbose:
         load_cmd.append("-v")
-    if chunk_size:
-        load_cmd.append("--chunk-size=%d" % chunk_size)
     load_cmd.extend([gdfilename, trackname])
 
     # Pipe read command into load command

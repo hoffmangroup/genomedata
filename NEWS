@@ -4,6 +4,7 @@
 * genomedata-load: now supports UNIX glob wildcards as arguments to -s
 * genomedata-load-data: allow other delimiters besides space for
   variableStep and fixedStep, allow wiggle_0 track specification
+* genomedata-load-data, genomedata-load: remove unused --chunk-size option
 * genomedata-close-data: fix bug where chunk_starts, chunk_ends not
   written for supercontigs with zero present data
 * installation: move from path.py to forked-path

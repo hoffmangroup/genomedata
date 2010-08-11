@@ -100,7 +100,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             # Load track data
             for track_name, track_filename in tracks:
                 load_data(tempdatapath, track_name, track_filename,
-                          chunk_size=chunk_size, verbose=verbose)
+                          verbose=verbose)
 
         # Close genomedata
         try:

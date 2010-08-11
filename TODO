@@ -2,3 +2,6 @@
 * add supercontig gap length variable
 * add sequence length variable (set during load_seq)
 ** allow full slicing once sequence length known for each chromosome
+
+* change supercontig.start and supercontig.end to unsigned ints, not
+  signed ints. then compile with -Wextra
