@@ -5,3 +5,14 @@
 
 * change supercontig.start and supercontig.end to unsigned ints, not
   signed ints. then compile with -Wextra
+
+* needed tests:
+  ** multiple track headers in middle of file
+  ** tab-delimited track header
+
+* run coverage
+  <http://www.nedbatchelder.com/code/modules/coverage.html>
+
+* run fuzz
+
+* buildbot
