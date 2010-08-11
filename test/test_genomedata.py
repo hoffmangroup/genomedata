@@ -29,6 +29,9 @@ test_filename = lambda filename: os.path.join("data", filename)
 def seq2str(seq):
     return seq.tostring().lower()
 
+def make_temp_dir():
+    return mkdtemp(prefix="genomedata.test.")
+
 class GenomedataTester(unittest.TestCase):
     def setUp(self):
         # Defaults
@@ -48,7 +51,7 @@ class GenomedataTester(unittest.TestCase):
         seqs = ["chr1.short.fa", "chrY.short.fa.gz"]
         # Placental includes data for chr1 and chrY
         if self.mode == "dir":
-            gdfilename = mkdtemp(prefix="genomedata")
+            gdfilename = make_temp_dir()
 
         elif self.mode == "file":
             tempfile, gdfilename = mkstemp(prefix="genomedata")
@@ -270,6 +273,96 @@ class GenomedataTester(unittest.TestCase):
             chromosome = genome["chr1"]
             self.assertArraysEqual(chromosome[new_entry[0], new_trackname],
                                    new_entry[1])
+
+class GenomedataNoDataTester(unittest.TestCase):
+    def setUp(self):
+        # Defaults
+        self.verbose = False
+        self.mode = "dir"
+        # Track to be added by test_add_track
+        self.new_track = ("primate", "chr1.phyloP44way.primate.short.wigFix")
+
+        # Potentially override defaults
+        self.init()  # Call to sub-classed method
+
+        # Create Genomedata collection from test files
+        seqs = ["chr1.short.fa", "chrY.short.fa.gz"]
+        # Placental includes data for chr1 and chrY
+        if self.mode == "dir":
+            gdfilename = make_temp_dir()
+
+        elif self.mode == "file":
+            tempfile, gdfilename = mkstemp(prefix="genomedata")
+            os.close(tempfile)
+            os.remove(gdfilename)  # Allow load_genomedata to create it
+        else:
+            self.fail("Unrecognized mode: %s" % self.mode)
+
+        self.gdfilepath = path(gdfilename).expand()
+
+        # Get resource paths instead of filenames
+        seqfiles = [test_filename(file) for file in seqs]
+        self.seqfiles = seqfiles
+
+        load_genomedata(self.gdfilepath, None, seqfiles,
+                        verbose=self.verbose, mode=self.mode)
+
+        if self.mode == "dir":
+            self.chroms = [val.split(".")[0] for val in seqs]
+            for chrom in self.chroms:
+                filename = os.extsep.join([chrom, "genomedata"])
+                filepath = self.gdfilepath.joinpath(filename)
+                self.assertTrue(filepath.isfile(),
+                                "Chromosome file was not found: %s" % filepath)
+        elif self.mode == "file":
+            self.assertTrue(self.gdfilepath.isfile(),
+                            "Genomedata archive was not created: %r" %
+                            self.gdfilepath)
+        else:
+            self.fail("Unrecognized mode: %s" % self.mode)
+
+    def tearDown(self):
+        if self.mode == "dir":
+            self.gdfilepath.rmtree()
+        elif self.mode == "file":
+            self.gdfilepath.remove()
+        else:
+            self.fail("Unrecognized mode: %s" % self.mode)
+
+    def assertArraysEqual(self, observed, expected):
+        expected = array(expected, dtype=observed.dtype)
+        not_equal = (observed != expected)
+        # Do some special stuff to allow testing equality between NaN's
+        both_nan = logical_and(isnan(observed), isnan(observed))
+        if logical_and(not_equal, logical_not(both_nan)).any():
+            self.fail("%r != %r" % (observed, expected))
+
+    def test_add_track(self):
+        new_track_name, new_track_file = self.new_track
+
+        # Open new track
+        genome = Genome(self.gdfilepath, mode="r+")
+        with genome:
+            self.assertEqual(genome.num_tracks_continuous, 0)
+            genome.add_track_continuous(new_track_name)
+
+        # Load data for new track
+        load_data(self.gdfilepath, new_track_name,
+                  test_filename(new_track_file), verbose=self.verbose)
+
+        # Close data with new track
+        close_data(self.gdfilepath, verbose=self.verbose)
+
+        # Make sure addition was successful
+        genome = Genome(self.gdfilepath)
+        with genome:
+            # Track ordering should now end with dnase
+            self.assertEqual(genome.tracknames_continuous, [new_track_name])
+
+            # Given track ordering, check single track data retrieval
+            self.assertArraysEqual(genome["chr1"][305:310, new_track_name],
+                                   [-2.65300012, 0.37200001, 0.37200001,
+                                     0.37200001, 0.37099999])
 
 def test_genomedata(*args):
     pass

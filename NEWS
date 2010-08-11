@@ -11,6 +11,7 @@
 * docs: fixed small errors
 * various: removed exclamation marks from error messages. It's not *that* exciting.
 * some portability improvements
+* tests: improve unit test interface
 
 1.2.1:
 

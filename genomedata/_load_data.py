@@ -33,13 +33,18 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
     if datafile.endswith(SUFFIX_GZ):
         read_cmd = ["zcat"]
     else:
-        read_cmd = ["cat"]
+        read_cmd = ["cat"] # XXX: useless use of cat
     read_cmd.append(datafile)
 
     load_cmd = [LOAD_DATA_CMD]
     if verbose:
         load_cmd.append("-v")
     load_cmd.extend([gdfilename, trackname])
+
+    if verbose:
+        read_cmdline = " ".join(read_cmd)
+        load_cmdline = " ".join(load_cmd)
+        print >>sys.stderr, "%s | %s" % (read_cmdline, load_cmdline)
 
     # Pipe read command into load command
     reader = Popen(read_cmd, stdout=PIPE)

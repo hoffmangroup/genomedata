@@ -1139,8 +1139,8 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
 /*
   The only difference with bedGraph is that the first line is not passed in
  */
-void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
-              bool verbose)
+void proc_bed(genome_t *genome, char *trackname, char **line,
+              size_t *size_line, bool verbose)
 {
   size_t chrom_len;
 
@@ -1156,8 +1156,7 @@ void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
   chromosome_t chromosome;
 
   if (!**line) {
-    /* bedGraph case, need to read second line rather than process
-       first */
+    /* bedGraph case, need to read second line rather than process first */
 
     if (getline(line, size_line, stdin) == 0) {
       return;
@@ -1236,7 +1235,7 @@ void proc_data(genome_t *genome, char *trackname, char **line,
     break;
   case FMT_BEDGRAPH:
     /* don't need to process line because the first line is unimportant */
-    *line = '\0';
+    **line = '\0';
   case FMT_BED:
     proc_bed(genome, trackname, line, size_line, verbose);
     break;
