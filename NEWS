@@ -1,3 +1,7 @@
+1.2.3:
+
+
+
 1.2.2:
 
 * genomedata-load: will now support track filenames with "=" in the names
