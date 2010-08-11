@@ -7,7 +7,7 @@ _close_data: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2008-2009 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2010 Michael M. Hoffman <mmh1@washington.edu>
 
 import sys
 
@@ -21,6 +21,41 @@ from ._util import fill_array, init_num_obs, new_extrema
 
 def update_extrema(func, extrema, data, col_index):
     extrema[col_index] = new_extrema(func, data, extrema[col_index])
+
+def find_chunks(mask_rows_any_present):
+    """
+    find chunks that have less than MIN_GAP_LEN missing data
+    gaps in a row
+    """
+    # defaults
+    starts = array([0])
+    ends = array([mask_rows_any_present.shape[0]])
+
+    # get all of the indices where there is any data
+    indices_present = mask_rows_any_present.nonzero()[0]
+
+    if len(indices_present):
+        # make a mask of whether the difference from one index to the
+        # next is >= MIN_GAP_LEN
+        diffs_signif = diff(indices_present) >= MIN_GAP_LEN
+
+        # convert the mask back to indices of the original indices
+        # these are the indices immediately before a big gap
+        indices_signif = diffs_signif.nonzero()[0]
+
+        if len(indices_signif):
+            # start with the indices immediately after a big gap
+            starts = indices_present[hstack([0, indices_signif+1])]
+
+            # end with indices immediately before a big gap
+            ends_inclusive = indices_present[hstack([indices_signif, -1])]
+
+            # add 1 to ends because we want slice(start, end) to
+            # include the last_index; convert from inclusive (closed)
+            # to exclusive (half-open) coordinates, as Python needs
+            ends = ends_inclusive + 1
+
+    return starts, ends
 
 def write_metadata(chromosome, verbose=False):
     if verbose:
@@ -54,8 +89,7 @@ def write_metadata(chromosome, verbose=False):
         if __debug__:
             init_num_obs(num_obs, continuous) # for the assertion
 
-        num_rows = continuous.shape[0]
-        mask_rows_any_present = fill_array(False, num_rows)
+        mask_rows_any_present = fill_array(False, continuous.shape[0])
 
         # doing this column by column greatly reduces the memory
         # footprint when you have large numbers of tracks. It also
@@ -83,41 +117,9 @@ def write_metadata(chromosome, verbose=False):
                 sums_squares[col_index] += square(col_finite).sum(0)
                 num_datapoints[col_index] += num_datapoints_col
 
-        ## find chunks that have less than MIN_GAP_LEN missing data
-        ## gaps in a row
-
-        # get all of the indices where there is any data
-        indices_present = mask_rows_any_present.nonzero()[0]
-
-        if not len(indices_present):
-            # Don't split it up into groups if it's all NaNs (should compress)
-            # Keep the continuous, however, so that all supercontigs have one
-            continue
-
-        # make a mask of whether the difference from one index to the
-        # next is >= MIN_GAP_LEN
-        diffs_signif = diff(indices_present) >= MIN_GAP_LEN
-
-        # convert the mask back to indices of the original indices
-        # these are the indices immediately before a big gap
-        indices_signif = diffs_signif.nonzero()[0]
-
-        if len(indices_signif):
-            # start with the indices immediately after a big gap
-            starts = indices_present[hstack([0, indices_signif+1])]
-
-            # end with indices immediately before a big gap
-            ends_inclusive = indices_present[hstack([indices_signif, -1])]
-
-            # add 1 to ends because we want slice(start, end) to
-            # include the last_index; convert from inclusive (closed)
-            # to exclusive (half-open) coordinates, as Python needs
-            ends = ends_inclusive + 1
-        else:
-            starts = array([0])
-            ends = array([num_rows])
-
         supercontig_attrs = supercontig.attrs
+
+        starts, ends = find_chunks(mask_rows_any_present)
         supercontig_attrs.chunk_starts = starts
         supercontig_attrs.chunk_ends = ends
 

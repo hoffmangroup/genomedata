@@ -358,15 +358,16 @@ double quotes (``"chr*.fa"``).
 genomedata-load-seq
 -------------------
 
-This command adds the provided sequence files to the specified Genomedata,
-archive creating it if it does not already exist. Sequence files should be in
-|sequence file formats| format. Gaps of >= 100,000 base pairs
-(specified as :option:`gap-length`) in the reference sequence,
-are used to divide the sequence into supercontigs. The FASTA sequence
-identifier will be used as the name for the chromosomes/scaffolds
-created within the Genomedata archive and must be consistent between these
-sequence files and the data loaded later with :ref:`genomedata-load-data`.
-See :ref:`this example <genomedata-load-example>` for details.
+This command adds the provided sequence files to the specified
+Genomedata, archive creating it if it does not already exist. Sequence
+files should be in |sequence file formats| format. Gaps of >= 100,000
+base pairs (specified as :option:`gap-length`) in the reference
+sequence, are used to divide the sequence into supercontigs. The FASTA
+definition line will be used as the name for the chromosomes/scaffolds
+created within the Genomedata archive and must be consistent between
+these sequence files and the data loaded later with
+:ref:`genomedata-load-data`. See :ref:`this example
+<genomedata-load-example>` for details.
 
 ::
 

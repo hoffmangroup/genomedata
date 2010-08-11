@@ -2,9 +2,14 @@
 
 * genomedata-load: will now support track filenames with "=" in the names
 * genomedata-load: now supports UNIX glob wildcards as arguments to -s
+* genomedata-load-data: allow other delimiters besides space for
+  variableStep and fixedStep, allow wiggle_0 track specification
+* genomedata-close-data: fix bug where chunk_starts, chunk_ends not
+  written for supercontigs with zero present data
 * installation: move from path.py to forked-path
 * docs: fixed small errors
 * various: removed exclamation marks from error messages. It's not *that* exciting.
+* some portability improvements
 
 1.2.1:
 

@@ -27,12 +27,15 @@
 
 /** constants **/
 
-#define ID_WIGVAR "variableStep "
-#define ID_WIGFIX "fixedStep "
+/* XXX: these should be enforced as separate delimiters, because
+   "fixedStepX" will match ID_WIGFIX right now */
+#define ID_WIGVAR "variableStep"
+#define ID_WIGFIX "fixedStep"
 
-/* XXX: should allow "type=bedGraph" anywhere on line */
+/* XXX: should allow "type=bedGraph or type=wiggle_0" anywhere on line */
 #define ID_BEDGRAPH "track type=bedGraph"
-#define DELIM_WIG " "
+#define ID_WIGUNKNOWN "track type=wiggle_0"
+#define DELIM_WIG " \t"
 #define DELIM_BED " \t"
 
 #define KEY_CHROM "chrom"
@@ -65,7 +68,7 @@ const float nan_float = NAN;
 /** typedefs **/
 
 typedef enum {
-  FMT_BED, FMT_WIGFIX, FMT_WIGVAR, FMT_BEDGRAPH
+  FMT_BED, FMT_WIGUNKNOWN, FMT_WIGFIX, FMT_WIGVAR, FMT_BEDGRAPH
 } file_format;
 
 typedef struct {
@@ -97,8 +100,17 @@ typedef struct {
 
 /** helper functions **/
 
-/* XXX: GNU-only extension; should be wrapped */
-__attribute__((noreturn)) void fatal(char *msg) {
+#define GCC_VERSION (__GNUC__ * 10000                 \
+                     + __GNUC_MINOR__ * 100           \
+                     + __GNUC_PATCHLEVEL__)
+
+#if GCC_VERSION >= 20500
+#define NORETURN __attribute__((noreturn))
+#else
+#define NORETURN
+#endif
+
+NORETURN void fatal(char *msg) {
   fputs(msg, stderr);
   fputs("\t", stderr);
   exit(EXIT_FAILURE);
@@ -136,6 +148,23 @@ long xstrtol(const char *nptr, char **endptr, int base) {
   }
 
   return value;
+}
+
+ssize_t xgetline(char **lineptr, size_t *n, FILE *stream) {
+  ssize_t nchars;
+
+  nchars = getline(lineptr, n, stream);
+
+  if (nchars < 0) {
+    fatal("failed to read essential input line");
+  }
+
+  return nchars;
+}
+
+/* strncmp with strlen of s1 (assumed to be an optimizable constant) */
+inline int streq(const char *s1, const char *s2) {
+  return strncmp(s1, s2, strlen(s1)) == 0;
 }
 
 /** general-purpose HDF5 attribute helper functions **/
@@ -520,19 +549,33 @@ hid_t get_col_dataspace(hsize_t *dims) {
 
 /** general parsing **/
 
-file_format sniff_header_line(const char *line) {
-  if (!strncmp(ID_WIGFIX, line, strlen(ID_WIGFIX))) {
+file_format sniff_wiggle_header_line(const char *line) {
+  if (streq(ID_WIGFIX, line)) {
     return FMT_WIGFIX;
-  } else if (!strncmp(ID_WIGVAR, line, strlen(ID_WIGVAR))) {
+  } else if (streq(ID_WIGVAR, line)) {
     return FMT_WIGVAR;
-  } else if (!strncmp(ID_BEDGRAPH, line, strlen(ID_BEDGRAPH))) {
+  }
+
+  return FMT_WIGUNKNOWN;
+}
+
+file_format sniff_header_line(const char *line) {
+  file_format res;
+
+  res = sniff_wiggle_header_line(line);
+
+  if (res != FMT_WIGUNKNOWN) {
+    return res;
+  } else if (streq(ID_BEDGRAPH, line)) {
     return FMT_BEDGRAPH;
+  } else if (streq(ID_WIGUNKNOWN, line)) {
+    return FMT_WIGUNKNOWN;
   }
 
   return FMT_BED;
 }
 
-void parse_wiggle_header(char *line, file_format fmt, char **chrom,
+void parse_wiggle_header(char **line, size_t *size_line, file_format fmt, char **chrom,
                          long *start, long *step, long *span) {
   /* mallocs chrom; caller must free() it */
   /* start and step may be null pointers */
@@ -559,15 +602,21 @@ void parse_wiggle_header(char *line, file_format fmt, char **chrom,
     exit(EXIT_FAILURE);
   }
 
-  assert(!strncmp(id_str, line, strlen(id_str)));
+  /* deal with another track line in the middle (common when
+     concatenating files) */
+  if (streq(ID_WIGUNKNOWN, *line)) {
+    xgetline(line, size_line, stdin);
+  }
+
+  assert(streq(id_str, *line));
 
   /* strip trailing newline */
-  *strchr(line, '\n') = '\0';
+  *strchr(*line, '\n') = '\0';
 
   /* Initialize to avoid compiler warning */
   save_ptr = NULL;
 
-  line_no_id = line + strlen(id_str);
+  line_no_id = *line + strlen(id_str);
 
   /* set to defaults */
   *span = 1;
@@ -870,8 +919,7 @@ void fill_buffer(float *buf_start, float *buf_end, long start, long end,
 }
 
 /** wigFix **/
-
-void proc_wigfix_header(char *line, genome_t *genome, chromosome_t *chromosome,
+void proc_wigfix_header(char **line, size_t *size_line, genome_t *genome, chromosome_t *chromosome,
                         float **buf_start, float **buf_end, float **fill_start,
                         long *step, long *span, bool verbose) {
   long start = -1;
@@ -879,7 +927,7 @@ void proc_wigfix_header(char *line, genome_t *genome, chromosome_t *chromosome,
   char *chrom = NULL;
 
   /* do writing if buf_len > 0 */
-  parse_wiggle_header(line, FMT_WIGFIX, &chrom, &start, step, span);
+  parse_wiggle_header(line, size_line, FMT_WIGFIX, &chrom, &start, step, span);
   assert(chrom && start >= 0 && *step >= 1 && *span >= 1);
 
   /* chromosome->chrom is always initialized, at least to NULL, and
@@ -918,7 +966,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
 
   init_chromosome(&chromosome);
 
-  proc_wigfix_header(*line, genome, &chromosome,
+  proc_wigfix_header(line, size_line, genome, &chromosome,
                      &buf_start, &buf_end, &fill_start,
                      &step, &span, verbose);
 
@@ -974,7 +1022,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
       assert(tailptr == *line);
       write_buf(&chromosome, trackname, buf_start, buf_end,
                 buf_filled_start, fill_start, chunk_nrows, verbose);
-      proc_wigfix_header(*line, genome, &chromosome,
+      proc_wigfix_header(line, size_line, genome, &chromosome,
                          &buf_start, &buf_end, &fill_start,
                          &step, &span, verbose);
       buf_filled_start = fill_start;
@@ -990,14 +1038,13 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
 }
 
 /** wigVar **/
-
-void proc_wigvar_header(char *line, genome_t *genome, chromosome_t *chromosome,
+void proc_wigvar_header(char **line, size_t *size_line, genome_t *genome, chromosome_t *chromosome,
                         char *trackname, float **buf_start, float **buf_end,
                         long *span, long chunk_nrows, bool verbose) {
   char *chrom = NULL;
 
   /* do writing if buf_len > 0 */
-  parse_wiggle_header(line, FMT_WIGVAR, &chrom, NULL, NULL, span);
+  parse_wiggle_header(line, size_line, FMT_WIGVAR, &chrom, NULL, NULL, span);
   assert(chrom && *span >= 1);
 
   /* chromosome->chrom is always initialized, at least to NULL, and
@@ -1030,7 +1077,7 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
 
   init_chromosome(&chromosome);
 
-  proc_wigvar_header(*line, genome, &chromosome, trackname,
+  proc_wigvar_header(line, size_line, genome, &chromosome, trackname,
                      &buf_start, &buf_end, &span, chunk_nrows, verbose);
 
   while (getline(line, size_line, stdin) >= 0) {
@@ -1070,7 +1117,7 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
     } else {
       write_buf(&chromosome, trackname, buf_start, buf_end,
                 buf_start, buf_end, chunk_nrows, verbose);
-      proc_wigvar_header(*line, genome, &chromosome, trackname,
+      proc_wigvar_header(line, size_line, genome, &chromosome, trackname,
                          &buf_start, &buf_end, &span, chunk_nrows, verbose);
     }
   }
@@ -1156,6 +1203,44 @@ void proc_bed(genome_t *genome, char *trackname, char **line, size_t *size_line,
   free(buf_start);
 }
 
+/** process any kind of data: start by sniffing header line **/
+void proc_data(genome_t *genome, char *trackname, char **line,
+               size_t *size_line, long chunk_nrows, bool verbose) {
+  file_format fmt;
+
+  /* XXXopt: would be faster to just read a big block and do repeated
+     strtof rather than using getline */
+
+  xgetline(line, size_line, stdin);
+  fmt = sniff_header_line(*line);
+
+  /* XXX: allow mixing and matching later on, if that is what UCSC
+     intends (check with them first). for now, once you pick a format,
+     you are stuck */
+  switch (fmt) {
+  case FMT_WIGUNKNOWN:
+    /* XXX: this will allow you to go from track type=wiggle_0 to
+       anything else, but I'm not sure how much that matters */
+    proc_data(genome, trackname, line, size_line, chunk_nrows, verbose);
+    break;
+  case FMT_WIGFIX:
+    proc_wigfix(genome, trackname, line, size_line, chunk_nrows, verbose);
+    break;
+  case FMT_WIGVAR:
+    proc_wigvar(genome, trackname, line, size_line, chunk_nrows, verbose);
+    break;
+  case FMT_BEDGRAPH:
+    /* don't need to process line because the first line is unimportant */
+    *line = '\0';
+  case FMT_BED:
+    proc_bed(genome, trackname, line, size_line, chunk_nrows, verbose);
+    break;
+  default:
+    fatal("only fixedStep, variableStep, bedGraph, BED formats supported");
+    break;
+  }
+}
+
 /** programmatic interface **/
 
 void load_data(char *gdfilename, char *trackname, long chunk_nrows,
@@ -1163,43 +1248,12 @@ void load_data(char *gdfilename, char *trackname, long chunk_nrows,
   char *line = NULL;
   size_t size_line = 0;
 
-  file_format fmt;
-
   genome_t genome;
-
-  /* XXXopt: would be faster to just read a big block and do repeated
-     strtof rather than using getline */
-
-  if (getline(&line, &size_line, stdin) < 0) {
-    error_at_line(EXIT_FAILURE, errno, __FILE__, __LINE__,
-                  "failed to read first line");
-  }
-
-  fmt = sniff_header_line(line);
 
   init_genome(&genome);
   load_genome(&genome, gdfilename);
 
-  /* XXX: allow mixing and matching later on, if that is what UCSC
-     intends (check with them first). for now, once you pick a format,
-     you are stuck */
-  switch (fmt) {
-  case FMT_WIGFIX:
-    proc_wigfix(&genome, trackname, &line, &size_line, chunk_nrows, verbose);
-    break;
-  case FMT_WIGVAR:
-    proc_wigvar(&genome, trackname, &line, &size_line, chunk_nrows, verbose);
-    break;
-  case FMT_BEDGRAPH:
-    /* don't need to process line because the first line is unimportant */
-    *line = '\0';
-  case FMT_BED:
-    proc_bed(&genome, trackname, &line, &size_line, chunk_nrows, verbose);
-    break;
-  default:
-    fatal("only fixedStep, variableStep, bedGraph, BED formats supported");
-    break;
-  }
+  proc_data(&genome, trackname, &line, &size_line, chunk_nrows, verbose);
 
   close_genome(&genome);
   /* free heap variables */
