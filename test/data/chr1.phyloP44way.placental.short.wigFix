@@ -1,7 +1,9 @@
+track type=wiggle_0 name="A.101" description="Frequency of A or T in windows of size 101."
 fixedStep chrom=chr1 start=281 step=1
 0.371
 0.372
-fixedStep chrom=chr1 start=283 step=1
+track type=wiggle_0 name="A.101" description="Frequency of A or T in windows of size 101."
+fixedStep	chrom=chr1	start=283	step=1
 0.372
 0.372
 0.367
