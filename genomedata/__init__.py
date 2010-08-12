@@ -372,15 +372,14 @@ for archives created with Genomedata version 1.2.0 or later.""")
             except AttributeError:
                 pass
 
-        version = None
-        for chromosome in self:
-            cur_version = chromosome._format_version
-            if version is None:
-                version = cur_version
-            else:
-                assert version == cur_version
+        # else: self is a directory
+        chromosomes = iter(self)
+        res = chromosomes.next()._format_version
 
-        return version
+        assert all(res == chromosome._format_version
+                   for chromosome in chromosomes)
+
+        return res
 
     # XXX: should memoize these with an off-the-shelf decorator
     @property
@@ -916,7 +915,12 @@ since being closed with genomedata-close-data.""")
         try:
             return self._file_attrs.genomedata_format_version
         except AttributeError:
-            return self.attrs.genomedata_format_version
+            try:
+                return self.attrs.genomedata_format_version
+            except AttributeError:
+                # original version did not have
+                # genomedata_format_version attribute
+                return 0
 
     @property
     def start(self):

@@ -1,6 +1,8 @@
 1.2.3:
 
-* tests: regression tests more robust
+* Genome.format_version will now return 0 when files are missing a
+  genomedata_format_version attribute
+* tests: add regression tests
 
 1.2.2:
 
