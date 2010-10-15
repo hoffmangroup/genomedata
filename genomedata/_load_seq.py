@@ -7,7 +7,7 @@ load_seq: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2008-2009 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2010 Michael M. Hoffman <mmh1@washington.edu>
 
 from re import compile, VERBOSE
 import sys
@@ -38,6 +38,8 @@ def create_supercontig(chromosome, index, seq, start, end):
 
     seq_array = frombuffer(seq, SEQ_DTYPE)
     h5file.createCArray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
+
+    # XXXopt: does this result in compression?
     supercontig.seq[...] = seq_array
 
     attrs = supercontig._v_attrs
@@ -112,6 +114,8 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None):
     else:
         raise ValueError("Unsupported mode: %s" % mode)
 
+    # XXX: ignoring all warnings is probably bad. Why is this here?
+    # Can we be more specific?
     warnings.simplefilter("ignore")
     with Genome(gdpath, mode="w", filters=FILTERS_GZIP) as genome:
         for filename in filenames:
@@ -125,13 +129,13 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None):
                         chromosome = genome[name]
                     else: # mode == "file"
                         h5file = genome.h5file
-                        h5group = h5file.createGroup("/", name,
-                                                     filters=FILTERS_GZIP)
+                        h5file.createGroup("/", name, filters=FILTERS_GZIP)
                         chromosome = genome[name]
 
                     chromosome.attrs.dirty = True
                     read_seq(chromosome, seq)
 
+    # XXX: this should be enforced even when there is an exception
     warnings.resetwarnings()
 
 def parse_options(args):

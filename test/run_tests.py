@@ -43,6 +43,16 @@ class TestParseBedGraph(test_genomedata.GenomedataTester):
         self.new_track = ("dnase", "wgEncodeDukeDNaseSeqBase"
                           "OverlapSignalK562V2.bedGraph")
 
+class TestGivenDataV0(test_genomedata.GenomedataGivenDataTester):
+    def init(self):
+        self.mode = "file"
+        self.set_gdfilepath("data/v0.genomedata")
+
+class TestGivenDataV1(test_genomedata.GenomedataGivenDataTester):
+    def init(self):
+        self.mode = "file"
+        self.set_gdfilepath("data/v1.genomedata")
+
 class TestNoDataGenomedataDir(test_genomedata.GenomedataNoDataTester):
     def init(self):
         self.mode = "dir"

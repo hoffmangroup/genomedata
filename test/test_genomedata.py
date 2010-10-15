@@ -32,12 +32,13 @@ def seq2str(seq):
 def make_temp_dir():
     return mkdtemp(prefix="genomedata.test.")
 
-class GenomedataTester(unittest.TestCase):
+class GenomedataTesterBase(unittest.TestCase):
     def setUp(self):
         # Defaults
         self.verbose = False
         self.mode = "dir"
-        self.tracks = {"vertebrate": "chr1.phyloP44way.vertebrate.short.wigFix",
+        self.tracks = {"vertebrate":
+                           "chr1.phyloP44way.vertebrate.short.wigFix",
                        "placental": "chr1.phyloP44way.placental.short.wigFix",
                        "primate": "chr1.phyloP44way.primate.short.wigFix"}
         # Track to be added by test_add_track
@@ -46,58 +47,6 @@ class GenomedataTester(unittest.TestCase):
 
         # Potentially override defaults
         self.init()  # Call to sub-classed method
-
-        # Create Genomedata collection from test files
-        seqs = ["chr1.short.fa", "chrY.short.fa.gz"]
-        # Placental includes data for chr1 and chrY
-        if self.mode == "dir":
-            gdfilename = make_temp_dir()
-
-        elif self.mode == "file":
-            tempfile, gdfilename = mkstemp(prefix="genomedata")
-            os.close(tempfile)
-            os.remove(gdfilename)  # Allow load_genomedata to create it
-        else:
-            self.fail("Unrecognized mode: %s" % self.mode)
-
-        self.gdfilepath = path(gdfilename).expand()
-
-        self.tracknames = sorted(self.tracks.keys())
-
-        # Get resource paths instead of filenames
-        seqfiles = [test_filename(file) for file in seqs]
-        trackfiles = [test_filename(self.tracks[trackname])
-                      for trackname in self.tracknames]
-        self.seqfiles = seqfiles
-        self.trackfiles = trackfiles
-
-        tracktuples = [(trackname, trackfile) for trackname, trackfile in
-                       zip(self.tracknames, self.trackfiles)]
-
-        load_genomedata(self.gdfilepath, tracktuples, seqfiles,
-                        verbose=self.verbose, mode=self.mode)
-
-        if self.mode == "dir":
-            self.chroms = [val.split(".")[0] for val in seqs]
-            for chrom in self.chroms:
-                filename = os.extsep.join([chrom, "genomedata"])
-                filepath = self.gdfilepath.joinpath(filename)
-                self.assertTrue(filepath.isfile(),
-                                "Chromosome file was not found: %s" % filepath)
-        elif self.mode == "file":
-            self.assertTrue(self.gdfilepath.isfile(),
-                            "Genomedata archive was not created: %r" %
-                            self.gdfilepath)
-        else:
-            self.fail("Unrecognized mode: %s" % self.mode)
-
-    def tearDown(self):
-        if self.mode == "dir":
-            self.gdfilepath.rmtree()
-        elif self.mode == "file":
-            self.gdfilepath.remove()
-        else:
-            self.fail("Unrecognized mode: %s" % self.mode)
 
     def assertArraysEqual(self, observed, expected):
         expected = array(expected, dtype=observed.dtype)
@@ -191,6 +140,64 @@ class GenomedataTester(unittest.TestCase):
 
         self.assertEqual(genome.open_chromosomes, {})
 
+    def set_gdfilepath(self, filename):
+        self.gdfilepath = path(filename).expand()
+
+class GenomedataTester(GenomedataTesterBase):
+    def setUp(self):
+        GenomedataTesterBase.setUp(self)
+
+        # Create Genomedata collection from test files
+        seqs = ["chr1.short.fa", "chrY.short.fa.gz"]
+        # Placental includes data for chr1 and chrY
+        if self.mode == "dir":
+            gdfilename = make_temp_dir()
+
+        elif self.mode == "file":
+            tempfile, gdfilename = mkstemp(prefix="genomedata")
+            os.close(tempfile)
+            os.remove(gdfilename)  # Allow load_genomedata to create it
+        else:
+            self.fail("Unrecognized mode: %s" % self.mode)
+
+        self.set_gdfilepath(gdfilename)
+        self.tracknames = sorted(self.tracks.keys())
+
+        # Get resource paths instead of filenames
+        seqfiles = [test_filename(file) for file in seqs]
+        trackfiles = [test_filename(self.tracks[trackname])
+                      for trackname in self.tracknames]
+        self.seqfiles = seqfiles
+        self.trackfiles = trackfiles
+
+        tracktuples = [(trackname, trackfile) for trackname, trackfile in
+                       zip(self.tracknames, self.trackfiles)]
+
+        load_genomedata(self.gdfilepath, tracktuples, seqfiles,
+                        verbose=self.verbose, mode=self.mode)
+
+        if self.mode == "dir":
+            self.chroms = [val.split(".")[0] for val in seqs]
+            for chrom in self.chroms:
+                filename = os.extsep.join([chrom, "genomedata"])
+                filepath = self.gdfilepath.joinpath(filename)
+                self.assertTrue(filepath.isfile(),
+                                "Chromosome file was not found: %s" % filepath)
+        elif self.mode == "file":
+            self.assertTrue(self.gdfilepath.isfile(),
+                            "Genomedata archive was not created: %r" %
+                            self.gdfilepath)
+        else:
+            self.fail("Unrecognized mode: %s" % self.mode)
+
+    def tearDown(self):
+        if self.mode == "dir":
+            self.gdfilepath.rmtree()
+        elif self.mode == "file":
+            self.gdfilepath.remove()
+        else:
+            self.fail("Unrecognized mode: %s" % self.mode)
+
     def test_add_track(self):
         new_track_name, new_track_file = self.new_track
 
@@ -273,6 +280,15 @@ class GenomedataTester(unittest.TestCase):
             chromosome = genome["chr1"]
             self.assertArraysEqual(chromosome[new_entry[0], new_trackname],
                                    new_entry[1])
+
+class GenomedataGivenDataTester(GenomedataTesterBase):
+    """
+    test a given Genomedata file
+    """
+    def setUp(self):
+        GenomedataTesterBase.setUp(self)
+
+        self.tracknames = ["placental", "primate", "vertebrate"]
 
 class GenomedataNoDataTester(unittest.TestCase):
     def setUp(self):

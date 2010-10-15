@@ -9,7 +9,7 @@ but genomedata provides a transparent interface to interact with your
 underlying data without having to worry about the mess of repeatedly parsing
 large data files or having to keep them in memory for random access.
 
-Copyright 2009 Michael M. Hoffman <mmh1@washington.edu>
+Copyright 2009, 2010 Michael M. Hoffman <mmh1@washington.edu>
 
 """
 
@@ -218,7 +218,7 @@ class Genome(object):
 
         """
         try:
-            chromosome = self[name]
+            self[name]
         except KeyError:
             return False  # Couldn't find chromosome
         else:
@@ -353,6 +353,28 @@ for archives created with Genomedata version 1.2.0 or later.""")
                     assert res == chromosome.tracknames_continuous
 
         return res
+
+    def index_continuous(self, trackname):
+        """Return the column index of the trackname in the continuous data.
+
+        :param trackname: name of data track
+        :type trackname: string
+        :returns: integer
+
+        This is used for efficient indexing into continuous data:
+
+        >>> col_index = genome.index_continuous("sample_track")
+        >>> data = genome["chr3"][100:150, col_index]
+
+        although for typical use, the track can be indexed directly:
+
+        >>> data = genome["chr3"][100:150, "sample_track"]
+
+        """
+        try:
+            return self.tracknames_continuous.index(trackname)
+        except ValueError:
+            raise KeyError("Could not find continuous track: %s" % trackname)
 
     @property
     def num_tracks_continuous(self):
@@ -817,7 +839,7 @@ since being closed with genomedata-close-data.""")
         for supercontig in self:
             supercontig_length = supercontig.seq.shape[0]
             try:
-                continuous = supercontig.continuous
+                supercontig.continuous
             except NoSuchNodeError:
                 # Define an extendible array in the second dimension (0)
                 supercontig_shape = (supercontig_length, 0)

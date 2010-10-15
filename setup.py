@@ -48,7 +48,7 @@ genomedata-erase-data = genomedata._erase_data:main
 genomedata-test = test.run_tests:main
 """
 
-install_requires = ["numpy", "forked-path", "tables>2.0.4,<2.2a0", "textinput"]
+install_requires = ["numpy", "forked-path", "tables>2.0.4,<2.2a0,>=2.2", "textinput"]
 
 arch = "_".join([system(), processor()])
 
@@ -154,7 +154,7 @@ class BuildScriptWrapper(build_scripts):
         if include_gnulib:
             compiler.add_library("gnu")
 
-        extra_postargs = ["-std=c99"]
+        extra_postargs = ["-std=c99", "-Wall"]
 
         # Remove DNDEBUG flag from all compile statements
         bad_flag = "-DNDEBUG"

@@ -2,16 +2,16 @@
 Genomedata |version| documentation
 ==================================
 :Website: http://noble.gs.washington.edu/proj/genomedata
-:Author: Michael M. Hoffman <mmh1 at washington dot edu>
+:Author: Michael M. Hoffman <mmh1 at uw dot edu>
 :Organization: University of Washington
 :Address: Department of Genome Sciences, PO Box 355065, Seattle, WA 98195-5065, United States of America
-:Copyright: 2009 Michael M. Hoffman
+:Copyright: 2009-2010 Michael M. Hoffman
 
 For a broad overview, see the paper:
 
     Hoffman MM, Buske OJ, Noble WS. (2010). `The Genomedata format for storing
-    large-scale functional genomics data`__. 
-    *Bioinformatics*, **26**\(11):1458-1459; doi:10.1093/bioinformatics/btq164 
+    large-scale functional genomics data`__.
+    *Bioinformatics*, **26**\(11):1458-1459; doi:10.1093/bioinformatics/btq164
 
 .. __: http://bioinformatics.oxfordjournals.org/cgi/content/abstract/btq164
 
@@ -23,7 +23,7 @@ Installation
 ============
 
 A simple, interactive script_ has been created to install Genomedata
-(and most dependencies) on any \*nix platform. Installation is as
+(and most dependencies) on any Unix platform. Installation is as
 simple as downloading and running this script! For instance::
 
   wget http://noble.gs.washington.edu/proj/genomedata/install.py
@@ -38,7 +38,7 @@ simple as downloading and running this script! For instance::
       This software has been tested on Linux and Mac OS X systems.
       We would love to add support for other systems in the future and
       will gladly accept any contributions toward this end.
-  - Python 2.5 or 2.6
+  - Python 2.5-2.7
   - Zlib
 
 .. note:: For questions, comments, or troubleshooting, please refer to
@@ -124,12 +124,11 @@ sequence and numerical data into a Genomedata archive with the
 
     genomedata-load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATAFILE
 
-
-This command is a user-friendly shortcut to the typical workflow.
-The underlying commands are still installed and may be used if more
-fine-grained control is required (for instance, parallel data loading or
-adding additional tracks later).
-The commands and required ordering are:
+This command is a user-friendly shortcut to the typical workflow. The
+underlying commands are still installed and may be used if more
+fine-grained control is required (for instance, parallel data loading
+or adding additional tracks later). The commands and required ordering
+are:
 
 1. :ref:`genomedata-load-seq`
 #. :ref:`genomedata-open-data`
@@ -304,7 +303,8 @@ with the :ref:`genomedata-load` command.
 genomedata-load
 ---------------
 
-Usage information follows, but in summary, this script takes as input:
+This is a convenience script that will do everything necessary to
+create a Genomedata archive. This script takes as input:
 
 - sequence files in |sequence file formats| format, where the sequence
   identifiers are the names of the chromosomes/scaffolds to create.
@@ -505,6 +505,15 @@ languages, but currently only exports the following Python API.
    :members:
    :undoc-members:
 
+Tips and tricks
+===============
+
+If you find yourself creating many Genomedata archives on the same
+genome, it might be useful to save a copy of an archive after you load
+sequence, but before you load any data. Obviously, you can only do
+this if you use the fine-grained workflow of
+:ref:`genomedata-load-seq`, :ref:`genomedata-open-data`,
+:ref:`genomedata-load-data`, and :ref:`genomedata-close-data`.
 
 .. _support:
 
@@ -518,7 +527,7 @@ To stay informed of **new releases**, subscribe to the moderated
 
 For **discussion and questions** about the use of the Genomedata system,
 there is a ``genomedata-users`` mailing list:
-  
+
   https://mailman1.u.washington.edu/mailman/listinfo/genomedata-users
 
 For issues related to the use of Genomedata on **Mac OS X**, 
