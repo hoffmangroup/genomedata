@@ -138,6 +138,10 @@ class Genome(object):
         self._context_count = 0
         self._isopen = True
 
+        format_version = self.format_version
+        if format_version > FORMAT_VERSION:
+            raise NotImplementedError("This archive has format version %s, but the installed Genomedata software unly supports format version %d" % (format_version, FORMAT_VERSION)))
+
     def __iter__(self):
         """Return next chromosome, in sorted order, with memoization.
 
