@@ -39,6 +39,7 @@ classifiers = ["Natural Language :: English",
 
 entry_points = """
 [console_scripts]
+genomedata-info = genomedata._info:main
 genomedata-load = genomedata.load_genomedata:main
 genomedata-load-seq = genomedata._load_seq:main
 genomedata-open-data = genomedata._open_data:main
