@@ -9,7 +9,7 @@ space footprint. We have also developed utilities to load data into
 this format.
 """
 
-__version__ = "1.2.3"
+__version__ = "writing output... [100%] index                                                                        writing output... [ 50%] genomedata                                                                   1.2.4"
 
 # Copyright 2008-2010 Michael M. Hoffman <mmh1@washington.edu>
 
