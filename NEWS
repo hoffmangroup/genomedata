@@ -1,5 +1,8 @@
 1.2.3:
 
+* allow use with PyTables >=2.2
+* new command: genomedata-info: "genomedata-info tracknames ARCHIVE"
+  prints the tracknames for ARCHIVE
 * Genome.format_version will now return 0 when files are missing a
   genomedata_format_version attribute
 * Genome.__init__: future-proof to future versions of file format by throwing an error
