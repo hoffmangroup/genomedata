@@ -35,7 +35,7 @@ SEQ_DTYPE = uint8
 SEQ_ATOM = UInt8Atom()
 
 CONTINUOUS_DTYPE = float32
-CONTINUOUS_ATOM = Float32Atom()
+CONTINUOUS_ATOM = Float32Atom(dflt=NAN)
 CONTINUOUS_CHUNK_SHAPE = (10000, 1)
 
 EXT = "genomedata"
@@ -139,7 +139,7 @@ class Genome(object):
         self._isopen = True
 
         format_version = self.format_version
-        if format_version > FORMAT_VERSION:
+        if format_version is not None and format_version > FORMAT_VERSION:
             raise NotImplementedError("This archive has format version %s,"
                                       " but the installed Genomedata software"
                                       " unly supports format version %d" \
@@ -403,6 +403,11 @@ for archives created with Genomedata version 1.2.0 or later.""")
 
         # else: self is a directory
         chromosomes = iter(self)
+        try:
+            first_chromosome = chromosomes.next()
+        except StopIteration:
+            return None
+
         res = chromosomes.next()._format_version
 
         assert all(res == chromosome._format_version
@@ -828,23 +833,23 @@ since being closed with genomedata-close-data.""")
         assert self.isopen
         if self._isfile:
             # Update tracknames attribute with new trackname
-            attrs = self._file_attrs
-            if "tracknames" in attrs:
-                tracknames = attrs.tracknames
+            file_attrs = self._file_attrs
+            if "tracknames" in file_attrs:
+                tracknames = file_attrs.tracknames
                 if trackname in tracknames:
                     raise ValueError("%s already has a track of name: %s"
                                      % (self.filename, trackname))
             else:
                 tracknames = array([])
 
-            attrs.tracknames = append(tracknames, trackname)
+            file_attrs.tracknames = append(tracknames, trackname)
         # else: hope the Genome object updated its own tracknames
 
         self.attrs.dirty = True  # dirty specific to chromosome
 
         # Extend supercontigs by a column (or create them)
         for supercontig in self:
-            supercontig_length = supercontig.seq.shape[0]
+            supercontig_length = supercontig.end - supercontig.start
             try:
                 supercontig.continuous
             except NoSuchNodeError:
@@ -854,6 +859,7 @@ since being closed with genomedata-close-data.""")
                                          CONTINUOUS_ATOM, supercontig_shape,
                                          chunkshape=CONTINUOUS_CHUNK_SHAPE)
 
+            # XXXopt: this is needlessly slow and expensive
             # Create empty continuous array
             continuous_array = fill_array(NAN, (supercontig_length, 1),
                                           dtype=CONTINUOUS_DTYPE)

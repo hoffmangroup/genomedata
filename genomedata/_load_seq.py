@@ -30,17 +30,23 @@ DNA_LETTERS_UNAMBIG = "ACGTacgt"
 
 SUPERCONTIG_NAME_FMT = "supercontig_%s"
 
-def create_supercontig(chromosome, index, seq, start, end):
+def create_supercontig(chromosome, index, seq=None, start=None, end=None):
     name = SUPERCONTIG_NAME_FMT % index
     h5file = chromosome.h5file
     where = chromosome.h5group
     supercontig = h5file.createGroup(where, name)
 
-    seq_array = frombuffer(seq, SEQ_DTYPE)
-    h5file.createCArray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
+    if seq is not None:
+        seq_array = frombuffer(seq, SEQ_DTYPE)
+        h5file.createCArray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
 
-    # XXXopt: does this result in compression?
-    supercontig.seq[...] = seq_array
+        # XXXopt: does this result in compression?
+        supercontig.seq[...] = seq_array
+
+    if start is None:
+        start = chromosome.start
+    if end is None:
+        end = chromosome.end
 
     attrs = supercontig._v_attrs
     attrs.start = start
@@ -64,12 +70,15 @@ re_gap_segment = compile(r"""
        DNA_LETTERS_UNAMBIG, REGEX_SEGMENT_LEN-1,
        DNA_LETTERS_UNAMBIG), VERBOSE)
 
+def init_chromosome(chromosome, size):
+    chromosome.attrs.start = 0
+    chromosome.attrs.end = size
+    chromosome._file_attrs.genomedata_format_version = FORMAT_VERSION
+
 def read_seq(chromosome, seq):
     supercontig_index = 0
 
-    chromosome.attrs.start = 0
-    chromosome.attrs.end = len(seq)
-    chromosome._file_attrs.genomedata_format_version = FORMAT_VERSION
+    init_chromosome(chromosome, len(seq))
 
     for m_segment in re_gap_segment.finditer(seq):
         seq_unambig = m_segment.group(2)
@@ -81,17 +90,61 @@ def read_seq(chromosome, seq):
         else:
             assert m_segment.group(1)
 
-def load_seq(gdfilename, filenames, verbose=False, mode=None):
+def size_chromosome(chromosome, size):
+    init_chromosome(chromosome, size)
+    create_supercontig(chromosome, 0)
+
+def load_sizes(filename):
+    res = {}
+
+    with maybe_gzip_open(filename) as infile:
+        for line in infile:
+            row = line.rstrip().split()
+            res[row[0]] = int(row[1])
+
+    return res
+
+def get_num_seq(filenames):
+    """
+    Run through all files once and count the number of sequences
+    """
+    res = 0
+
+    for filename in filenames:
+        with maybe_gzip_open(filename) as infile:
+            for line in infile:
+                if line.startswith(">"):
+                    res += 1
+
+    return res
+
+def create_chromosome(genome, name, mode):
+    name = "_".join(name.split())  # Remove any whitespace
+    if mode == "dir":
+        res = genome[name]
+    else: # mode == "file"
+        h5file = genome.h5file
+        h5file.createGroup("/", name, filters=FILTERS_GZIP)
+        res = genome[name]
+
+    res.attrs.dirty = True
+
+    return res
+
+def load_seq(gdfilename, filenames, verbose=False, mode=None, use_sizes=None):
     gdpath = path(gdfilename)
 
+    if use_sizes:
+        assert len(filenames) == 1
+        sizes = load_sizes(filenames[0])
+    else:
+        sizes = None
+
     if mode is None:
-        # Run through all files once and count the number of sequences
-        num_seq = 0
-        for filename in filenames:
-            with maybe_gzip_open(filename) as infile:
-                for line in infile:
-                    if line.startswith(">"):
-                        num_seq += 1
+        if use_sizes:
+            num_seq = len(sizes)
+        else:
+            num_seq = get_num_seq(filenames)
 
         if num_seq < FILE_MODE_CHROMS:
             mode = "dir"
@@ -99,10 +152,9 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None):
             mode = "file"
 
         if verbose:
-            print >>sys.stderr, ("Implementation unspecified. Found %d"
-                                 " chromosomes/scaffolds, so using: %s"
-                                 % (num_seq, mode))
-
+            msg = ("Implementation unspecified. Found %d"
+                   "chromosomes/scaffolds, so using: %s" % (num_seq, mode))
+            print >>sys.stderr, msg
     if mode == "dir":
         if gdpath.exists():
             assert gdpath.isdir()
@@ -116,26 +168,26 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None):
 
     # XXX: ignoring all warnings is probably bad. Why is this here?
     # Can we be more specific?
+    #
+    # is this because we are going to close chromosomes when they are
+    # set dirty?
     warnings.simplefilter("ignore")
     with Genome(gdpath, mode="w", filters=FILTERS_GZIP) as genome:
-        for filename in filenames:
-            if verbose:
-                print >>sys.stderr, filename
+        if use_sizes:
+            for name, size in sizes.iteritems():
+                chromosome = create_chromosome(genome, name, mode)
+                size_chromosome(chromosome, size)
+        else:
+            for filename in filenames:
+                if verbose:
+                    print >>sys.stderr, filename
 
-            with maybe_gzip_open(filename) as infile:
-                for defline, seq in LightIterator(infile):
-                    name = "_".join(defline.split())  # Remove any whitespace
-                    if mode == "dir":
-                        chromosome = genome[name]
-                    else: # mode == "file"
-                        h5file = genome.h5file
-                        h5file.createGroup("/", name, filters=FILTERS_GZIP)
-                        chromosome = genome[name]
-
-                    chromosome.attrs.dirty = True
-                    read_seq(chromosome, seq)
-
+                with maybe_gzip_open(filename) as infile:
+                    for defline, seq in LightIterator(infile):
+                        chromosome = create_chromosome(genome, defline, mode)
+                        read_seq(chromosome, seq)
     # XXX: this should be enforced even when there is an exception
+    # is there a context manager available?
     warnings.resetwarnings()
 
 def parse_options(args):
@@ -150,9 +202,11 @@ def parse_options(args):
     parser = OptionParser(usage=usage, version=version,
                           description=description)
 
-    parser.add_option("-v", "--verbose", dest="verbose",
+    parser.add_option("-v", "--verbose",
                       default=False, action="store_true",
                       help="Print status updates and diagnostic messages")
+    parser.add_option("-s", "--sizes", action="store_true",
+                      help="SEQFILE contains list of sizes instead of sequence")
     parser.add_option("-f", "--file-mode", dest="mode",
                       default=None, action="store_const", const="file",
                       help="If specified, the Genomedata archive will be"
@@ -181,9 +235,9 @@ def main(args=sys.argv[1:]):
     options, args = parse_options(args)
     gdfilename = args[0]
     seqfiles = args[1:]
-    kwargs = {"verbose": options.verbose,
-              "mode": options.mode}
-    return load_seq(gdfilename, seqfiles, **kwargs)
+
+    return load_seq(gdfilename, seqfiles, verbose=options.verbose,
+                    mode=options.mode, use_sizes=options.sizes)
 
 if __name__ == "__main__":
     sys.exit(main())

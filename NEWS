@@ -1,9 +1,12 @@
-writing output... [100%] index                                                                        writing output... [ 50%] genomedata                                                                   1.2.4:
+1.3.0:
 
-
+* genomedata supercontigs are no longer guaranteed to have seq data
+* add --sizes option to genomedata-load-seq, where you can avoid loading seq
+* fix bug where genomedata-load-seq didn't work
 
 1.2.3:
 
+* DO NOT RELEASE: genomedata-load-seq doesn't work
 * allow use with PyTables >=2.2
 * new command: genomedata-info: "genomedata-info tracknames ARCHIVE"
   prints the tracknames for ARCHIVE
