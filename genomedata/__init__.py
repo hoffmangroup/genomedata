@@ -408,7 +408,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
         except StopIteration:
             return None
 
-        res = chromosomes.next()._format_version
+        res = first_chromosome._format_version
 
         assert all(res == chromosome._format_version
                    for chromosome in chromosomes)

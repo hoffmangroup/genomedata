@@ -3,6 +3,7 @@
 * genomedata supercontigs are no longer guaranteed to have seq data
 * add --sizes option to genomedata-load-seq, where you can avoid loading seq
 * fix bug where genomedata-load-seq didn't work
+* fix bug where directory genomedata archive didn't work with only one chromosome
 
 1.2.3:
 
