@@ -851,21 +851,18 @@ since being closed with genomedata-close-data.""")
         for supercontig in self:
             supercontig_length = supercontig.end - supercontig.start
             try:
-                supercontig.continuous
+                continuous = supercontig.continuous
             except NoSuchNodeError:
                 # Define an extendible array in the second dimension (0)
                 supercontig_shape = (supercontig_length, 0)
                 self.h5file.createEArray(supercontig.h5group, "continuous",
                                          CONTINUOUS_ATOM, supercontig_shape,
                                          chunkshape=CONTINUOUS_CHUNK_SHAPE)
+                continuous = supercontig.continuous
 
-            # XXXopt: this is needlessly slow and expensive
-            # Create empty continuous array
-            continuous_array = fill_array(NAN, (supercontig_length, 1),
-                                          dtype=CONTINUOUS_DTYPE)
             # Add column to supercontig continuous array
-            supercontig.continuous.append(continuous_array)
-
+            # "truncate" also extends with default values
+            continuous.truncate(continuous.nrows+1)
 
     @property
     def isopen(self):

@@ -9,7 +9,7 @@ from __future__ import division, with_statement
 
 __version__ = "$Revision$"
 
-# Copyright 2008-2009 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2010 Michael M. Hoffman <mmh1@washington.edu>
 
 import sys
 
@@ -20,6 +20,7 @@ from . import Genome
 def open_data(gdfilename, tracknames, verbose=False):
     warnings.simplefilter("ignore")
     with Genome(gdfilename, "r+") as genome:
+        # XXXopt: it would be more efficient to add them all at once
         for trackname in tracknames:
             genome.add_track_continuous(trackname)
 
