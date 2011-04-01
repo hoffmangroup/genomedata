@@ -70,11 +70,16 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
         # Load sequences if any are specified
         if seqfilenames is not None and len(seqfilenames) > 0:
             for seqfilename in seqfilenames:
+                if seqfile_type == "fasta":
+                    seqfile_desc = "sequence"
+                else:
+                    seqfile_desc = "assembly"
+
                 if not path(seqfilename).isfile():
-                    die("Could not find sequence file: %s" % seqfilename)
+                    die("Could not find %s file: %s" % (seqfile_desc, seqfilename))
 
             if verbose:
-                print ">> Loading sequence files:"
+                print ">> Loading %s files:" % seqfile_desc
 
             load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode,
                      seqfile_type=seqfile_type)
