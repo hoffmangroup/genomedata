@@ -1,6 +1,13 @@
 1.3.1:
 
-
+* genomedata-load-seq: add --assembly option which supports AGP files,
+  to allow avoid loading seq while still dealing with assembly gaps
+  properly
+* genomedata-load: now supports --assembly and --sizes options
+* genomedata-load-assembly: alias for genomedata-load-seq.
+  genomedata-load-seq will be deprecated in the future
+* genomedata-load: print genomedata-load-data error code on failure
+* docs: add links to source code
 
 1.3.0:
 

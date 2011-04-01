@@ -15,6 +15,7 @@ from ._util import SUFFIX_GZ
 
 DEFAULT_CHUNK_SIZE = 10000
 LOAD_DATA_CMD = "genomedata-load-data"
+MSG_LOAD_ERROR = "Error loading data from track file %%s. %s returned %%s." % LOAD_DATA_CMD
 
 def die(msg="Unexpected error."):
     print >>sys.stderr, msg
@@ -52,7 +53,7 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
     loader.communicate()
     retcode = loader.poll()
     if retcode != 0:
-        die("Error loading data from track file: %s" % datafile)
+        die(MSG_LOAD_ERROR % (datafile, retcode))
 
 def parse_args(args):
     from optparse import OptionParser

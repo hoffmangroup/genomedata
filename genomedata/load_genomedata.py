@@ -7,7 +7,7 @@ load_genomedata: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2009 Orion Buske <orion.buske@gmail.com>
+# Copyright 2009, 2011 Orion Buske <orion.buske@gmail.com>
 # Copyright 2010 Michael Hoffman <mmh1@uw.edu>
 
 from glob import glob
@@ -28,7 +28,8 @@ def die(msg="Unexpected error."):
     sys.exit(1)
 
 def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
-                    chunk_size=DEFAULT_CHUNK_SIZE, verbose=False):
+                    seqfile_type="fasta", chunk_size=DEFAULT_CHUNK_SIZE,
+                    verbose=False):
     """Loads Genomedata collection with given data
 
     gdfilename: name of Genomedata archive to create
@@ -75,7 +76,8 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             if verbose:
                 print ">> Loading sequence files:"
 
-            load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode)
+            load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode,
+                     seqfile_type=seqfile_type)
 
         # Load tracks if any are specified
         if tracks is not None and len(tracks) > 0:
@@ -202,6 +204,14 @@ def parse_options(args):
                       dest="track", default=[], metavar="NAME=FILE",
                       help="Add data from FILE as the track NAME,"
                       " such as: -t signal=signal.wig")
+    parser.add_option("--assembly", action="store_const",
+                      const="agp", dest="seqfile_type",
+                      help="sequence files contain assembly (AGP) files instead of"
+                      " sequence")
+    parser.add_option("--sizes", action="store_const", const="sizes",
+                      dest="seqfile_type", default="fasta",
+                      help="sequence files contain list of sizes instead of"
+                      " sequence")
     parser.add_option_group(group)
 
     group = OptionGroup(parser, "Implementation")
@@ -251,7 +261,8 @@ def main(args=sys.argv[1:]):
     kwargs = {"verbose": options.verbose,
               "mode": options.mode}
 #              "chunk_size": options.chunk_size
-    load_genomedata(gdfilename, tracks, seqfilenames, **kwargs)
+    load_genomedata(gdfilename, tracks, seqfilenames,
+                    seqfile_type=options.seqfile_type, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

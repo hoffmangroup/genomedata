@@ -11,9 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import sys
 
-sys.path.append("..")
+sys.path.insert(0, "..")
 
 from setup import __version__ as release
 
@@ -26,7 +26,7 @@ from setup import __version__ as release
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -41,8 +41,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'genomedata'
-copyright = u'2009-2010, Michael M. Hoffman'
+project = u'Genomedata'
+copyright = u'2009-2011, Michael M. Hoffman'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

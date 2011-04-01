@@ -7,14 +7,15 @@ load_seq: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2008-2010 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2011 Michael M. Hoffman <mmh1@washington.edu>
 
 from re import compile, VERBOSE
 import sys
+import warnings
 
 from numpy import frombuffer
 from path import path
-import warnings
+from tabdelim import DictReader
 
 from . import SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, FORMAT_VERSION, Genome
 from ._util import FILTERS_GZIP, LightIterator, maybe_gzip_open
@@ -29,6 +30,41 @@ REGEX_SEGMENT_LEN = MIN_GAP_LEN // 2 # max == MAXREPEAT
 DNA_LETTERS_UNAMBIG = "ACGTacgt"
 
 SUPERCONTIG_NAME_FMT = "supercontig_%s"
+
+AGP_FIELDNAMES = ["object", "object_beg", "object_end", "part_number",
+                  "component_type", "col6", "col7", "col8", "col9"]
+
+GAP_COMPONENT_TYPES = frozenset("NU")
+
+def ignore_comments(iterable):
+    return (item for item in iterable if not item.startswith("#"))
+
+def read_agp(iterable):
+    """
+    converts coordinates from 1-based to 0-based
+    """
+    reader = DictReader(ignore_comments(iterable), AGP_FIELDNAMES)
+    for row in reader:
+        row["object_beg"] = int(row["object_beg"]) - 1
+        row["object_end"] = int(row["object_end"])
+        row["part_number"] = int(row["part_number"])
+
+        if row["component_type"] in GAP_COMPONENT_TYPES:
+            row["gap_length"] = int(row["col6"])
+            row["gap_type"] = row["col7"]
+            if row["col8"] == "yes":
+                row["linkage"] = True
+            else:
+                assert row["col8"] == "no"
+                row["linkage"] = False
+            row["linkage_evidence"] = row["col9"]
+        else:
+            row["component_id"] = row["col6"]
+            row["component_beg"] = int(row["col7"]) - 1
+            row["component_end"] = int(row["col8"])
+            row["orientation"] = row["col8"]
+
+        yield row
 
 def create_supercontig(chromosome, index, seq=None, start=None, end=None):
     name = SUPERCONTIG_NAME_FMT % index
@@ -90,6 +126,19 @@ def read_seq(chromosome, seq):
         else:
             assert m_segment.group(1)
 
+def read_assembly(chromosome, infile):
+    supercontig_index = 0
+
+    for part in read_agp(infile):
+        if part["component_type"] in GAP_COMPONENT_TYPES:
+            continue
+
+        start = part["object_beg"]
+        end = part["object_end"]
+
+        create_supercontig(chromosome, supercontig_index, None, start, end)
+        supercontig_index += 1
+
 def size_chromosome(chromosome, size):
     init_chromosome(chromosome, size)
     create_supercontig(chromosome, 0)
@@ -131,17 +180,19 @@ def create_chromosome(genome, name, mode):
 
     return res
 
-def load_seq(gdfilename, filenames, verbose=False, mode=None, use_sizes=None):
+def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fasta"):
     gdpath = path(gdfilename)
 
-    if use_sizes:
+    ## load sizes if necessary to figure out number of chromosomes
+    if seqfile_type == "sizes":
         assert len(filenames) == 1
         sizes = load_sizes(filenames[0])
     else:
         sizes = None
 
+    ## decide whether should use dir or file mode
     if mode is None:
-        if use_sizes:
+        if seqfile_type == "sizes":
             num_seq = len(sizes)
         else:
             num_seq = get_num_seq(filenames)
@@ -173,19 +224,25 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, use_sizes=None):
     # set dirty?
     warnings.simplefilter("ignore")
     with Genome(gdpath, mode="w", filters=FILTERS_GZIP) as genome:
-        if use_sizes:
+        if seqfile_type == "sizes":
             for name, size in sizes.iteritems():
                 chromosome = create_chromosome(genome, name, mode)
                 size_chromosome(chromosome, size)
         else:
+            assert seqfile_type in frozenset(["agp", "fasta"])
             for filename in filenames:
                 if verbose:
                     print >>sys.stderr, filename
 
                 with maybe_gzip_open(filename) as infile:
-                    for defline, seq in LightIterator(infile):
-                        chromosome = create_chromosome(genome, defline, mode)
-                        read_seq(chromosome, seq)
+                    if seqfile_type == "agp":
+                        name = filename.partition(".agp.gz")[0]
+                        chromosome = create_chromosome(genome, name, mode)
+                        read_assembly(chromosome, infile)
+                    else:
+                        for defline, seq in LightIterator(infile):
+                            chromosome = create_chromosome(genome, defline, mode)
+                            read_seq(chromosome, seq)
     # XXX: this should be enforced even when there is an exception
     # is there a context manager available?
     warnings.resetwarnings()
@@ -205,8 +262,14 @@ def parse_options(args):
     parser.add_option("-v", "--verbose",
                       default=False, action="store_true",
                       help="Print status updates and diagnostic messages")
-    parser.add_option("-s", "--sizes", action="store_true",
-                      help="SEQFILE contains list of sizes instead of sequence")
+    parser.add_option("-a", "--assembly", action="store_const",
+                      const="agp", dest="seqfile_type",
+                      help="SEQFILE contains assembly (AGP) files instead of"
+                      " sequence")
+    parser.add_option("-s", "--sizes", action="store_const", const="sizes",
+                      dest="seqfile_type", default="fasta",
+                      help="SEQFILE contains list of sizes instead of"
+                      " sequence")
     parser.add_option("-f", "--file-mode", dest="mode",
                       default=None, action="store_const", const="file",
                       help="If specified, the Genomedata archive will be"
@@ -237,7 +300,7 @@ def main(args=sys.argv[1:]):
     seqfiles = args[1:]
 
     return load_seq(gdfilename, seqfiles, verbose=options.verbose,
-                    mode=options.mode, use_sizes=options.sizes)
+                    mode=options.mode, seqfile_type=options.seqfile_type)
 
 if __name__ == "__main__":
     sys.exit(main())
