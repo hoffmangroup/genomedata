@@ -9,7 +9,7 @@ but genomedata provides a transparent interface to interact with your
 underlying data without having to worry about the mess of repeatedly parsing
 large data files or having to keep them in memory for random access.
 
-Copyright 2009, 2010 Michael M. Hoffman <mmh1@washington.edu>
+Copyright 2009, 2010, 2011 Michael M. Hoffman <mmh1@washington.edu>
 
 """
 
@@ -27,8 +27,6 @@ from os import extsep
 from path import path
 from tables import Float32Atom, NoSuchNodeError, openFile, UInt8Atom
 from warnings import warn
-
-from ._util import fill_array
 
 FORMAT_VERSION = 1
 SEQ_DTYPE = uint8

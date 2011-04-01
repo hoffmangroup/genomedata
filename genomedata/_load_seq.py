@@ -106,10 +106,16 @@ re_gap_segment = compile(r"""
        DNA_LETTERS_UNAMBIG, REGEX_SEGMENT_LEN-1,
        DNA_LETTERS_UNAMBIG), VERBOSE)
 
-def init_chromosome(chromosome, size):
+def init_chromosome_start(chromosome):
+    """
+    doesn't set end, so you can't use create_supercontig(end=None) if you use this
+    """
     chromosome.attrs.start = 0
-    chromosome.attrs.end = size
     chromosome._file_attrs.genomedata_format_version = FORMAT_VERSION
+
+def init_chromosome(chromosome, size):
+    init_chromosome_start(chromosome)
+    chromosome.attrs.end = size
 
 def read_seq(chromosome, seq):
     supercontig_index = 0
@@ -129,15 +135,20 @@ def read_seq(chromosome, seq):
 def read_assembly(chromosome, infile):
     supercontig_index = 0
 
+    init_chromosome_start(chromosome)
+
     for part in read_agp(infile):
+        end = part["object_end"]
+
         if part["component_type"] in GAP_COMPONENT_TYPES:
             continue
 
         start = part["object_beg"]
-        end = part["object_end"]
 
         create_supercontig(chromosome, supercontig_index, None, start, end)
         supercontig_index += 1
+
+    chromosome.attrs.end = end
 
 def size_chromosome(chromosome, size):
     init_chromosome(chromosome, size)
@@ -194,6 +205,8 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     if mode is None:
         if seqfile_type == "sizes":
             num_seq = len(sizes)
+        elif seqfile_type == "agp":
+            num_seq = len(filenames)
         else:
             num_seq = get_num_seq(filenames)
 
