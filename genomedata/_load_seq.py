@@ -249,7 +249,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
 
                 with maybe_gzip_open(filename) as infile:
                     if seqfile_type == "agp":
-                        name = filename.rpartition(".agp")[0]
+                        name = path(filename).name.rpartition(".agp")[0]
                         chromosome = create_chromosome(genome, name, mode)
                         read_assembly(chromosome, infile)
                     else:
