@@ -10,6 +10,7 @@ __version__ = "$Revision$"
 # Copyright 2009, 2011 Orion Buske <orion.buske@gmail.com>
 # Copyright 2010 Michael Hoffman <mmh1@uw.edu>
 
+from datetime import datetime
 from glob import glob
 from os import close, extsep
 from path import path
@@ -26,6 +27,18 @@ from ._close_data import close_data
 def die(msg="Unexpected error."):
     print >>sys.stderr, msg
     sys.exit(1)
+
+def print_timestamp(msg=""):
+    print >>sys.stderr, ">> %s: %s" % (datetime.now().isoformat(), msg)
+
+def repack(infilename, outfilename, verbose=False):
+    if verbose:
+        print >>sys.stderr, ">> Repacking: %s -> %s" % (infilename,
+                                                        outfilename)
+
+    retcode = call(["h5repack", "-f", "GZIP=1", infilename, outfilename])
+    if retcode != 0:
+        die("HDF5 repacking failed.")
 
 def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                     seqfile_type="fasta", chunk_size=DEFAULT_CHUNK_SIZE,
@@ -65,7 +78,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             raise ValueError("Unknown mode: %s" % mode)
 
         if verbose:
-            print ">> Using temporary Genomedata archive: %s" % tempdatapath
+            print >>sys.stderr, ">> Using temporary Genomedata archive: %s" % tempdatapath
 
         # Load sequences if any are specified
         if seqfilenames is not None and len(seqfilenames) > 0:
@@ -79,7 +92,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                     die("Could not find %s file: %s" % (seqfile_desc, seqfilename))
 
             if verbose:
-                print ">> Loading %s files:" % seqfile_desc
+                print_timestamp("Loading %s files:" % seqfile_desc)
 
             load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode,
                      seqfile_type=seqfile_type)
@@ -99,12 +112,15 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                 die("Error saving data from tracks: %s" % tracks)
 
             if verbose:
-                print (">> Opening Genomedata archive with %d tracks" %
-                       len(track_names))
+                print_timestamp("Opening Genomedata archive with %d tracks" %
+                                len(track_names))
 
             open_data(tempdatapath, track_names, verbose=verbose)
 
             # Load track data
+            if verbose:
+                print_timestamp("Loading data")
+
             for track_name, track_filename in tracks:
                 load_data(tempdatapath, track_name, track_filename,
                           verbose=verbose)
@@ -117,7 +133,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
 
         # Make output directory
         if verbose:
-            print ">> Creating Genomedata archive: %s" % gdfilename
+            print_timestamp("Creating Genomedata archive: %s" % gdfilename)
 
         # Move/repack h5 files to output directory
         if isdir:  # Repack each h5 file separately
@@ -127,24 +143,12 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                 gdpath.makedirs()
 
             for tempfilepath in tempdatapath.files():
-                # Repack file to output dir
-                tempfilename = tempfilepath.name
-                outfilepath = gdpath.joinpath(tempfilename)
-                if verbose:
-                    print ">> Repacking: %s -> %s" % \
-                        (tempfilepath, outfilepath)
+                tempbasepath = tempfilepath.name
+                outfilepath = gdpath / tempbasepath
 
-                cmd_args = ["h5repack", "-f", "GZIP=1",
-                            tempfilepath, outfilepath]
-                retcode = call(cmd_args)
-                if retcode != 0:
-                    die("HDF5 repacking failed.")
-        else:  # Move the .genomedata file over
-            if verbose:
-                print >>sys.stderr, ">> Moving %s -> %s" % \
-                    (tempdatapath, gdpath)
-
-            tempdatapath.copyfile(gdpath)
+                repack(tempfilepath, outfilepath, verbose)
+        else:
+            repack(tempdatapath, gdpath, verbose)
     except:
         print >>sys.stderr, "Error creating genomedata."
         raise
@@ -152,7 +156,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
         try:
             # Remove temp directory and all contents
             if verbose:
-                print ">> Cleaning up...",
+                print >>sys.stderr, ">> Cleaning up...",
 
             sys.stdout.flush()
             if tempdatapath.isfile():
@@ -161,12 +165,12 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                 tempdatapath.rmtree()
 
             if verbose:
-                print "done"
+                print >>sys.stderr, "done"
         except Exception, e:
             print >>sys.stderr, "\nCleanup failed: %s" % str(e)
 
     if verbose:
-        print "\n===== Genomedata archive successfully created: %s =====\n" % \
+        print >>sys.stderr, "\n===== Genomedata archive successfully created: %s =====\n" % \
             gdfilename
 
     return gdfilename
