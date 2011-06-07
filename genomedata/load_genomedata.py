@@ -179,7 +179,7 @@ def parse_options(args):
     from optparse import OptionGroup, OptionParser
 
     usage = ("%prog [OPTIONS] GENOMEDATAFILE"
-             "\ne.g. %prog -t high=signal.high.wig -t low=signal.low.bed.gz"
+             "\nexample: %prog -t high=signal.high.wig -t low=signal.low.bed.gz"
              " -s chrX.fa -s chrY.fa.gz mygenomedata")
     version = "%%prog %s" % __version__
     description = ("Create Genomedata archive named GENOMEDATAFILE by loading"
@@ -245,7 +245,7 @@ def parse_options(args):
     options, args = parser.parse_args(args)
 
     if not len(args) == 1:
-        parser.error("Inappropriate number of arguments")
+        parser.error("Expected only one argument. Instead, got: %s" % " ".join(args))
 
     return options, args
 

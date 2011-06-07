@@ -7,6 +7,11 @@
 * genomedata-load-assembly: alias for genomedata-load-seq.
   genomedata-load-seq will be deprecated in the future
 * genomedata-load: print genomedata-load-data error code on failure
+* genomedata-load-data: print more informative messages when ignoring data
+* genomedata-load: all diagnostics messages to stderr
+* genomedata-load: some diagnostics now include timestamp so we can
+  see where performance bottlenecks are
+* genomedata-load: more descriptive error message
 * docs: add links to source code
 
 1.3.0:

@@ -60,10 +60,6 @@
 
 const float nan_float = NAN;
 
-/* stringize a macro value with Xstr(VAL_MACRO) */
-#define Str(x) #x
-#define Xstr(x) Str(x)
-
 /** typedefs **/
 
 typedef enum {
@@ -903,7 +899,7 @@ void fill_buffer(float *buf_start, float *buf_end, long start, long end,
   if (fill_start >= buf_end) {
     if (verbose) {
       /* XXX: use of %ld here is not portable to 32-bit systems */
-      fprintf(stderr, " ignoring some data at %ld\n", start);
+      fprintf(stderr, " ignoring data beyond last supercontig (start: %ld)\n", start);
     }
     return;
   }
@@ -911,7 +907,7 @@ void fill_buffer(float *buf_start, float *buf_end, long start, long end,
   fill_end = buf_start + end;
   if (fill_end > buf_end) {
     if (verbose) {
-      fprintf(stderr, " ignoring some data at %ld:%ld\n", start, end);
+      fprintf(stderr, " ignoring data beyond last supercontig (end: %ld)\n", end);
     }
     fill_end = buf_end;
   }
@@ -1000,7 +996,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
         fill_end = fill_start + span;
         if (fill_end > buf_end) {
           if (verbose) {
-            fprintf(stderr, " ignoring data at %s:%lu+%lu\n",
+            fprintf(stderr, " ignoring data beyond last supercontig at %s:%lu+%lu\n",
                     chromosome.chrom,
                     (unsigned long)(fill_start - buf_start),
                     (unsigned long)span);
@@ -1017,7 +1013,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
       } else {
         /* else: ignore data until we get to another header line */
         if (verbose && !warned) {
-          fprintf(stderr, " ignoring data at %s:%lu\n",
+          fprintf(stderr, " ignoring data beyond last supercontig at %s:%lu\n",
                   chromosome.chrom,
                   (unsigned long)(fill_start - buf_start));
           warned = true;
