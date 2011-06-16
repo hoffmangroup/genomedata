@@ -5,7 +5,7 @@ Genomedata |version| documentation
 :Author: Michael M. Hoffman <mmh1 at uw dot edu>
 :Organization: University of Washington
 :Address: Department of Genome Sciences, PO Box 355065, Seattle, WA 98195-5065, United States of America
-:Copyright: 2009-2010 Michael M. Hoffman
+:Copyright: 2009-2011 Michael M. Hoffman
 
 For a broad overview, see the paper:
 
@@ -308,6 +308,7 @@ create a Genomedata archive. This script takes as input:
 
 - sequence files in |sequence file formats| format, where the sequence
   identifiers are the names of the chromosomes/scaffolds to create.
+  This is **mandatory**, despite having an option interface.
 - trackname, datafile pairs (specified as ``trackname=datafile``), where:
     * trackname is a ``string`` identifier (e.g. ``broad.h3k27me3``)
     * datafile contains signal data for this data track

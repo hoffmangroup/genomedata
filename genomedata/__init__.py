@@ -124,9 +124,7 @@ class Genome(object):
             # Genomedata directory
             isfile = False
         else:
-            raise NotImplementedError("Unknown Genomedata archive format: %r" %
-                                      filepath)
-
+            raise ValueError("Genomedata archive must be file or directory: %s" % filepath)
 
         self._path = filepath
         self._isfile = isfile
@@ -391,7 +389,10 @@ for archives created with Genomedata version 1.2.0 or later.""")
 
     @property
     def format_version(self):
-        """Genomedata format version"""
+        """Genomedata format version
+
+        None means there are no chromosomes in it already.
+        """
         assert self.isopen
         if self._isfile:
             try:

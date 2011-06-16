@@ -81,21 +81,23 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             print >>sys.stderr, ">> Using temporary Genomedata archive: %s" % tempdatapath
 
         # Load sequences if any are specified
-        if seqfilenames is not None and len(seqfilenames) > 0:
-            for seqfilename in seqfilenames:
-                if seqfile_type == "fasta":
-                    seqfile_desc = "sequence"
-                else:
-                    seqfile_desc = "assembly"
+        if not seqfilenames:
+            raise ValueError("No sequence files specified.")
 
-                if not path(seqfilename).isfile():
-                    die("Could not find %s file: %s" % (seqfile_desc, seqfilename))
+        for seqfilename in seqfilenames:
+            if seqfile_type == "fasta":
+                seqfile_desc = "sequence"
+            else:
+                seqfile_desc = "assembly"
 
-            if verbose:
-                print_timestamp("Loading %s files:" % seqfile_desc)
+            if not path(seqfilename).isfile():
+                die("Could not find %s file: %s" % (seqfile_desc, seqfilename))
 
-            load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode,
-                     seqfile_type=seqfile_type)
+        if verbose:
+            print_timestamp("Loading %s files:" % seqfile_desc)
+
+        load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode,
+                 seqfile_type=seqfile_type)
 
         # Load tracks if any are specified
         if tracks is not None and len(tracks) > 0:
@@ -264,7 +266,7 @@ def main(args=sys.argv[1:]):
             track_name, _, track_filename = track_expr.partition("=")
             tracks.append((track_name, track_filename))  # Tuple
     except ValueError:
-        die(("Error parsing track expression: %s\nMake sure to specify tracks"
+        die(("Error parsing track expression: %s\Specify tracks"
              "in NAME=FILE form, such as: -t high=signal.high") % track_expr)
 
     kwargs = {"verbose": options.verbose,
