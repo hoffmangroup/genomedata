@@ -130,7 +130,7 @@ fine-grained control is required (for instance, parallel data loading
 or adding additional tracks later). The commands and required ordering
 are:
 
-1. :ref:`genomedata-load-seq`
+1. :ref:`genomedata-load-assembly`
 #. :ref:`genomedata-open-data`
 #. :ref:`genomedata-load-data`
 #. :ref:`genomedata-close-data`
@@ -156,10 +156,10 @@ following pipeline:
 
 As of the current version, Genomedata archives must include the
 underlying genomic sequence and can only be created with
-:ref:`genomedata-load-seq`. A Genomedata archive can be created
+:ref:`genomedata-load-assembly`. A Genomedata archive can be created
 without any tracks, however, using the following pipeline:
 
-1. :ref:`genomedata-load-seq`
+1. :ref:`genomedata-load-assembly`
 #. :ref:`genomedata-close-data`
 
 .. versionadded:: 1.2
@@ -218,7 +218,7 @@ following command::
 
 or the following pipeline::
 
-   genomedata-load-seq genomedata.test chr1.fa chrY.fa.gz
+   genomedata-load-assembly genomedata.test chr1.fa chrY.fa.gz
    genomedata-open-data genomedata.test low high
    genomedata-load-data genomedata.test low < signal_low.wigFix
    zcat signal_high.bed.gz | genomedata-load-data genomedata.test high
@@ -349,14 +349,14 @@ This can be especially useful for parallelizing Genomedata loading over a
 cluster.
 
 You can use wildcards when specifying sequence files, such as in
-``genomedata-load-seq -s 'chr*.fa'``. You must be sure to quote the
+``genomedata-load-assembly -s 'chr*.fa'``. You must be sure to quote the
 wildcards so that they are not expanded by your shell. For most
 shells, this means using single quotes (``'chr*.fa'``) instead of
 double quotes (``"chr*.fa"``).
 
-.. _genomedata-load-seq:
+.. _genomedata-load-assembly:
 
-genomedata-load-seq
+genomedata-load-assembly
 -------------------
 
 This command adds the provided sequence files to the specified
@@ -372,7 +372,7 @@ these sequence files and the data loaded later with
 
 ::
 
- Usage: genomedata-load-seq [OPTION]... GENOMEDATAFILE SEQFILE...
+ Usage: genomedata-load-assembly [OPTION]... GENOMEDATAFILE SEQFILE...
 
  Options:
    -g, --gap-length  XXX: Implement this.
@@ -406,7 +406,7 @@ This command loads data from stdin into Genomedata under the given trackname.
 The input data must be in one of these supported datatypes:
 |signal data formats|. The chromosome/scaffold references in these files must
 match the sequence identifiers in the sequence files loaded with
-:ref:`genomedata-load-seq`. See :ref:`this example <genomedata-load-example>`
+:ref:`genomedata-load-assembly`. See :ref:`this example <genomedata-load-example>`
 for details. A :option:`chunk-size` can be specified to control the
 size of hdf5 chunks (the smallest data read size, like a page size).
 Larger values of :option:`chunk-size` can increase the level
@@ -513,7 +513,7 @@ If you find yourself creating many Genomedata archives on the same
 genome, it might be useful to save a copy of an archive after you load
 sequence, but before you load any data. Obviously, you can only do
 this if you use the fine-grained workflow of
-:ref:`genomedata-load-seq`, :ref:`genomedata-open-data`,
+:ref:`genomedata-load-assembly`, :ref:`genomedata-open-data`,
 :ref:`genomedata-load-data`, and :ref:`genomedata-close-data`.
 
 .. _support:

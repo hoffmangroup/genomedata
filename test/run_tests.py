@@ -7,8 +7,8 @@ DESCRIPTION
 
 __version__ = "$Revision: $"
 
+# Copyright 2010-2011 Michael M. Hoffman <mmh1@uw.edu>
 # Copyright 2009 Orion Buske <stasis@uw.edu>
-# Copyright 2010 Michael M. Hoffman <mmh1@uw.edu>
 
 from os import chdir
 import unittest
@@ -42,6 +42,24 @@ class TestParseBedGraph(test_genomedata.GenomedataTester):
         self.mode = "file"
         self.new_track = ("dnase", "wgEncodeDukeDNaseSeqBase"
                           "OverlapSignalK562V2.bedGraph")
+
+class TestParseWigVarDOS(test_genomedata.GenomedataTester):
+    def init(self):
+        self.mode = "file"
+        self.new_track = ("dnase", "wgEncodeDukeDNaseSeqBase"
+                          "OverlapSignalK562V2.dos.wigVar")
+
+class TestParseBedDOS(test_genomedata.GenomedataTester):
+    def init(self):
+        self.mode = "file"
+        self.new_track = ("dnase", "wgEncodeDukeDNaseSeqBase"
+                          "OverlapSignalK562V2.dos.bed")
+
+class TestParseBedGraphDOS(test_genomedata.GenomedataTester):
+    def init(self):
+        self.mode = "file"
+        self.new_track = ("dnase", "wgEncodeDukeDNaseSeqBase"
+                          "OverlapSignalK562V2.dos.bedGraph")
 
 class TestGivenDataV0(test_genomedata.GenomedataGivenDataTester):
     def init(self):

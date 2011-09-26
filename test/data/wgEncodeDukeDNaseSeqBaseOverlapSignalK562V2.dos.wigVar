@@ -1,0 +1,19 @@
+variableStep chrom=chr2 span=1
+1 0
+variableStep chrom=chr1 span=1
+156 0
+157       1
+158   1
+159	1
+160  1
+161	1
+162 1
+163 1
+164 1
+165 1
+166 1
+167 1
+168 0
+169 0
+variableStep chrom=chr10 span=1
+100 0

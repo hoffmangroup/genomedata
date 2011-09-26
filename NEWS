@@ -6,6 +6,7 @@
 * genomedata-load: now supports --assembly and --sizes options
 * genomedata-load-assembly: alias for genomedata-load-seq.
   genomedata-load-seq will be deprecated in the future
+* genomedata-load-data: now support DOS-style line endings ("\r\n")
 * genomedata-load: print genomedata-load-data error code on failure
 * genomedata-load-data: print more informative messages when ignoring data
 * genomedata-load: all diagnostics messages to stderr
@@ -15,6 +16,7 @@
 * docs: add links to source code
 * docs: genomedata-load: sequence "option" is mandatory. In a future
   version, we should change this to an argument to reflect this.
+* test: add tests for DOS-style line-endings
 
 1.3.0:
 

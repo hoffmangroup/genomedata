@@ -168,6 +168,10 @@ inline int streq(const char *s1, const char *s2) {
   return strncmp(s1, s2, strlen(s1)) == 0;
 }
 
+inline bool is_newline(const char *s) {
+  return *s == '\n' || streq("\r\n", s);
+}
+
 /** general-purpose HDF5 attribute helper functions **/
 
 void disable_h5_errors(err_state_t *err_state) {
@@ -585,6 +589,7 @@ void parse_wiggle_header(char **line, size_t *size_line, file_format fmt, char *
   char *token;
   char *tailptr;
   char *line_no_id;
+  char *line_end;
   char *id_str;
 
   char *loc_eq;
@@ -612,7 +617,13 @@ void parse_wiggle_header(char **line, size_t *size_line, file_format fmt, char *
   assert(streq(id_str, *line));
 
   /* strip trailing newline */
-  *strchr(*line, '\n') = '\0';
+  line_end = *line + strlen(*line) - 1;
+  if (*(line_end) == '\n') {
+    if (*(line_end-1) == '\r') {
+      line_end--;
+    }
+    *line_end = '\0';
+  }
 
   /* Initialize to avoid compiler warning */
   save_ptr = NULL;
@@ -655,6 +666,9 @@ void parse_wiggle_header(char **line, size_t *size_line, file_format fmt, char *
     } else if (!strcmp(key, KEY_STEP)) {
       assert(step); /* don't write a null pointer */
       *step = xstrtol(val, &tailptr, BASE);
+      if(*tailptr) {
+        fprintf(stderr, "tailptr: %s (%x)", tailptr, *tailptr);
+      }
       assert(!*tailptr);
 
     } else if (!strcmp(key, KEY_SPAN)) {
@@ -987,7 +1001,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
       }
     }
 
-    if (*tailptr == '\n') {
+    if (is_newline(tailptr)) {
       if (!is_valid_chromosome(&chromosome)) {
         continue;
       }
@@ -1110,7 +1124,7 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
       assert(!errno);
 
       /* must be EOL */
-      assert(*tailptr == '\n');
+      assert(is_newline(tailptr));
 
       end = start + span;
       fill_buffer(buf_start, buf_end, start, end, datum, verbose);
@@ -1191,7 +1205,7 @@ void proc_bed(genome_t *genome, char *trackname, char **line,
 
     errno = 0;
     datum = strtof(tailptr, &tailptr);
-    assert(!errno && *tailptr == '\n');
+    assert(!errno && (is_newline(tailptr)));
 
     fill_buffer(buf_start, buf_end, start, end, datum, verbose);
   } while (getline(line, size_line, stdin) >= 0);
