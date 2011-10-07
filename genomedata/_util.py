@@ -49,6 +49,9 @@ class LightIterator(object):
         if not lines:
             raise StopIteration
 
+        if defline_old is None:
+            raise ValueError("no definition line found oat next position in %r" % self._handle)
+
         return defline_old, ''.join(lines)
 
 # XXX: suggest as default

@@ -13,6 +13,8 @@
 * genomedata-load: some diagnostics now include timestamp so we can
   see where performance bottlenecks are
 * genomedata-load: more descriptive error messages
+* genomedata-load-seq: print more descriptive error message when
+  attempting to load sequence from a non-FASTA file
 * docs: add links to source code
 * docs: genomedata-load: sequence "option" is mandatory. In a future
   version, we should change this to an argument to reflect this.

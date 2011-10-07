@@ -13,6 +13,10 @@ import sys
 
 from . import Genome
 
+# XXX: add sizes command that produces tab-delimited file of sizes,
+# compatible with UCSC bigWig tab-delimited specification file, for
+# checking
+
 def print_tracknames_continuous(genome):
     print "\n".join(genome.tracknames_continuous)
 
