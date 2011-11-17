@@ -306,9 +306,11 @@ genomedata-load
 This is a convenience script that will do everything necessary to
 create a Genomedata archive. This script takes as input:
 
-- sequence files in |sequence file formats| format, where the sequence
-  identifiers are the names of the chromosomes/scaffolds to create.
-  This is **mandatory**, despite having an option interface.
+- assembly files in either |sequence file formats| format (where the
+  sequence identifiers are the names of the chromosomes/scaffolds to
+  create), or assembly files in AGP format (when used with
+  :option:`--assembly`). This is **mandatory**, despite having an
+  option interface.
 - trackname, datafile pairs (specified as ``trackname=datafile``), where:
     * trackname is a ``string`` identifier (e.g. ``broad.h3k27me3``)
     * datafile contains signal data for this data track
@@ -353,6 +355,10 @@ You can use wildcards when specifying sequence files, such as in
 wildcards so that they are not expanded by your shell. For most
 shells, this means using single quotes (``'chr*.fa'``) instead of
 double quotes (``"chr*.fa"``).
+
+If you aren't going to use the sequence later on, loading the assembly from
+an AGP file will be faster and take less memory during loading, and
+disk space afterward.
 
 .. _genomedata-load-assembly:
 
@@ -515,6 +521,43 @@ sequence, but before you load any data. Obviously, you can only do
 this if you use the fine-grained workflow of
 :ref:`genomedata-load-assembly`, :ref:`genomedata-open-data`,
 :ref:`genomedata-load-data`, and :ref:`genomedata-close-data`.
+
+Technical matters
+=================
+
+Chunking and chunk cache overhead
+---------------------------------
+
+Genomedata uses an HDF5 data store. The data is stored in chunks_.
+The chunk size is 10,000 bp and one data track of 32-bit
+single-precision floats, which makes the chunk 40 kB. Each chunk is
+gzip compressed so on disk it will be smaller. To read a single
+position you have to read its entire chunk off of the disk and then
+decompress it. There is a tradeoff here between latency and
+throughput. Larger chunk sizes mean more latency but better throughput
+and better compression.
+
+:: _chunks: http://www.hdfgroup.org/HDF5/doc/Advanced/Chunking/
+
+The only disk storage overhead is that compression is slightly less
+efficient than compressing the whole binary data file when you break
+it into chunks. This is far outweighed by the efficient random access
+capability. If you have different needs, then it should be possible to
+change the chunk shape (``genomedata.CONTINUOUS_CHUNK_SHAPE``) or
+compression method (``genomedata._util.FILTERS_GZIP``).
+
+The memory overhead is dominated by the chunk cache defined by
+PyTables. On the version of PyTables we use, this is 2 MiB. You can
+change this by setting `tables.parameters.CHUNK_CACHE_SIZE`__.
+
+:: __: http://www.pytables.org/docs/manual/apc.html
+
+Bugs
+====
+There is currently an interaction between Genomedata and PyTables that
+can result in the emission of PerformanceWarnings when a Genomedata
+file is opened. These can be ignored. We would like to fix these at
+some point.
 
 .. _support:
 
