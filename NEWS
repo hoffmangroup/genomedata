@@ -1,5 +1,7 @@
 1.3.1:
 
+* API: now allow lists of tracks when directly accessing chromosome data, for example:
+  chromosome[245:270, ["data1", "data3"]] or chromosome[245:270, [7, 5]]
 * genomedata-load-seq: add --assembly option which supports AGP files,
   to allow avoid loading seq while still dealing with assembly gaps
   properly
@@ -15,6 +17,7 @@
 * genomedata-load: more descriptive error messages
 * genomedata-load-seq: print more descriptive error message when
   attempting to load sequence from a non-FASTA file
+* genomedata-load: fixed issue 10: now compiles on gcc 4.6.2
 * docs: add links to source code
 * docs: genomedata-load: sequence "option" is mandatory. In a future
   version, we should change this to an argument to reflect this.

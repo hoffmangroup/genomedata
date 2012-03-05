@@ -7,7 +7,7 @@ test_genomedata: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2010 Michael M. Hoffman <mmh1@uw.edu>
+# Copyright 2010-2012 Michael M. Hoffman <mmh1@uw.edu>
 
 import os
 import sys
@@ -90,6 +90,18 @@ class GenomedataTesterBase(unittest.TestCase):
             # Given track ordering, check multi-track data retrieval
             self.assertArraysEqual(chromosome[290, 0:3],
                                    [-2.297, -2.327, -2.320])
+
+            # test multi-track data retrieval by list
+            self.assertArraysEqual(chromosome[290, ["placental", "primate",
+                                                    "vertebrate"]],
+                                   chromosome[290, 0:3])
+            self.assertArraysEqual(chromosome[290, ["placental",
+                                                    "vertebrate"]],
+                                   [-2.297, -2.320])
+            self.assertArraysEqual(chromosome[290, [0, 2]],
+                                   [-2.297, -2.320])
+            self.assertArraysEqual(chromosome[290, [2, 0]],
+                                   [-2.320, -2.297])
 
             # Test filling of unassigned continuous segments
             chromosome = genome["chrY"]
@@ -191,6 +203,7 @@ class GenomedataTester(GenomedataTesterBase):
             self.fail("Unrecognized mode: %s" % self.mode)
 
     def tearDown(self):
+        return
         if self.mode == "dir":
             self.gdfilepath.rmtree()
         elif self.mode == "file":

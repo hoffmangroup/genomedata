@@ -9,7 +9,7 @@ but genomedata provides a transparent interface to interact with your
 underlying data without having to worry about the mess of repeatedly parsing
 large data files or having to keep them in memory for random access.
 
-Copyright 2009, 2010, 2011 Michael M. Hoffman <mmh1@washington.edu>
+Copyright 2009, 2010, 2011, 2012 Michael M. Hoffman <mmh1@washington.edu>
 
 """
 
@@ -654,23 +654,28 @@ since being closed with genomedata-close-data.""")
             base_key = key
             track_key = slice(None)  # All tracks
 
-        # Treat direct indexing differently (just like numpy)
-        base_index = False
-        track_index = False
+        # just like NumPy, direct indexing results in output shape
+        # change (at end of method)
+        base_direct_index = isinstance(base_key, int)
+        track_direct_index = isinstance(track_key, (basestring, int))
 
-        if isinstance(base_key, int):
-            base_index = True
-
-        base_start, base_stop = _key_to_tuple(base_key)
-        base_key = slice(base_start, base_stop)
+        # convert base_key
+        base_key = slice(*_key_to_tuple(base_key))
 
         # First convert track_key toward slice
-        if isinstance(track_key, basestring):
-            track_key = self.index_continuous(track_key)
+        if isinstance(track_key, list):
+            track_indexes = array([self._index_continuous(item)
+                                          for item in track_key])
+            track_min = track_indexes.min()
+            track_key = slice(track_min, track_indexes.max() + 1, 1)
+            track_subset_indexes = track_indexes - track_min
 
-        if isinstance(track_key, int):
-            track_key = slice(track_key, track_key + 1, 1)
-            track_index = True
+        else:
+            track_subset_indexes = slice(None) # everything
+            if isinstance(track_key, basestring):
+                track_key = self.index_continuous(track_key)
+            if isinstance(track_key, int):
+                track_key = slice(track_key, track_key + 1, 1)
 
         if isinstance(track_key, slice):
             # Fix indices to number of tracks
@@ -681,9 +686,9 @@ since being closed with genomedata-close-data.""")
 
         nrows = base_key.stop - base_key.start
         ncols = len(xrange(track_key.start, track_key.stop, track_key.step))
+        dtype = self._continuous_dtype
 
         # Handle degenerate case
-        dtype = self._continuous_dtype
         if nrows < 1 or ncols < 1:
             # Return empty array (matches numpy behavior)
             return array([], dtype=dtype)
@@ -704,8 +709,8 @@ since being closed with genomedata-close-data.""")
         data.fill(NAN)
 
         for supercontig in supercontigs:
-            assert base_key.start < supercontig.end and \
-                base_key.stop > supercontig.start
+            assert (base_key.start < supercontig.end and
+                    base_key.stop > supercontig.start)
             chr_start = max(base_key.start, supercontig.start)
             chr_end = min(base_key.stop, supercontig.end)
             data_slice = slice(chr_start - base_key.start,
@@ -720,10 +725,13 @@ since being closed with genomedata-close-data.""")
                 # Allow the supercontig to not have a continuous dataset
                 pass
 
+        # get a subset of tracks 
+        data = data[:, track_subset_indexes]
+
         # Make output shape appropriate for indexing method (like numpy)
-        if track_index:
+        if track_direct_index:
             data = data[:, 0]
-        if base_index:
+        if base_direct_index:
             data = data[0]
         return data
 
@@ -753,6 +761,16 @@ since being closed with genomedata-close-data.""")
                 yield supercontig, supercontig.continuous
             except NoSuchNodeError:
                 continue
+
+    def _index_continuous(self, track_key):
+        """
+        Convert track_key to index only when it is a basestring.
+        Otherwise return track_key unchanged.
+        """
+        if isinstance(track_key, basestring):
+            return self.index_continuous(track_key)
+
+        return track_key
 
     def index_continuous(self, trackname):
         """Return the column index of the trackname in the continuous data.

@@ -13,7 +13,6 @@
 
 #define _GNU_SOURCE
 
-#include <argp.h>
 #include <assert.h>
 #include <error.h>
 #include <math.h>
@@ -22,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <argp.h>
 
 #include <hdf5.h>
 
