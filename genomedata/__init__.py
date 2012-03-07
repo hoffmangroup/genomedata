@@ -22,7 +22,7 @@ import sys
 import tables
 from functools import partial
 from numpy import (add, amin, amax, append, array, empty, float32,
-                   NAN, square, uint8)
+                   NAN, ndarray, square, uint8)
 from os import extsep
 from path import path
 from tables import Float32Atom, NoSuchNodeError, openFile, UInt8Atom
@@ -617,7 +617,11 @@ since being closed with genomedata-close-data.""")
     def __getitem__(self, key):
         """Return the continuous data corresponding to this bp slice
 
-        :param key: key must index or slice bases, but can also index, slice,
+        :param key: base_key must index or slice bases
+                    track_key specify data tracks with index, slice, string,
+                    list of strings, list of indexes, or array of indexes
+
+        but can also index, slice,
                     or directly specify (string or list of strings) the data
                     tracks.
 
@@ -663,9 +667,9 @@ since being closed with genomedata-close-data.""")
         base_key = slice(*_key_to_tuple(base_key))
 
         # First convert track_key toward slice
-        if isinstance(track_key, list):
+        if isinstance(track_key, (list, ndarray)):
             track_indexes = array([self._index_continuous(item)
-                                          for item in track_key])
+                                   for item in track_key])
             track_min = track_indexes.min()
             track_key = slice(track_min, track_indexes.max() + 1, 1)
             track_subset_indexes = track_indexes - track_min

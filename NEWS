@@ -1,6 +1,6 @@
 1.3.2:
 
-
+* API: now allow array of tracks. For example: chromosome[245:270, array([7, 5])]
 
 1.3.1:
 

@@ -103,6 +103,10 @@ class GenomedataTesterBase(unittest.TestCase):
             self.assertArraysEqual(chromosome[290, [2, 0]],
                                    [-2.320, -2.297])
 
+            self.assertArraysEqual(chromosome[290, array([1, 0])],
+                                   [-2.327, -2.297])
+
+            
             # Test filling of unassigned continuous segments
             chromosome = genome["chrY"]
             # Get first supercontig
