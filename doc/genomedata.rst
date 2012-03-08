@@ -5,7 +5,7 @@ Genomedata |version| documentation
 :Author: Michael M. Hoffman <mmh1 at uw dot edu>
 :Organization: University of Washington
 :Address: Department of Genome Sciences, PO Box 355065, Seattle, WA 98195-5065, United States of America
-:Copyright: 2009-2011 Michael M. Hoffman
+:Copyright: 2009-2012 Michael M. Hoffman
 
 For a broad overview, see the paper:
 
@@ -363,7 +363,7 @@ disk space afterward.
 .. _genomedata-load-assembly:
 
 genomedata-load-assembly
--------------------
+------------------------
 
 This command adds the provided sequence files to the specified
 Genomedata, archive creating it if it does not already exist. Sequence
@@ -526,7 +526,7 @@ Technical matters
 =================
 
 Chunking and chunk cache overhead
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Genomedata uses an HDF5 data store. The data is stored in chunks_.
 The chunk size is 10,000 bp and one data track of 32-bit
@@ -537,7 +537,7 @@ decompress it. There is a tradeoff here between latency and
 throughput. Larger chunk sizes mean more latency but better throughput
 and better compression.
 
-:: _chunks: http://www.hdfgroup.org/HDF5/doc/Advanced/Chunking/
+.. _chunks: http://www.hdfgroup.org/HDF5/doc/Advanced/Chunking/
 
 The only disk storage overhead is that compression is slightly less
 efficient than compressing the whole binary data file when you break
@@ -564,7 +564,7 @@ some point.
 Support
 =======
 
-To stay informed of **new releases**, subscribe to the moderated 
+To stay informed of **new releases**, subscribe to the moderated
 ``genomedata-announce`` mailing list (mail volume very low):
 
   https://mailman1.u.washington.edu/mailman/listinfo/genomedata-announce
@@ -574,8 +574,8 @@ there is a ``genomedata-users`` mailing list:
 
   https://mailman1.u.washington.edu/mailman/listinfo/genomedata-users
 
-For issues related to the use of Genomedata on **Mac OS X**, 
-please use the above mailing list or contact 
+For issues related to the use of Genomedata on **Mac OS X**,
+please use the above mailing list or contact
 Jay Hesselberth <jay dot hesselberth at ucdenver dot edu>.
 
 If you want to **report a bug or request a feature**, please do so using
