@@ -102,6 +102,8 @@ class Genome(object):
         >>> genome.close()
 
         """
+        # so that Genome.__del__() won't throw an exception if there is an error during __init__()
+        self._isopen = False
         self.filename = filename
         self.args = args
         self.kwargs = kwargs
