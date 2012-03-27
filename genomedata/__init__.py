@@ -21,7 +21,7 @@ import sys
 
 import tables
 from functools import partial
-from numpy import (add, amin, amax, append, array, empty, float32,
+from numpy import (add, amin, amax, append, array, empty, float32, inf,
                    nan, ndarray, square, uint8)
 from os import extsep
 from path import path
@@ -56,6 +56,13 @@ class _InactiveDict(dict):
     """A fake dict that can't be added to."""
     def __setitem__(self, key, value):
         return
+
+def _open_file(*args, **kwargs):
+    if not "BUFFER_TIMES" in kwargs:
+        # eliminate spurious PerformanceWarning
+        kwargs["BUFFER_TIMES"] = inf
+
+    return openFile(*args, **kwargs)
 
 class Genome(object):
     """The root level of the genomedata object hierarchy.
@@ -120,7 +127,7 @@ class Genome(object):
         if filepath.isfile():
             # Open the Genomedata file
             isfile = True
-            self.h5file = openFile(filepath, *args, **kwargs)
+            self.h5file = _open_file(filepath, *args, **kwargs)
             self._file_attrs = self.h5file.root._v_attrs
         elif filepath.isdir():
             # Genomedata directory
@@ -579,7 +586,7 @@ since being closed with genomedata-close-data.""")
         """
         filepath = path(filename).expand()
         try:
-            h5file = openFile(filepath, mode=mode, *args, **kwargs)
+            h5file = _open_file(filepath, mode=mode, *args, **kwargs)
         except IOError:
             raise IOError("Could not find file: %r" % filename)
 
