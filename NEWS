@@ -1,6 +1,6 @@
 1.3.3:
 
-
+* genomedata-info: friendlier error when unsupported command name used
 
 1.3.2:
 

@@ -7,7 +7,7 @@ _info: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2010 Michael M. Hoffman <mmh1@uw.edu>
+# Copyright 2010, 2012 Michael M. Hoffman <mmh1@uw.edu>
 
 import sys
 
@@ -17,11 +17,16 @@ from . import Genome
 # compatible with UCSC bigWig tab-delimited specification file, for
 # checking
 
+def die(msg="Unexpected error."):
+    print >>sys.stderr, msg
+    sys.exit(1)
+
 def print_tracknames_continuous(genome):
     print "\n".join(genome.tracknames_continuous)
 
 def _info(cmd, filename):
-    assert cmd in set(["tracknames", "tracknames_continuous"])
+    if cmd not in set(["tracknames", "tracknames_continuous"]):
+        die("CMD must be 'tracknames_continuous'.")
 
     with Genome(filename) as genome:
         print_tracknames_continuous(genome)

@@ -15,7 +15,7 @@ from tempfile import mkdtemp, mkstemp
 import unittest
 import warnings
 
-from numpy import array, isnan, logical_and, logical_not, NAN
+from numpy import array, isnan, logical_and, logical_not, nan
 from path import path
 
 from genomedata import Genome
@@ -112,7 +112,7 @@ class GenomedataTesterBase(unittest.TestCase):
             # Get first supercontig
             for supercontig in chromosome:
                 break
-            self.assertArraysEqual(supercontig.continuous[0, 2], NAN)
+            self.assertArraysEqual(supercontig.continuous[0, 2], nan)
 
     def test_repr_str(self):
         genome = Genome(self.gdfilepath, mode="r")
@@ -245,7 +245,7 @@ class GenomedataTester(GenomedataTesterBase):
         # Test ability to delete a track
         trackname = "primate"
         old_entry = (290, -2.327)
-        new_entry = (290, NAN)
+        new_entry = (290, nan)
 
         # Test value before deleting track
         warnings.simplefilter("ignore")

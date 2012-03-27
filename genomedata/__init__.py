@@ -22,7 +22,7 @@ import sys
 import tables
 from functools import partial
 from numpy import (add, amin, amax, append, array, empty, float32,
-                   NAN, ndarray, square, uint8)
+                   nan, ndarray, square, uint8)
 from os import extsep
 from path import path
 from tables import Float32Atom, NoSuchNodeError, openFile, UInt8Atom
@@ -33,7 +33,7 @@ SEQ_DTYPE = uint8
 SEQ_ATOM = UInt8Atom()
 
 CONTINUOUS_DTYPE = float32
-CONTINUOUS_ATOM = Float32Atom(dflt=NAN)
+CONTINUOUS_ATOM = Float32Atom(dflt=nan)
 CONTINUOUS_CHUNK_SHAPE = (10000, 1)
 
 EXT = "genomedata"
@@ -712,7 +712,7 @@ since being closed with genomedata-close-data.""")
                  " (filling gaps with 'NaN')")
 
         data = empty((nrows, ncols), dtype=dtype)
-        data.fill(NAN)
+        data.fill(nan)
 
         for supercontig in supercontigs:
             assert (base_key.start < supercontig.end and
@@ -841,7 +841,7 @@ since being closed with genomedata-close-data.""")
         col_index = self.index_continuous(trackname)
         self.attrs.dirty = True
         for supercontig, continuous in self.itercontinuous():
-            continuous[:, col_index] = NAN
+            continuous[:, col_index] = nan
 
     def _add_track_continuous(self, trackname):
         """Add a new track
