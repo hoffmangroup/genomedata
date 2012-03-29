@@ -1205,7 +1205,7 @@ void proc_bed(genome_t *genome, char *trackname, char **line,
 
     errno = 0;
     datum = strtof(tailptr, &tailptr);
-    assert(!errno && (is_newline(tailptr)));
+    assert(!errno && is_newline(tailptr));
 
     fill_buffer(buf_start, buf_end, start, end, datum, verbose);
   } while (getline(line, size_line, stdin) >= 0);
