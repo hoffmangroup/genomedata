@@ -3,7 +3,7 @@ from __future__ import division, with_statement
 
 __version__ = "$Revision$"
 
-# Copyright 2008-2009 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2009, 2012 Michael M. Hoffman <mmh1@washington.edu>
 
 from contextlib import closing
 from gzip import open as _gzip_open
@@ -50,7 +50,7 @@ class LightIterator(object):
             raise StopIteration
 
         if defline_old is None:
-            raise ValueError("no definition line found oat next position in %r" % self._handle)
+            raise ValueError("no definition line found at next position in %r" % self._handle)
 
         return defline_old, ''.join(lines)
 

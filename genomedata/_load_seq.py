@@ -7,7 +7,7 @@ load_seq: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2008-2011 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2012 Michael M. Hoffman <mmh1@washington.edu>
 
 from re import compile, VERBOSE
 import sys
