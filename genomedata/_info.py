@@ -24,12 +24,21 @@ def die(msg="Unexpected error."):
 def print_tracknames_continuous(genome):
     print "\n".join(genome.tracknames_continuous)
 
+def print_contigs(genome):
+    for chrom in genome:
+        for contig in chrom:
+            print "%s\t%s\t%s" % (chrom.name, contig.start, contig.end)
+
 def _info(cmd, filename):
-    if cmd not in set(["tracknames", "tracknames_continuous"]):
-        die("CMD must be 'tracknames_continuous'.")
+    choices = ["tracknames", "tracknames_continuous", "contigs"]
+    if cmd not in set(choices):
+        die("CMD must be one of: %s" % ",".join(choices))
 
     with Genome(filename) as genome:
-        print_tracknames_continuous(genome)
+        if cmd in ["tracknames_continuous", "tracknames"]:
+            print_tracknames_continuous(genome)
+        if cmd == "contigs":
+            print_contigs(genome)
 
 def parse_options(args):
     from optparse import OptionParser
