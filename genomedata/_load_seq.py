@@ -13,7 +13,7 @@ from re import compile, VERBOSE
 import sys
 import warnings
 
-from numpy import frombuffer
+from numpy import frombuffer, uint32
 from path import path
 from tabdelim import DictReader
 
@@ -35,6 +35,9 @@ AGP_FIELDNAMES = ["object", "object_beg", "object_end", "part_number",
                   "component_type", "col6", "col7", "col8", "col9"]
 
 GAP_COMPONENT_TYPES = frozenset("NU")
+
+GenomicPosition = uint32
+GENOMIC_POSITION_0 = GenomicPosition(0)
 
 def ignore_comments(iterable):
     return (item for item in iterable if not item.startswith("#"))
@@ -85,8 +88,8 @@ def create_supercontig(chromosome, index, seq=None, start=None, end=None):
         end = chromosome.end
 
     attrs = supercontig._v_attrs
-    attrs.start = start
-    attrs.end = end
+    attrs.start = GenomicPosition(start)
+    attrs.end = GenomicPosition(end)
 
 # XXXopt: the all-regex approach is much slower than the hybrid
 # approach (3 min to load chr21, 6 min to load chr1), but it is easier
@@ -110,12 +113,12 @@ def init_chromosome_start(chromosome):
     """
     doesn't set end, so you can't use create_supercontig(end=None) if you use this
     """
-    chromosome.attrs.start = 0
+    chromosome.attrs.start = GENOMIC_POSITION_0
     chromosome._file_attrs.genomedata_format_version = FORMAT_VERSION
 
 def init_chromosome(chromosome, size):
     init_chromosome_start(chromosome)
-    chromosome.attrs.end = size
+    chromosome.attrs.end = GenomicPosition(size)
 
 def read_seq(chromosome, seq):
     supercontig_index = 0
@@ -148,7 +151,7 @@ def read_assembly(chromosome, infile):
         create_supercontig(chromosome, supercontig_index, None, start, end)
         supercontig_index += 1
 
-    chromosome.attrs.end = end
+    chromosome.attrs.end = GenomicPosition(end)
 
 def size_chromosome(chromosome, size):
     init_chromosome(chromosome, size)

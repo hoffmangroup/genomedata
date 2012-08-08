@@ -12,11 +12,14 @@
 /** includes **/
 
 #define _GNU_SOURCE
+#define __STDC_FORMAT_MACROS
 
 #include <assert.h>
 #include <error.h>
+#include <inttypes.h>
 #include <math.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,38 +63,43 @@
 
 const float nan_float = NAN;
 
+#define PRI_HSIZE_T "llu"
+
 /** typedefs **/
 
 typedef enum {
   FMT_BED, FMT_WIGUNKNOWN, FMT_WIGFIX, FMT_WIGVAR, FMT_BEDGRAPH
 } file_format;
 
-typedef struct {
-  /* XXX: int might not be sufficient for start and end */
-  int start;
-  int end;
-  hid_t group;
-} supercontig_t;
+typedef uint_fast64_t genomic_position_type;
+#define PRI_GENOMIC_POSITION PRIuFAST64
+#define GENOMIC_POSITION_H5T H5T_NATIVE_UINT_FAST64
 
 typedef struct {
-  hid_t h5file; /* handle to the paerent file; invalid if <0;
+  genomic_position_type start;
+  genomic_position_type end;
+  hid_t group;
+} supercontig_type;
+
+typedef struct {
+  hid_t h5file; /* handle to the parent file; invalid if <0;
                    will be invalid if genome is single-file */
   hid_t h5group; /* handle to the base chromosome group; invalid if <0 */
   char *chrom; /* name of chromosome */
-  size_t num_supercontigs;
-  supercontig_t *supercontigs;
-  supercontig_t *supercontig_curr;
-} chromosome_t;
+  hsize_t num_supercontigs;
+  supercontig_type *supercontigs;
+  supercontig_type *supercontig_curr;
+} chromosome_type;
 
 typedef struct {
   hid_t h5file; /* handle to the file; invalid if <0; will be invalid if dir */
   char *dirname; /* name of dir if archive is a directory; invalid if NULL; */
-} genome_t;
+} genome_type;
 
 typedef struct {
   H5E_auto2_t old_func;
   void *old_client_data;
-} err_state_t;
+} err_state_type;
 
 /* GNU extensions */
 
@@ -164,24 +172,24 @@ ssize_t xgetline(char **lineptr, size_t *n, FILE *stream) {
 }
 
 /* strncmp with strlen of s1 (assumed to be an optimizable constant) */
-inline int streq(const char *s1, const char *s2) {
+static inline int streq(const char *s1, const char *s2) {
   return strncmp(s1, s2, strlen(s1)) == 0;
 }
 
-inline bool is_newline(const char *s) {
+static inline bool is_newline(const char *s) {
   return *s == '\n' || streq("\r\n", s);
 }
 
 /** general-purpose HDF5 attribute helper functions **/
 
-void disable_h5_errors(err_state_t *err_state) {
+void disable_h5_errors(err_state_type *err_state) {
   assert(H5Eget_auto(H5E_DEFAULT, &(err_state->old_func),
                      &(err_state->old_client_data))
          >= 0);
   assert(H5Eset_auto(H5E_DEFAULT, NULL, NULL) >= 0);
 }
 
-void enable_h5_errors(err_state_t *err_state) {
+void enable_h5_errors(err_state_type *err_state) {
   assert(H5Eset_auto(H5E_DEFAULT, err_state->old_func,
                      err_state->old_client_data)
          >= 0);
@@ -204,7 +212,7 @@ void get_attr(hid_t loc, const char *name, hid_t mem_type_id, void *buf) {
 hid_t open_dataset(hid_t loc, char *name, hid_t dapl) {
   hid_t dataset;
 
-  err_state_t err_state;
+  err_state_type err_state;
 
   disable_h5_errors(&err_state);
   dataset = H5Dopen(loc, name, dapl);
@@ -252,23 +260,26 @@ void close_file(hid_t h5file) {
 
 /** genome functions **/
 
-int is_valid_genome(genome_t * genome) {
+int is_valid_genome(genome_type * genome) {
   return (genome->h5file >= 0) || genome->dirname;
 }
 
-void init_genome(genome_t *genome) {
+void init_genome(genome_type *genome) {
   genome->h5file = -1;
   genome->dirname = NULL;
 }
 
-int load_genome(genome_t *genome, char *filename) {
-  err_state_t err_state;
+void load_genome(genome_type *genome, char *filename) {
+  err_state_type err_state;
 
   struct stat file_stat;
   if (stat(filename, &file_stat) == 0) {
+    /* is this a directory? */
     if (S_ISDIR(file_stat.st_mode)) {
       /* save the path of the genome dir */
       genome->dirname = filename;
+
+    /* else is it a regular file? */
     } else if (S_ISREG(file_stat.st_mode)) {
       /* open the genome file */
       disable_h5_errors(&err_state);
@@ -276,17 +287,14 @@ int load_genome(genome_t *genome, char *filename) {
       enable_h5_errors(&err_state);
     }
   }
+  /* if anything else happened, then it won't be a valid genome */
 
-  /* if opening failed, then return -1 with h5file set bad */
   if (!is_valid_genome(genome)) {
-    fputs("Can't open Genomedata archive\n", stderr);
-    return -1;
+    fatal("Can't open Genomedata archive");
   }
-
-  return 0;
 }
 
-void close_genome(genome_t *genome) {
+void close_genome(genome_type *genome) {
   if (!is_valid_genome(genome)) {
     return;
   }
@@ -299,21 +307,21 @@ void close_genome(genome_t *genome) {
 
 /** chromosome functions **/
 
-int is_valid_chromosome(chromosome_t *chromosome) {
+int is_valid_chromosome(chromosome_type *chromosome) {
   return chromosome->h5group >= 0;
 }
 
-void init_chromosome(chromosome_t *chromosome) {
+void init_chromosome(chromosome_type *chromosome) {
   chromosome->chrom = xmalloc(sizeof(char));
   *(chromosome->chrom) = '\0';
   chromosome->h5file = -1;
   chromosome->h5group = -1;
 }
 
-void init_supercontig_array(size_t num_supercontigs, chromosome_t *chromosome)
+void init_supercontig_array(hsize_t num_supercontigs, chromosome_type *chromosome)
 {
   chromosome->num_supercontigs = num_supercontigs;
-  chromosome->supercontigs = xmalloc(num_supercontigs * sizeof(supercontig_t));
+  chromosome->supercontigs = xmalloc(num_supercontigs * sizeof(supercontig_type));
   chromosome->supercontig_curr = chromosome->supercontigs;
 }
 
@@ -321,10 +329,10 @@ herr_t supercontig_visitor(hid_t g_id, const char *name,
                            UNUSED const H5L_info_t *info,
                            void *op_info) {
   hid_t subgroup;
-  supercontig_t *supercontig;
-  chromosome_t *chromosome;
+  supercontig_type *supercontig;
+  chromosome_type *chromosome;
 
-  chromosome = (chromosome_t *) op_info;
+  chromosome = (chromosome_type *) op_info;
 
   supercontig = chromosome->supercontig_curr++;
 
@@ -332,25 +340,25 @@ herr_t supercontig_visitor(hid_t g_id, const char *name,
   subgroup = H5Gopen(g_id, name, H5P_DEFAULT);
   assert(subgroup >= 0);
 
-  get_attr(subgroup, ATTR_START, H5T_STD_I32LE, &supercontig->start);
-  get_attr(subgroup, ATTR_END, H5T_STD_I32LE, &supercontig->end);
+  get_attr(subgroup, ATTR_START, GENOMIC_POSITION_H5T, &supercontig->start);
+  get_attr(subgroup, ATTR_END, GENOMIC_POSITION_H5T, &supercontig->end);
   supercontig->group = subgroup;
 
   return 0;
 }
 
-supercontig_t *last_supercontig(chromosome_t *chromosome) {
+supercontig_type *last_supercontig(chromosome_type *chromosome) {
   return chromosome->supercontigs + chromosome->num_supercontigs - 1;
 }
 
-void close_chromosome(chromosome_t *chromosome) {
+void close_chromosome(chromosome_type *chromosome) {
   free(chromosome->chrom);
 
   if (!is_valid_chromosome(chromosome)) {
     return;
   }
 
-  for (supercontig_t *supercontig = chromosome->supercontigs;
+  for (supercontig_type *supercontig = chromosome->supercontigs;
        supercontig <= last_supercontig(chromosome); supercontig++) {
     close_group(supercontig->group);
   }
@@ -365,8 +373,8 @@ void close_chromosome(chromosome_t *chromosome) {
   }
 }
 
-int seek_chromosome(char *chrom, genome_t *genome,
-                    chromosome_t *chromosome, bool verbose) {
+int seek_chromosome(char *chrom, genome_type *genome,
+                    chromosome_type *chromosome, bool verbose) {
   hid_t h5file = -1;
   hid_t h5group = -1;
   H5G_info_t h5group_info;
@@ -376,7 +384,7 @@ int seek_chromosome(char *chrom, genome_t *genome,
      resumption, but I don't use it */
   hsize_t idx = 0;
 
-  err_state_t err_state;
+  err_state_type err_state;
 
   if (verbose) {
     fprintf(stderr, "%s\n", chrom);
@@ -467,7 +475,7 @@ int seek_chromosome(char *chrom, genome_t *genome,
 /** specific auxiliary functions **/
 
 /* fetch num_cols and the col for a particular trackname */
-void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
+void get_cols(chromosome_type *chromosome, char *trackname, hsize_t *num_cols,
               hsize_t *col) {
   hid_t attr, root, dataspace, datatype;
   hsize_t data_size, cell_size, num_cells;
@@ -525,7 +533,7 @@ void get_cols(chromosome_t *chromosome, char *trackname, hsize_t *num_cols,
   assert(H5Aclose(attr) >= 0);
 }
 
-hid_t open_supercontig_dataset(supercontig_t *supercontig, char *trackname) {
+hid_t open_supercontig_dataset(supercontig_type *supercontig, char *trackname) {
   /* it must already exist;
      returns a handle for H5Dread or H5Dwrite */
 
@@ -703,13 +711,13 @@ bool has_data(float *buf_start, float *buf_end) {
   return false;
 }
 
-void write_buf(chromosome_t *chromosome, char *trackname,
+void write_buf(chromosome_type *chromosome, char *trackname,
                float *buf_start, float *buf_end,
                float *buf_filled_start, float *buf_filled_end,
                bool verbose) {
   float *buf_supercontig_start, *buf_supercontig_end;
 
-  size_t start_offset, end_offset;
+  uintptr_t start_offset, end_offset;
   hid_t dataset;
 
   hid_t mem_dataspace;
@@ -729,7 +737,7 @@ void write_buf(chromosome_t *chromosome, char *trackname,
     buf_filled_end = buf_end;
   }
 
-  for (supercontig_t *supercontig = chromosome->supercontigs;
+  for (supercontig_type *supercontig = chromosome->supercontigs;
        supercontig <= last_supercontig(chromosome); supercontig++) {
     /* find the start that fits into this supercontig */
     start_offset = buf_filled_start - buf_start;
@@ -790,7 +798,7 @@ void write_buf(chromosome_t *chromosome, char *trackname,
 
     /* write */
     if (verbose) {
-      fprintf(stderr, " writing %lld floats...", mem_dataspace_dims[0]);
+      fprintf(stderr, " writing %" PRI_HSIZE_T "floats...", mem_dataspace_dims[0]);
     }
     assert(H5Dwrite(dataset, DTYPE, mem_dataspace, file_dataspace,
                     H5P_DEFAULT, buf_supercontig_start) >= 0);
@@ -805,12 +813,12 @@ void write_buf(chromosome_t *chromosome, char *trackname,
   }
 }
 
-void malloc_chromosome_buf(chromosome_t *chromosome,
+void malloc_chromosome_buf(chromosome_type *chromosome,
                            float **buf_start, float **buf_end, bool verbose) {
   /* allocate enough space to assign values from 0 to the end of the
      last supercontig, and fill with NAN */
 
-  size_t buf_len;
+  genomic_position_type buf_len;
 
   if (!is_valid_chromosome(chromosome)) {
     return;
@@ -819,7 +827,7 @@ void malloc_chromosome_buf(chromosome_t *chromosome,
   /* last_supercontig(chromosome) might not return the maximum
      value; you really need to iterate through all of them */
   buf_len = 0;
-  for (supercontig_t *supercontig = chromosome->supercontigs;
+  for (supercontig_type *supercontig = chromosome->supercontigs;
        supercontig <= last_supercontig(chromosome); supercontig++) {
     if (supercontig->end > buf_len) {
       buf_len = supercontig->end;
@@ -830,8 +838,8 @@ void malloc_chromosome_buf(chromosome_t *chromosome,
     free(*buf_start);
   }
   if (verbose) {
-    fprintf(stderr, " allocating memory for %lu floats\n",
-            (unsigned long)buf_len);
+    fprintf(stderr, " allocating memory for %" PRI_GENOMIC_POSITION " floats\n",
+            buf_len);
   }
   *buf_start = xmalloc(buf_len * sizeof(float));
   *buf_end = *buf_start + buf_len;
@@ -844,7 +852,7 @@ void malloc_chromosome_buf(chromosome_t *chromosome,
 
 /* returns true if valid/success */
 /* false otherwise */
-bool load_chromosome(char *chrom, genome_t *genome, chromosome_t *chromosome,
+bool load_chromosome(char *chrom, genome_type *genome, chromosome_type *chromosome,
                      char *trackname, float **buf_start, float **buf_end,
                      bool verbose) {
   hsize_t num_cols, col;
@@ -866,7 +874,7 @@ bool load_chromosome(char *chrom, genome_t *genome, chromosome_t *chromosome,
   /* calc dimensions */
   get_cols(chromosome, trackname, &num_cols, &col);
 
-  for (supercontig_t *supercontig = chromosome->supercontigs;
+  for (supercontig_type *supercontig = chromosome->supercontigs;
        supercontig <= last_supercontig(chromosome); supercontig++) {
     /* set mem dataspace */
     mem_dataspace_dims[0] = supercontig->end - supercontig->start;
@@ -888,7 +896,7 @@ bool load_chromosome(char *chrom, genome_t *genome, chromosome_t *chromosome,
 
     /* read */
     if (verbose) {
-      fprintf(stderr, " reading %lld floats...", mem_dataspace_dims[0]);
+      fprintf(stderr, " reading %" PRI_HSIZE_T " floats...", mem_dataspace_dims[0]);
     }
     assert(H5Dread(dataset, DTYPE, mem_dataspace, file_dataspace,
                    H5P_DEFAULT, (*buf_start) + supercontig->start) >= 0);
@@ -912,7 +920,6 @@ void fill_buffer(float *buf_start, float *buf_end, long start, long end,
   fill_start = buf_start + start;
   if (fill_start >= buf_end) {
     if (verbose) {
-      /* XXX: use of %ld here is not portable to 32-bit systems */
       fprintf(stderr, " ignoring data beyond last supercontig (start: %ld)\n", start);
     }
     return;
@@ -934,7 +941,7 @@ void fill_buffer(float *buf_start, float *buf_end, long start, long end,
 }
 
 /** wigFix **/
-void proc_wigfix_header(char **line, size_t *size_line, genome_t *genome, chromosome_t *chromosome,
+void proc_wigfix_header(char **line, size_t *size_line, genome_type *genome, chromosome_type *chromosome,
                         float **buf_start, float **buf_end, float **fill_start,
                         long *step, long *span, bool verbose) {
   long start = -1;
@@ -964,7 +971,7 @@ void proc_wigfix_header(char **line, size_t *size_line, genome_t *genome, chromo
   *fill_start = *buf_start + start;
 }
 
-void proc_wigfix(genome_t *genome, char *trackname, char **line,
+void proc_wigfix(genome_type *genome, char *trackname, char **line,
                  size_t *size_line, bool verbose) {
   char *tailptr;
 
@@ -972,7 +979,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
   /* buf_filled_start is overall fill start; fill_start is current fill start*/
   float *buf_filled_start, *fill_start, *fill_end, *buf_end;
 
-  chromosome_t chromosome;
+  chromosome_type chromosome;
 
   long step = 1;
   long span = 1;
@@ -1010,10 +1017,10 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
         fill_end = fill_start + span;
         if (fill_end > buf_end) {
           if (verbose) {
-            fprintf(stderr, " ignoring data beyond last supercontig at %s:%lu+%lu\n",
+            fprintf(stderr, " ignoring data beyond last supercontig at %s:%td+%ld\n",
                     chromosome.chrom,
-                    (unsigned long)(fill_start - buf_start),
-                    (unsigned long)span);
+                    fill_start - buf_start,
+                    span);
           }
           fill_end = buf_end;
         }
@@ -1027,9 +1034,9 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
       } else {
         /* else: ignore data until we get to another header line */
         if (verbose && !warned) {
-          fprintf(stderr, " ignoring data beyond last supercontig at %s:%lu\n",
+          fprintf(stderr, " ignoring data beyond last supercontig at %s:%td\n",
                   chromosome.chrom,
-                  (unsigned long)(fill_start - buf_start));
+                  fill_start - buf_start);
           warned = true;
         }
       }
@@ -1053,7 +1060,7 @@ void proc_wigfix(genome_t *genome, char *trackname, char **line,
 }
 
 /** wigVar **/
-void proc_wigvar_header(char **line, size_t *size_line, genome_t *genome, chromosome_t *chromosome,
+void proc_wigvar_header(char **line, size_t *size_line, genome_type *genome, chromosome_type *chromosome,
                         char *trackname, float **buf_start, float **buf_end,
                         long *span, bool verbose) {
   char *chrom = NULL;
@@ -1077,7 +1084,7 @@ void proc_wigvar_header(char **line, size_t *size_line, genome_t *genome, chromo
 }
 
 
-void proc_wigvar(genome_t *genome, char *trackname, char **line,
+void proc_wigvar(genome_type *genome, char *trackname, char **line,
                  size_t *size_line, bool verbose) {
   char *tailptr;
 
@@ -1085,7 +1092,7 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
   float *buf_end;
   float datum;
 
-  chromosome_t chromosome;
+  chromosome_type chromosome;
 
   long start, end;
   long span = 1;
@@ -1149,7 +1156,7 @@ void proc_wigvar(genome_t *genome, char *trackname, char **line,
 /*
   The only difference with bedGraph is that the first line is not passed in
  */
-void proc_bed(genome_t *genome, char *trackname, char **line,
+void proc_bed(genome_type *genome, char *trackname, char **line,
               size_t *size_line, bool verbose)
 {
   size_t chrom_len;
@@ -1163,7 +1170,7 @@ void proc_bed(genome_t *genome, char *trackname, char **line,
   float *buf_start = NULL;
   float *buf_end = NULL;
 
-  chromosome_t chromosome;
+  chromosome_type chromosome;
 
   if (!**line) {
     /* bedGraph case, need to read second line rather than process first */
@@ -1195,17 +1202,30 @@ void proc_bed(genome_t *genome, char *trackname, char **line,
       continue;
     }
 
+    /* column 2: chromStart */
     start = xstrtol(*line + chrom_len + 1, &tailptr, BASE); /* 0-based */
-    assert(isblank(*tailptr));
+    if (!isblank(*tailptr)) {
+      fatal("unexpected non-blank character after bedGraph chromStart");
+    }
 
+    /* column 3: chromEnd */
     end = xstrtol(tailptr, &tailptr, BASE); /* 0-based */
-    assert(isblank(*tailptr));
+    if (!isblank(*tailptr)) {
+      fatal("unexpected non-blank character after bedGraph chromEnd");
+    }
 
     /* printf("%s[%ld:%ld]\n", chrom, start, end); */
 
+    /* column 4: dataValue */
     errno = 0;
     datum = strtof(tailptr, &tailptr);
-    assert(!errno && is_newline(tailptr));
+
+    if (errno) {
+      fatal("bedGraph dataValue: invalid floating point number");
+    }
+    if (!is_newline(tailptr)) {
+      fatal("unexpected non-newline character after bedGraph dataValue");
+    }
 
     fill_buffer(buf_start, buf_end, start, end, datum, verbose);
   } while (getline(line, size_line, stdin) >= 0);
@@ -1218,7 +1238,7 @@ void proc_bed(genome_t *genome, char *trackname, char **line,
 }
 
 /** process any kind of data: start by sniffing header line **/
-void proc_data(genome_t *genome, char *trackname, char **line,
+void proc_data(genome_type *genome, char *trackname, char **line,
                size_t *size_line, bool verbose) {
   file_format fmt;
 
@@ -1250,7 +1270,7 @@ void proc_data(genome_t *genome, char *trackname, char **line,
     proc_bed(genome, trackname, line, size_line, verbose);
     break;
   default:
-    fatal("only fixedStep, variableStep, bedGraph, BED formats supported");
+    fatal("only fixedStep, variableStep, bedGraph, BED3+1 formats supported");
     break;
   }
 }
@@ -1261,7 +1281,7 @@ void load_data(char *gdfilename, char *trackname, bool verbose) {
   char *line = NULL;
   size_t size_line = 0;
 
-  genome_t genome;
+  genome_type genome;
 
   init_genome(&genome);
   load_genome(&genome, gdfilename);

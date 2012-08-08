@@ -419,10 +419,12 @@ Larger values of :option:`chunk-size` can increase the level
 of compression, but they also increase the minimum amount of data
 that must be read to access a single value.
 
-.. |signal data formats| replace:: WIG_, BED_, bedGraph_
+BED3+1 format is interpreted the same ways as bedGraph, except that
+the track definition line is not required.
+
+.. |signal data formats| replace:: WIG_, BED3+1, bedGraph_
 
 .. _WIG: http://genome.ucsc.edu/FAQ/FAQformat#format6
-.. _BED: http://genome.ucsc.edu/FAQ/FAQformat#format1
 .. _bedGraph: http://genome.ucsc.edu/goldenPath/help/bedgraph.html
 
 ::
@@ -482,6 +484,50 @@ then be replaced. The pipeline for replacing a data track is:
    --version      show program's version number and exit
    -h, --help     show this help message and exit
    -v, --verbose  Print status updates and diagnostic messages
+
+
+.. _genomedata-info:
+
+genomedata-info
+---------------
+
+Displays information about a genomedata archive. Running 
+:: 
+ genomedata-info tracknames_continuous genomedata
+displays the list of continous tracks.  Running 
+:: 
+ genomedata-info contigs genomedata
+displays the list
+of contigs in BED format (0-based, half-open indexing).
+
+::
+
+ Usage: genomedata-info [OPTION]... CMD ARCHIVE
+
+ Options:
+   --version   show program's version number and exit
+   -h, --help  show this help message and exit
+
+
+.. _genomedata-query:
+
+genomedata-query
+---------------
+
+Prints data from a genomedata archive, for the track ``TRACKNAME``, 
+on ``CHROM``, in the region ``BEGIN``-``END`` (0-based, 
+half-open indexing).  Intended as a convenience function only; 
+this is much slower than the Python interface, 
+so it should not be used for large regions.
+
+::
+
+ Usage: genomedata-query [OPTION]... ARCHIVE TRACKNAME CHROM BEGIN END
+
+ Options:
+   --version   show program's version number and exit
+   -h, --help  show this help message and exit
+
 
 .. _python-api:
 

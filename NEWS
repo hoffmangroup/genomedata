@@ -1,6 +1,12 @@
 1.3.3:
 
 * genomedata-info: friendlier error when unsupported command name used
+* genomedata-load-data: friendlier errors when invalid BED3+1/bedGraph data supplied
+* genomedata-load-seq: always makes chromosome and supercontig
+  coordinates with unsigned 32-bit integers instead of system int
+* genomedata-load-data: bugfix
+* now compile with -Wextra
+* doc fixes
 
 1.3.2:
 

@@ -11,7 +11,7 @@ this format.
 
 __version__ = "1.3.3"
 
-# Copyright 2008-2011 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2012 Michael M. Hoffman <mmh1@washington.edu>
 
 import os
 import sys
@@ -40,6 +40,7 @@ classifiers = ["Natural Language :: English",
 entry_points = """
 [console_scripts]
 genomedata-info = genomedata._info:main
+genomedata-query = genomedata._query:main
 genomedata-load = genomedata.load_genomedata:main
 genomedata-load-seq = genomedata._load_seq:main
 genomedata-load-assembly = genomedata._load_seq:main
@@ -156,7 +157,8 @@ class BuildScriptWrapper(build_scripts):
         if include_gnulib:
             compiler.add_library("gnu")
 
-        extra_postargs = ["-std=c99", "-Wall"]
+        extra_postargs = ["-std=c99", "-pedantic",
+                          "-Wextra", "-Wno-missing-field-initializers"]
 
         # Remove DNDEBUG flag from all compile statements
         bad_flag = "-DNDEBUG"
