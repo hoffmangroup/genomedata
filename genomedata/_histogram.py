@@ -16,14 +16,7 @@ from functools import partial
 from numpy import (array, concatenate, histogram, iinfo, isfinite, ndarray,
                    NINF, PINF, zeros)
 
-XXX all of these need to be removed
-from segway._util import (DTYPE_IDENTIFY, fill_array, iter_chroms_coords,
-                          load_coords, walk_continuous_supercontigs)
-
 FIELDNAMES = ["lower_edge", "count"]
-
-IINFO_IDENTIFY = iinfo(DTYPE_IDENTIFY)
-MAX_IDENTIFY = IINFO_IDENTIFY.max # sentinel for padding
 
 def calc_range(genome, track_index):
     # not limited to include_coords, so scale is always the same
