@@ -2,14 +2,14 @@
 from __future__ import division, with_statement
 
 """
-h5histogram: prints histogram
+_histogram: prints histogram
 
 XXX a lot of this is copied and updated in the external validation tool
 """
 
 __version__ = "$Revision$"
 
-# Copyright 2008 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008, 2013 Michael M. Hoffman <mmh1@washington.edu>
 
 import sys
 
@@ -34,23 +34,19 @@ def get_col_index(chromosome, trackname):
     else:
         return _get_col_index(chromosome, trackname)
 
-def calc_range(trackname, filenames):
+def calc_range(genome, track_index):
     # not limited to include_coords, so scale is always the same
-    minimum = PINF
-    maximum = NINF
+    return genome.mins[track_index], genome.maxs[track_index]
 
-    for filename in filenames:
-        with openFile(filename) as chromosome:
-            col_index = get_col_index(chromosome, trackname)
-
-            attrs = chromosome.root._v_attrs
-            minimum = min(minimum, attrs.mins[col_index])
-            maximum = max(maximum, attrs.maxs[col_index])
-
-    return minimum, maximum
-
-def calc_histogram(trackname, filenames, data_range, num_bins, include_coords,
+def calc_histogram(genome, track_index, data_range, num_bins, include_coords,
                    include_identify_dict, identify_label):
+    for chromosome in genome:
+        for supercontig, continuous in chromosome.itercontinuous():
+            supercontig_hist, bin_edges = np.histogram(continuous[:, track_index], num_bins, range=(min_val, max_val))
+            hist += supercontig_hist
+
+    XXX need to scan through the rest of this
+            
     histogram_custom = partial(histogram, bins=num_bins, range=data_range,
                                new=True)
 
@@ -183,23 +179,29 @@ def load_include_identify(filelistname):
 
     return res
 
-def h5histogram(trackname, filenames, num_bins, include_coords_filename=None,
-                include_identify_filelistname=None, identify_label=1):
-    print "\t".join(FIELDNAMES)
+def _histogram(genomedataname, trackname, num_bins, include_coords_filename=None,
+               include_identify_filelistname=None, identify_label=1):
+    print "\t".join(FIELDNAMES) # lower_edge, count
 
-    # two passes to avoid running out of memory
-    data_range = calc_range(trackname, filenames)
-
+    # load include files
     include_coords = load_coords(include_coords_filename)
     include_identify_dict = \
-        load_include_identify(include_identify_filelistname)
+                            load_include_identify(include_identify_filelistname)
 
-    try:
-        hist, edges = calc_histogram(trackname, filenames, data_range,
-                                     num_bins, include_coords,
-                                     include_identify_dict, identify_label)
-    finally:
-        for include_identify_h5files in include_identify_dict.itervalues():
+    with Genome(genomedataname) as genome:
+        track_index = genome.index_continuous(trackname)
+
+        # go through data in two passes to avoid running out of memory
+        # pass 1: calculate just the range
+        data_range = calc_range(XXXgenome, XXXtrack_index)
+
+        # pass 2: calculate the histogram
+        try:
+            hist, edges = calc_histogram(XXXgenome, XXXtrack_index, data_range,
+                                         num_bins, include_coords,
+                                         include_identify_dict, identify_label)
+        finally:
+            for include_identify_h5files in include_identify_dict.itervalues():
             for include_identify_h5file in include_identify_h5files:
                 include_identify_h5file.close()
 
@@ -208,22 +210,21 @@ def h5histogram(trackname, filenames, num_bins, include_coords_filename=None,
 def parse_options(args):
     from optparse import OptionParser
 
-    usage = "%prog [OPTION]... FILE..."
+    usage = "%prog [OPTION]... ARCHIVE TRACKNAME"
     version = "%%prog %s" % __version__
     parser = OptionParser(usage=usage, version=version)
-    # this is a 0-based file (I know because ENm008 starts at position 0)
+
     parser.add_option("--include-coords", metavar="FILE",
                       help="limit to genomic coordinates in FILE")
 
+    XXX dont understand this
     parser.add_option("--include-identify", metavar="FILELIST",
-                      help="limit to label identified in files in FILELIST")
+                      help="limit to genomic coordinates in files in FILELIST")
 
+    XXX dont understand this either
     parser.add_option("--identify-label", metavar="LABEL", default=1, type=int,
-                      help="limit to LABEL in a list of specified identify"
+                      help="subset from LABEL in a list of specified identify"
                       " files")
-
-    parser.add_option("-c", "--col", metavar="COL",
-                      help="write values in column COL (default first column)")
 
     parser.add_option("-b", "--num-bins", metavar="BINS", type=int,
                       default=100, help="use BINS bins")
@@ -239,9 +240,9 @@ def parse_options(args):
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
 
-    return h5histogram(options.col, args, options.num_bins,
-                       options.include_coords, options.include_identify,
-                       options.identify_label)
+    return _histogram(*args, options.num_bins,
+                      options.include_coords, options.include_identify,
+                      options.identify_label)
 
 if __name__ == "__main__":
     sys.exit(main())
