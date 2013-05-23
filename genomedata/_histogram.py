@@ -11,10 +11,10 @@ __version__ = "$Revision$"
 
 import sys
 
-from collections import defaultdict
 from functools import partial
-from numpy import (array, concatenate, histogram, iinfo, isfinite, ndarray,
-                   NINF, PINF, zeros)
+from numpy import array, histogram
+
+from . import Genome
 
 FIELDNAMES = ["lower_edge", "count"]
 
@@ -43,8 +43,7 @@ def print_histogram(hist, edges):
     for row in zip(edges, hist.tolist() + ["NA"]):
         print "\t".join(map(str, row))
 
-def _histogram(genomedataname, trackname, num_bins, include_coords_filename=None,
-               include_identify_filelistname=None, identify_label=1):
+def _histogram(genomedataname, trackname, num_bins, include_coords):
     print "\t".join(FIELDNAMES) # lower_edge, count
 
     with Genome(genomedataname) as genome:
@@ -84,9 +83,11 @@ def parse_options(args):
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
 
-    return _histogram(*args, options.num_bins,
-                      options.include_coords, options.include_identify,
-                      options.identify_label)
+    if options.include_coords:
+        raise NotImplementedError
+
+    return _histogram(*args, num_bins=options.num_bins,
+                      include_coords=options.include_coords)
 
 if __name__ == "__main__":
     sys.exit(main())
