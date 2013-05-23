@@ -18,9 +18,11 @@ from . import Genome
 
 FIELDNAMES = ["lower_edge", "count"]
 
+
 def calc_range(genome, track_index):
     # not limited to include_coords, so scale is always the same
     return genome.mins[track_index], genome.maxs[track_index]
+
 
 def calc_histogram(genome, track_index, data_range, num_bins, include_coords):
     histogram_custom = partial(histogram, bins=num_bins, range=data_range,
@@ -39,12 +41,14 @@ def calc_histogram(genome, track_index, data_range, num_bins, include_coords):
 
     return hist, edges
 
+
 def print_histogram(hist, edges):
     for row in zip(edges, hist.tolist() + ["NA"]):
         print "\t".join(map(str, row))
 
+
 def _histogram(genomedataname, trackname, num_bins, include_coords):
-    print "\t".join(FIELDNAMES) # lower_edge, count
+    print "\t".join(FIELDNAMES)  # lower_edge, count
 
     with Genome(genomedataname) as genome:
         track_index = genome.index_continuous(trackname)
@@ -58,6 +62,7 @@ def _histogram(genomedataname, trackname, num_bins, include_coords):
                                      include_coords)
 
     print_histogram(hist, edges)
+
 
 def parse_options(args):
     from optparse import OptionParser
@@ -79,6 +84,7 @@ def parse_options(args):
         sys.exit(1)
 
     return options, args
+
 
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
