@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+    #!/usr/bin/env python
 """
 Genomedata is a module to store and access large-scale functional
 genomics data in a format which is both space-efficient and allows
@@ -9,7 +9,7 @@ but genomedata provides a transparent interface to interact with your
 underlying data without having to worry about the mess of repeatedly parsing
 large data files or having to keep them in memory for random access.
 
-Copyright 2009, 2010, 2011, 2012 Michael M. Hoffman <mmh1@washington.edu>
+Copyright 2009, 2010, 2011, 2012, 2013 Michael M. Hoffman <mmh1@washington.edu>
 
 """
 
@@ -52,10 +52,12 @@ except NameError:
     else:
         PKG = __name__
 
+
 class _InactiveDict(dict):
     """A fake dict that can't be added to."""
     def __setitem__(self, key, value):
         return
+
 
 def _open_file(*args, **kwargs):
     if not "BUFFER_TIMES" in kwargs:
@@ -63,6 +65,7 @@ def _open_file(*args, **kwargs):
         kwargs["BUFFER_TIMES"] = inf
 
     return openFile(*args, **kwargs)
+
 
 class Genome(object):
     """The root level of the genomedata object hierarchy.
@@ -109,7 +112,8 @@ class Genome(object):
         >>> genome.close()
 
         """
-        # so that Genome.__del__() won't throw an exception if there is an error during __init__()
+        # so that Genome.__del__() won't throw an exception if there
+        # is an error during __init__()
         self._isopen = False
         self.filename = filename
         self.args = args
@@ -133,7 +137,8 @@ class Genome(object):
             # Genomedata directory
             isfile = False
         else:
-            raise ValueError("Genomedata archive must be file or directory: %s" % filepath)
+            raise ValueError("Genomedata archive must be file or directory: %s"
+                             % filepath)
 
         self._path = filepath
         self._isfile = isfile
@@ -147,8 +152,8 @@ class Genome(object):
         if format_version is not None and format_version > FORMAT_VERSION:
             raise NotImplementedError("This archive has format version %s,"
                                       " but the installed Genomedata software"
-                                      " unly supports format version %d" \
-                                          % (format_version, FORMAT_VERSION))
+                                      " unly supports format version %d"
+                                      % (format_version, FORMAT_VERSION))
 
     def __iter__(self):
         """Return next chromosome, in sorted order, with memoization.
@@ -291,7 +296,7 @@ class Genome(object):
         return repr(self)
 
     def _accum_extrema(self, name, accumulator):
-        self.tracknames_continuous # for assertion check
+        self.tracknames_continuous  # for assertion check
 
         extrema = [getattr(chromosome, name) for chromosome in self]
         return accumulator(extrema)
@@ -493,6 +498,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
         return (self.sums_squares / self.num_datapoints) - \
             square(self.means)
 
+
 class Chromosome(object):
     """The Genomedata object corresponding to data for a given chromosome.
 
@@ -567,7 +573,6 @@ since being closed with genomedata-close-data.""")
         self._seq = _ChromosomeSeqSlice(self)
         self._supercontigs = _Supercontigs(self)
         self._isopen = True
-
 
     @classmethod
     def _fromfilename(cls, filename, mode=default_mode, *args, **kwargs):
@@ -684,7 +689,7 @@ since being closed with genomedata-close-data.""")
             track_subset_indexes = track_indexes - track_min
 
         else:
-            track_subset_indexes = slice(None) # everything
+            track_subset_indexes = slice(None)  # everything
             if isinstance(track_key, basestring):
                 track_key = self.index_continuous(track_key)
             if isinstance(track_key, int):
@@ -738,7 +743,7 @@ since being closed with genomedata-close-data.""")
                 # Allow the supercontig to not have a continuous dataset
                 pass
 
-        # get a subset of tracks 
+        # get a subset of tracks
         data = data[:, track_subset_indexes]
 
         # Make output shape appropriate for indexing method (like numpy)
@@ -892,7 +897,7 @@ since being closed with genomedata-close-data.""")
 
             # Add column to supercontig continuous array
             # "truncate" also extends with default values
-            continuous.truncate(continuous.nrows+1)
+            continuous.truncate(continuous.nrows + 1)
 
     @property
     def isopen(self):
@@ -1033,10 +1038,13 @@ since being closed with genomedata-close-data.""")
         <Supercontig 'supercontig_2', [143522081:247249719]>
         >>> chromosome.seq[0:10].tostring()  # Inside supercontig
         'taaccctaac'
-        >>> chromosome.seq[121186950:121186970].tostring() # Supercontig boundary
+        >>> chromosome.seq[121186950:121186970].tostring()  \
+# supercontig boundary
         'agAATTCNNNNNNNNNNNNN'
-        >>> chromosome.seq[121186957:121186960].tostring() # Not in supercontig
-        UserWarning: slice of chromosome sequence does not overlap any supercontig (filling with 'N')
+        >>> chromosome.seq[121186957:121186960].tostring()  \
+# not in supercontig
+        UserWarning: slice of chromosome sequence does not overlap any \
+supercontig (filling with 'N')
         'NNN'
 
         The entire sequence for a chromosome can be retrieved with:
@@ -1067,6 +1075,7 @@ since being closed with genomedata-close-data.""")
         """
         return self._supercontigs
 
+
 class Supercontig(object):
     """A container for a segment of data in one chromosome.
 
@@ -1083,7 +1092,7 @@ class Supercontig(object):
 
     def __repr__(self):
         return "<Supercontig '%s', [%d:%d]>" % (self.name, self.start,
-                                                 self.end)
+                                                self.end)
 
     def __str__(self):
         return str(self.name)
@@ -1164,6 +1173,7 @@ class Supercontig(object):
         """
         return int(self.attrs.end)
 
+
 class _ChromosomeSeqSlice(object):
     def __init__(self, chromosome):
         assert isinstance(chromosome, Chromosome)
@@ -1209,6 +1219,7 @@ class _ChromosomeSeqSlice(object):
             seq = seq[0]
         return seq
 
+
 class _Supercontigs(object):
     def __init__(self, chromosome):
         assert isinstance(chromosome, Chromosome)
@@ -1232,6 +1243,7 @@ class _Supercontigs(object):
             # XXX: would be nice if we could count on supercontig ordering
 
         return supercontigs
+
 
 def _key_to_tuple(key):
     """Key to (start, stop)"""
@@ -1257,6 +1269,7 @@ def _key_to_tuple(key):
         raise IndexError("Start index can be at most the end index")
 
     return start, end
+
 
 def main(args=sys.argv[1:]):
     pass
