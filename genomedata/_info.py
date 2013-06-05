@@ -35,7 +35,7 @@ def print_contigs(genome):
 
 def _info(cmd, filename):
     choices = ["tracknames", "tracknames_continuous", "contigs"]
-    if cmd not in set(choices):
+    if cmd not in frozenset(choices):
         die("CMD must be one of: %s" % ",".join(choices))
 
     with Genome(filename) as genome:
