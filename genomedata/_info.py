@@ -7,7 +7,7 @@ _info: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2010, 2012 Michael M. Hoffman <mmh1@uw.edu>
+# Copyright 2010, 2012, 2013 Michael M. Hoffman <mmh1@uw.edu>
 
 import sys
 
@@ -17,17 +17,21 @@ from . import Genome
 # compatible with UCSC bigWig tab-delimited specification file, for
 # checking
 
+
 def die(msg="Unexpected error."):
     print >>sys.stderr, msg
     sys.exit(1)
 
+
 def print_tracknames_continuous(genome):
     print "\n".join(genome.tracknames_continuous)
+
 
 def print_contigs(genome):
     for chrom in genome:
         for contig in chrom:
             print "%s\t%s\t%s" % (chrom.name, contig.start, contig.end)
+
 
 def _info(cmd, filename):
     choices = ["tracknames", "tracknames_continuous", "contigs"]
@@ -39,6 +43,7 @@ def _info(cmd, filename):
             print_tracknames_continuous(genome)
         if cmd == "contigs":
             print_contigs(genome)
+
 
 def parse_options(args):
     from optparse import OptionParser
@@ -53,6 +58,7 @@ def parse_options(args):
         parser.error("incorrect number of arguments")
 
     return options, args
+
 
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
