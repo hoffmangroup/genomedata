@@ -7,15 +7,17 @@ _query: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2012 Michael M. Hoffman <mmh1@uw.edu>
+# Copyright 2012, 2013 Michael M. Hoffman <mmh1@uw.edu>
 
 import sys
 
 from . import Genome
 
+
 def die(msg="Unexpected error."):
     print >>sys.stderr, msg
     sys.exit(1)
+
 
 def _query(filename, trackname, chromosome_name, begin, end):
     begin = int(begin)
@@ -26,6 +28,7 @@ def _query(filename, trackname, chromosome_name, begin, end):
         data = chromosome[begin:end, track_index]
         for index, point in enumerate(data):
             print point
+
 
 def parse_options(args):
     from optparse import OptionParser
@@ -40,6 +43,7 @@ def parse_options(args):
         parser.error("incorrect number of arguments")
 
     return options, args
+
 
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
