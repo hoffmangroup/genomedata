@@ -1,5 +1,9 @@
 1.3.3:
 
+* genomedata-query: new command that prints data from a Genomedata archive for your
+  non-Python scripting needs (thanks to Max Libbrecht)
+* genomedata-histogram: new command that prints histograms from a Genomedata archive
+  (combination of a new module by Max Libbrecht and an old module by Michael Hoffman)
 * genomedata-info: friendlier error when unsupported command name used
 * genomedata-load-data: friendlier errors when invalid BED3+1/bedGraph data supplied
 * genomedata-load-seq: always makes chromosome and supercontig

@@ -11,7 +11,7 @@ this format.
 
 __version__ = "1.3.3"
 
-# Copyright 2008-2012 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2013 Michael M. Hoffman <mmh1@washington.edu>
 
 import os
 import sys
@@ -41,6 +41,7 @@ entry_points = """
 [console_scripts]
 genomedata-info = genomedata._info:main
 genomedata-query = genomedata._query:main
+genomedata-histogram = genomedata._histogram:main
 genomedata-load = genomedata.load_genomedata:main
 genomedata-load-seq = genomedata._load_seq:main
 genomedata-load-assembly = genomedata._load_seq:main
