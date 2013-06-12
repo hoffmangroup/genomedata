@@ -101,7 +101,7 @@ typedef struct {
   void *old_client_data;
 } err_state_type;
 
-/* GNU extensions */
+/** GNU extensions **/
 
 #ifdef __GNUC__
 #define GCC_VERSION (__GNUC__ * 10000                 \
@@ -121,18 +121,20 @@ typedef struct {
 
 NORETURN void fatal(char *msg) {
   fputs(msg, stderr);
-  fputs("\t", stderr);
+  fputs("\t", stderr); /* XXX: why is this '\t' instead of '\n'? */
   exit(EXIT_FAILURE);
 }
 
+/* malloc with fatal error on failure */
 void *xmalloc(size_t size)
 {
   register void *value = malloc(size);
   if (value == 0)
-    fatal("virtual memory exhausted");
+    fatal("Virtual memory exhausted.");
   return value;
 }
 
+/* strtol with fatal error on failure */
 long xstrtol(const char *nptr, char **endptr, int base) {
   long value;
 
@@ -159,6 +161,7 @@ long xstrtol(const char *nptr, char **endptr, int base) {
   return value;
 }
 
+/* getline with fatal error on failure */
 ssize_t xgetline(char **lineptr, size_t *n, FILE *stream) {
   ssize_t nchars;
 
@@ -171,8 +174,9 @@ ssize_t xgetline(char **lineptr, size_t *n, FILE *stream) {
   return nchars;
 }
 
-/* strncmp with strlen of s1 (assumed to be an optimizable constant) */
+/* strncmp with strlen of s1 */
 static inline int streq(const char *s1, const char *s2) {
+  /* (s1 is assumed to be constant, so strlen(s1) is optimizable constant) */
   return strncmp(s1, s2, strlen(s1)) == 0;
 }
 
@@ -290,7 +294,9 @@ void load_genome(genome_type *genome, char *filename) {
   /* if anything else happened, then it won't be a valid genome */
 
   if (!is_valid_genome(genome)) {
-    fatal("Can't open Genomedata archive");
+    /* opening failed */
+    fprintf(stderr, "Can't open Genomedata archive: %s", filename);
+    fatal(" is not a directory or HDF5 file.");
   }
 }
 
@@ -1289,6 +1295,7 @@ void load_data(char *gdfilename, char *trackname, bool verbose) {
   proc_data(&genome, trackname, &line, &size_line, verbose);
 
   close_genome(&genome);
+
   /* free heap variables */
   free(line);
 }
@@ -1296,7 +1303,7 @@ void load_data(char *gdfilename, char *trackname, bool verbose) {
 /** command-line interface **/
 
 const char *argp_program_version = "$Revision$";
-const char *argp_program_bug_address = "genomedata-users@uw.edu>";
+const char *argp_program_bug_address = "genomedata-users@uw.edu";
 
 static char doc[] = "Loads data into genomedata format \
 \nTakes track data in on stdin";
