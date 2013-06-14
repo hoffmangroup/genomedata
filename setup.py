@@ -60,6 +60,7 @@ include_gnulib = (system() != "Linux")
 GNULIB_BUILD_DIR = "src/build-deps"
 GNULIB_LIB_DIR = "%s/gllib" % GNULIB_BUILD_DIR
 
+
 class DirList(list):
     """Maintain a unique list of valid directories.
 
@@ -103,8 +104,10 @@ include_dirnames.add_env("C_INCLUDE_PATH")
 library_dirnames = list(library_dirnames)
 include_dirnames = list(include_dirnames)
 
+
 class InstallationError(Exception):
     pass
+
 
 class CleanWrapper(clean):
     """Wraps `python setup.py clean` to also cleans Gnulib installation"""
@@ -116,6 +119,7 @@ class CleanWrapper(clean):
                 check_call(["make", "clean"], cwd=GNULIB_BUILD_DIR)
             except CalledProcessError:
                 print >>sys.stderr, ">> WARNING: Failed to clean Gnulib build!"
+
 
 class BuildScriptWrapper(build_scripts):
     """Override the script-building machinery of distutils.
@@ -149,7 +153,8 @@ class BuildScriptWrapper(build_scripts):
         h5dump_filename = find_executable("h5dump")
         try:
             # XXX: output should be redirected to /dev/null
-            check_call("objdump -t %s | fgrep szip" % h5dump_filename, shell=True)
+            check_call("objdump -t %s | fgrep szip" % h5dump_filename,
+                       shell=True)
         except CalledProcessError:
             pass
         else:
@@ -207,6 +212,7 @@ class BuildScriptWrapper(build_scripts):
             print "Removing script build dir: %s" % output_dir
             rmtree(output_dir)
 
+
 def make_gnulib():
     print ">> Not a Linux system: configuring and making Gnulib libraries..."
 
@@ -255,7 +261,7 @@ if __name__ == "__main__":
           zip_safe=False,
           # XXX: this should be based off of __file__ instead
           packages=find_packages("."),  # including "test"
-          include_package_data = True,
+          include_package_data=True,
           entry_points=entry_points,
           scripts={"genomedata-load-data": ["src/genomedata_load_data.c"]},
           cmdclass={"build_scripts": BuildScriptWrapper,
