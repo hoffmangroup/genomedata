@@ -5,7 +5,7 @@ Genomedata |version| documentation
 :Author: Michael M. Hoffman <mmh1 at uw dot edu>
 :Organization: University of Washington
 :Address: Department of Genome Sciences, PO Box 355065, Seattle, WA 98195-5065, United States of America
-:Copyright: 2009-2012 Michael M. Hoffman
+:Copyright: 2009-2013 Michael M. Hoffman
 
 For a broad overview, see the paper:
 
@@ -491,14 +491,17 @@ then be replaced. The pipeline for replacing a data track is:
 genomedata-info
 ---------------
 
-Displays information about a genomedata archive. Running 
-:: 
- genomedata-info tracknames_continuous genomedata
-displays the list of continous tracks.  Running 
-:: 
- genomedata-info contigs genomedata
-displays the list
-of contigs in BED format (0-based, half-open indexing).
+This command displays information about a genomedata archive. Running
+the following command::
+
+   genomedata-info tracknames_continuous genomedata
+
+displays the list of continous tracks. Running::
+
+   genomedata-info contigs genomedata
+
+displays the list of contigs in BED format (0-based, half-open
+indexing).
 
 ::
 
@@ -512,7 +515,7 @@ of contigs in BED format (0-based, half-open indexing).
 .. _genomedata-query:
 
 genomedata-query
----------------
+----------------
 
 Prints data from a genomedata archive, for the track ``TRACKNAME``, 
 on ``CHROM``, in the region ``BEGIN``-``END`` (0-based, 
@@ -596,7 +599,7 @@ The memory overhead is dominated by the chunk cache defined by
 PyTables. On the version of PyTables we use, this is 2 MiB. You can
 change this by setting `tables.parameters.CHUNK_CACHE_SIZE`__.
 
-:: __: http://www.pytables.org/docs/manual/apc.html
+.. __: http://pytables.github.io/usersguide/parameter_files.html#tables.parameters.CHUNK_CACHE_SIZE
 
 Bugs
 ====
@@ -613,7 +616,7 @@ Support
 To stay informed of **new releases**, subscribe to the moderated
 ``genomedata-announce`` mailing list (mail volume very low):
 
-  https://mailman1.u.washington.edu/mailman/listinfo/genomedata-announce
+  https://mailman2.u.washington.edu/mailman/listinfo/genomedata-announce
 
 For **discussion and questions** about the use of the Genomedata system,
 there is a ``genomedata-users`` mailing list:
@@ -627,7 +630,7 @@ Jay Hesselberth <jay dot hesselberth at ucdenver dot edu>.
 If you want to **report a bug or request a feature**, please do so using
 our issue tracker:
 
-  http://code.google.com/p/genomedata/issues
+  http://code.google.com/p/genomedata/issues/list
 
 For other support with Genomedata, or to provide feedback, please write
 contact the authors directly. We are interested in all comments regarding the
