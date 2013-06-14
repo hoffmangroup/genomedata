@@ -49,7 +49,6 @@ genomedata-open-data = genomedata._open_data:main
 genomedata-close-data = genomedata._close_data:main
 genomedata-report = genomedata._report:main
 genomedata-erase-data = genomedata._erase_data:main
-genomedata-test = test.run_tests:main
 """
 
 install_requires = ["numpy", "forked-path", "tables>=2.2", "textinput"]
@@ -134,8 +133,7 @@ class BuildScriptWrapper(build_scripts):
     this executable into the appropriate directory to get added to the
     egg's bin directory.
     """
-    def run(self):
-        print "##################################################"
+    def _get_compiler(self):
         from distutils.ccompiler import new_compiler
         from distutils.sysconfig import customize_compiler
 
@@ -163,9 +161,6 @@ class BuildScriptWrapper(build_scripts):
         if include_gnulib:
             compiler.add_library("gnu")
 
-        extra_postargs = ["-std=c99", "-pedantic",
-                          "-Wextra", "-Wno-missing-field-initializers"]
-
         # Remove DNDEBUG flag from all compile statements
         bad_flag = "-DNDEBUG"
         for k, v, in compiler.__dict__.items():
@@ -173,6 +168,14 @@ class BuildScriptWrapper(build_scripts):
                 v.remove(bad_flag)
             except (AttributeError, TypeError, ValueError):
                 pass
+
+        return compiler
+
+    def run(self):
+        print "##################################################"
+        compiler = self._get_compiler()
+        extra_postargs = ["-std=c99", "-pedantic",
+                          "-Wextra", "-Wno-missing-field-initializers"]
 
         # Compile and link any sources that are passed in
         output_dir = os.path.join(self.build_dir, arch)
