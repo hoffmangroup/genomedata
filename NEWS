@@ -9,6 +9,7 @@
 * genomedata-load-data: friendlier errors when invalid BED3+1/bedGraph data supplied
 * genomedata-load-seq: always makes chromosome and supercontig
   coordinates with unsigned 32-bit integers instead of system int
+* genomedata-load-data: more detailed error message when initial file open fails
 * genomedata-load-data: bugfix
 * now compile with -Wextra
 * doc fixes

@@ -38,6 +38,7 @@ def make_temp_dir():
 class GenomedataTesterBase(unittest.TestCase):
     def setUp(self):
         # Defaults
+        # XXX: adding verbosity when unittest is run with verbosity would be useful
         self.verbose = False
         self.mode = "dir"
         self.tracks = {"vertebrate":
@@ -310,6 +311,7 @@ class GenomedataGivenDataTester(GenomedataTesterBase):
         self.tracknames = ["placental", "primate", "vertebrate"]
 
 
+## XXX: why isn't this a sublcass of GenomeDataTesterBase?
 class GenomedataNoDataTester(unittest.TestCase):
     def setUp(self):
         # Defaults

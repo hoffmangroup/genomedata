@@ -216,11 +216,8 @@ void get_attr(hid_t loc, const char *name, hid_t mem_type_id, void *buf) {
 hid_t open_dataset(hid_t loc, char *name, hid_t dapl) {
   hid_t dataset;
 
-  err_state_type err_state;
-
-  disable_h5_errors(&err_state);
+  /* Not disabling errors because failure is always fatal. */
   dataset = H5Dopen(loc, name, dapl);
-  enable_h5_errors(&err_state);
 
   return dataset;
 }
@@ -274,8 +271,6 @@ void init_genome(genome_type *genome) {
 }
 
 void load_genome(genome_type *genome, char *filename) {
-  err_state_type err_state;
-
   struct stat file_stat;
   if (stat(filename, &file_stat) == 0) {
     /* is this a directory? */
@@ -286,9 +281,8 @@ void load_genome(genome_type *genome, char *filename) {
     /* else is it a regular file? */
     } else if (S_ISREG(file_stat.st_mode)) {
       /* open the genome file */
-      disable_h5_errors(&err_state);
+      /* Don't suppress errors because they are fatal. */
       genome->h5file = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);
-      enable_h5_errors(&err_state);
     }
   }
   /* if anything else happened, then it won't be a valid genome */
@@ -419,6 +413,10 @@ int seek_chromosome(char *chrom, genome_type *genome,
     strcpy(h5filename_suffix, SUFFIX_H5);
 
     /* open the chromosome file */
+
+    /* Suppress errors so that loading data into a missing chromosome does
+       nothing, silently. This facilitates distributed loading. */
+
     disable_h5_errors(&err_state);
     h5file = H5Fopen(h5filename, H5F_ACC_RDWR, H5P_DEFAULT);
     enable_h5_errors(&err_state);
@@ -450,6 +448,11 @@ int seek_chromosome(char *chrom, genome_type *genome,
 
   if (h5file >= 0) {
     /* Open the chromosome group, regardless of dir/file implementation */
+
+    /* Suppress errors so that loading data into a missing chromosome
+       does nothing, silently. This is useful when you want to ignore
+       certain parts of assembly. */
+
     disable_h5_errors(&err_state);
     h5group = H5Gopen(h5file, where, H5P_DEFAULT);
     enable_h5_errors(&err_state);
