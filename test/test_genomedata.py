@@ -7,7 +7,7 @@ test_genomedata: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2010-2012 Michael M. Hoffman <mmh1@uw.edu>
+# Copyright 2010-2013 Michael M. Hoffman <mmh1@uw.edu>
 
 import os
 import sys
@@ -26,11 +26,14 @@ from genomedata._erase_data import erase_data
 
 test_filename = lambda filename: os.path.join("data", filename)
 
+
 def seq2str(seq):
     return seq.tostring().lower()
 
+
 def make_temp_dir():
     return mkdtemp(prefix="genomedata.test.")
+
 
 class GenomedataTesterBase(unittest.TestCase):
     def setUp(self):
@@ -38,7 +41,7 @@ class GenomedataTesterBase(unittest.TestCase):
         self.verbose = False
         self.mode = "dir"
         self.tracks = {"vertebrate":
-                           "chr1.phyloP44way.vertebrate.short.wigFix",
+                       "chr1.phyloP44way.vertebrate.short.wigFix",
                        "placental": "chr1.phyloP44way.placental.short.wigFix",
                        "primate": "chr1.phyloP44way.primate.short.wigFix"}
         # Track to be added by test_add_track
@@ -106,7 +109,6 @@ class GenomedataTesterBase(unittest.TestCase):
             self.assertArraysEqual(chromosome[290, array([1, 0])],
                                    [-2.327, -2.297])
 
-            
             # Test filling of unassigned continuous segments
             chromosome = genome["chrY"]
             # Get first supercontig
@@ -135,8 +137,8 @@ class GenomedataTesterBase(unittest.TestCase):
     def test_no_context(self):
         genome = Genome(self.gdfilepath)
         chr1 = genome["chr1"]
-        tracknames = genome.tracknames_continuous
-        data = chr1[100:1000]  # Used to segfault
+        genome.tracknames_continuous  # test access
+        chr1[100:1000]  # test access: at one point segfaulted
         chr2 = genome["chrY"]
         chr2.close()  # Make sure manual close doesn't break it
         self.assertTrue(chr1.isopen)
@@ -151,13 +153,14 @@ class GenomedataTesterBase(unittest.TestCase):
             chr1 = genome["chr1"]
             chr2 = genome["chr1"]  # Memoized
             self.assertEqual(chr1, chr2)
-            chr3 = genome["chrY"]
+            genome["chrY"]
             self.assertEqual(len(genome.open_chromosomes), 2)
 
         self.assertEqual(genome.open_chromosomes, {})
 
     def set_gdfilepath(self, filename):
         self.gdfilepath = path(filename).expand()
+
 
 class GenomedataTester(GenomedataTesterBase):
     def setUp(self):
@@ -245,7 +248,6 @@ class GenomedataTester(GenomedataTesterBase):
         # Test ability to delete a track
         trackname = "primate"
         old_entry = (290, -2.327)
-        new_entry = (290, nan)
 
         # Test value before deleting track
         warnings.simplefilter("ignore")
@@ -280,8 +282,7 @@ class GenomedataTester(GenomedataTesterBase):
                                    old_entry[1])
 
         # Remove track
-        erase_data(self.gdfilepath, old_trackname,
-                      verbose=self.verbose)
+        erase_data(self.gdfilepath, old_trackname, verbose=self.verbose)
 
         # Now replace it with the data from a different track
         track_index = self.tracknames.index(new_trackname)
@@ -298,6 +299,7 @@ class GenomedataTester(GenomedataTesterBase):
             self.assertArraysEqual(chromosome[new_entry[0], new_trackname],
                                    new_entry[1])
 
+
 class GenomedataGivenDataTester(GenomedataTesterBase):
     """
     test a given Genomedata file
@@ -306,6 +308,7 @@ class GenomedataGivenDataTester(GenomedataTesterBase):
         GenomedataTesterBase.setUp(self)
 
         self.tracknames = ["placental", "primate", "vertebrate"]
+
 
 class GenomedataNoDataTester(unittest.TestCase):
     def setUp(self):
@@ -395,10 +398,12 @@ class GenomedataNoDataTester(unittest.TestCase):
             # Given track ordering, check single track data retrieval
             self.assertArraysEqual(genome["chr1"][305:310, new_track_name],
                                    [-2.65300012, 0.37200001, 0.37200001,
-                                     0.37200001, 0.37099999])
+                                    0.37200001, 0.37099999])
+
 
 def test_genomedata(*args):
     pass
+
 
 def parse_options(args):
     from optparse import OptionParser
@@ -413,6 +418,7 @@ def parse_options(args):
         parser.error("incorrect number of arguments")
 
     return options, args
+
 
 def main(args=sys.argv[1:]):
     options, args = parse_options(args)
