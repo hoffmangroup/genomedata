@@ -13,7 +13,7 @@ For a broad overview, see the paper:
     large-scale functional genomics data`__.
     *Bioinformatics*, **26**\(11):1458-1459; doi:10.1093/bioinformatics/btq164
 
-.. __: http://bioinformatics.oxfordjournals.org/cgi/content/abstract/btq164
+.. __: http://bioinformatics.oxfordjournals.org/content/26/11/1458.full
 
 Please cite this paper if you use Genomedata.
 
