@@ -175,7 +175,8 @@ class BuildScriptWrapper(build_scripts):
         print "##################################################"
         compiler = self._get_compiler()
         extra_postargs = ["-std=c99", "-pedantic",
-                          "-Wextra", "-Wno-missing-field-initializers"]
+                          "-Wextra", "-Wno-missing-field-initializers",
+                          "-DH5_NO_DEPRECATED_SYMBOLS"]
 
         # Compile and link any sources that are passed in
         output_dir = os.path.join(self.build_dir, arch)
