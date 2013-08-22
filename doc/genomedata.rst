@@ -178,20 +178,20 @@ sequence and signal files.
 
 Given the following two sequence files:
 
-1. chr1.fa::
+1. A text file, `chr1.fa`::
 
      >chr1
      taaccctaaccctaaccctaaccctaaccctaaccctaaccctaacccta
      accctaaccctaaccctaaccctaaccct
 
-#. chrY.fa.gz::
+#. A compressed text file, `chrY.fa.gz`::
 
      >chrY
      ctaaccctaaccctaaccctaaccctaaccctaaccctCTGaaagtggac
 
 and the following two signal files:
 
-1. signal_low.wigFix::
+1. `signal_low.wigFix`::
 
      fixedStep chrom=chr1 start=5 step=1
      0.372
@@ -201,7 +201,7 @@ and the following two signal files:
      0.372
      -2.320
 
-#. signal_high.bed.gz::
+#. `signal_high.bed.gz`::
 
      chrY    0       12      4.67
      chrY    20      23      9.24
