@@ -157,6 +157,12 @@ def size_chromosome(chromosome, size):
     init_chromosome(chromosome, size)
     create_supercontig(chromosome, 0)
 
+def bed_chromosome(chromosome, regions):
+    max_region_end = max(zip(*regions)[1])
+    init_chromosome(chromosome, max_region_end-1) # subtract 1 for half-open bed coordinates
+    for index, region in enumerate(regions):
+        create_supercontig(chromosome, index, seq=None, start=region[0], end=region[1])
+
 def load_sizes(filename):
     res = {}
 
@@ -166,6 +172,26 @@ def load_sizes(filename):
             res[row[0]] = int(row[1])
 
     return res
+
+def load_bed(filename):
+    res = {}
+
+    # XXX This bed-parsing code is duplicitive of other code,
+    # but I don't think it exists in genomedata
+    with maybe_gzip_open(filename) as infile:
+        for line in infile:
+            line = line.split()
+            chrom = line[0]
+            start = int(line[1])
+            end = int(line[2])
+            if not chrom in res:
+                res[chrom] = []
+            res[chrom].append((start, end))
+    return res
+
+
+
+
 
 def get_num_seq(filenames):
     """
@@ -201,6 +227,9 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     if seqfile_type == "sizes":
         assert len(filenames) == 1
         sizes = load_sizes(filenames[0])
+    elif seqfile_type == "bed":
+        assert len(filenames) == 1
+        regions = load_bed(filenames[0])
     else:
         sizes = None
 
@@ -208,6 +237,8 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     if mode is None:
         if seqfile_type == "sizes":
             num_seq = len(sizes)
+        elif seqfile_type == "bed":
+            num_seq = len(regions)
         elif seqfile_type == "agp":
             num_seq = len(filenames)
         else:
@@ -244,6 +275,10 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
             for name, size in sizes.iteritems():
                 chromosome = create_chromosome(genome, name, mode)
                 size_chromosome(chromosome, size)
+        elif seqfile_type == "bed":
+            for name, chrom_regions in regions.iteritems():
+                chromosome = create_chromosome(genome, name, mode)
+                bed_chromosome(chromosome, chrom_regions)
         else:
             assert seqfile_type in frozenset(["agp", "fasta"])
             for filename in filenames:
@@ -285,6 +320,10 @@ def parse_options(args):
     parser.add_option("-s", "--sizes", action="store_const", const="sizes",
                       dest="seqfile_type", default="fasta",
                       help="SEQFILE contains list of sizes instead of"
+                      " sequence")
+    parser.add_option("-b", "--bed", action="store_const", const="bed",
+                      dest="seqfile_type", default="fasta",
+                      help="SEQFILE contains a bed file instead of"
                       " sequence")
     parser.add_option("-f", "--file-mode", dest="mode",
                       default=None, action="store_const", const="file",

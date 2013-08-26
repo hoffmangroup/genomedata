@@ -771,10 +771,23 @@ void write_buf(chromosome_type *chromosome, char *trackname,
     } else {
       buf_supercontig_end = buf_filled_end;
     }
-    if (end_offset < supercontig->start) {
+    if (end_offset <= supercontig->start) {
       continue;
     }
 
+    if (start_offset < supercontig->start) {
+        // FIXME
+        fprintf(stderr, "Error: start_offset %d is less than supercontig start %d", start_offset, supercontig->start);
+        exit(EXIT_FAILURE);
+    }
+    if (end_offset > supercontig->end) {
+        fprintf(stderr, "Error: end_offset %d is greater than supercontig end %d", end_offset, supercontig->end);
+        exit(EXIT_FAILURE);
+    }
+    if (end_offset <= start_offset) {
+        fprintf(stderr, "Error: end_offset %d is leq than start offset %d", end_offset, start_offset);
+        exit(EXIT_FAILURE);
+    }
     assert(start_offset >= supercontig->start
            && end_offset <= supercontig->end
            && end_offset > start_offset);
