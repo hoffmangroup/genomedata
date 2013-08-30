@@ -1,6 +1,7 @@
 1.3.4:
 
-
+* compile works with more HDF5 setups
+* doc fixes
 
 1.3.3:
 
