@@ -202,7 +202,7 @@ void enable_h5_errors(err_state_type *err_state) {
 void get_attr(hid_t loc, const char *name, hid_t mem_type_id, void *buf) {
   hid_t attr;
 
-  attr = H5Aopen_name(loc, name);
+  attr = H5Aopen_by_name(loc, name, H5P_DEFAULT, H5P_DEFAULT);
   assert(attr >= 0);
 
   assert(H5Aread(attr, mem_type_id, buf) >= 0);
@@ -494,7 +494,7 @@ void get_cols(chromosome_type *chromosome, char *trackname, hsize_t *num_cols,
   root = H5Gopen(chromosome->h5group, "/", H5P_DEFAULT);
   assert(root >= 0);
 
-  attr = H5Aopen_name(root, "tracknames");
+  attr = H5Aopen_by_name(root, "tracknames", H5P_DEFAULT, H5P_DEFAULT);
   assert(attr >= 0);
 
   dataspace = H5Aget_space(attr);
