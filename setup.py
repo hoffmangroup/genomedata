@@ -51,7 +51,7 @@ genomedata-report = genomedata._report:main
 genomedata-erase-data = genomedata._erase_data:main
 """
 
-install_requires = ["numpy", "forked-path", "tables>=2.2", "textinput"]
+install_requires = ["numpy==1.6.1", "forked-path", "tables==2.2.1", "textinput"]
 
 arch = "_".join([system(), processor()])
 
