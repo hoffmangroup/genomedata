@@ -131,7 +131,7 @@ class Genome(object):
         if filepath.isfile():
             # Open the Genomedata file
             isfile = True
-            self.h5file = _open_file(filepath, *args, **kwargs)
+            self.h5file = _open_file(str(filepath), *args, **kwargs)
             self._file_attrs = self.h5file.root._v_attrs
         elif filepath.isdir():
             # Genomedata directory
@@ -591,7 +591,7 @@ since being closed with genomedata-close-data.""")
         """
         filepath = path(filename).expand()
         try:
-            h5file = _open_file(filepath, mode=mode, *args, **kwargs)
+            h5file = _open_file(str(filepath), mode=mode, *args, **kwargs)
         except IOError:
             raise IOError("Could not find file: %r" % filename)
 
