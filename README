@@ -1,0 +1,20 @@
+============
+ Genomedata
+============
+by Michael Hoffman <mmh1@washington.edu>
+
+Description
+===========
+The genomedata package provides access to genome-scale data, using an
+HDF5_ container.
+
+.. _HDF5: http://www.hdfgroup.org/
+
+Please see the following URL (and linked documentation) for information,
+installation, and support: http://noble.gs.washington.edu/proj/genomedata
+
+License
+=======
+genomedata is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.

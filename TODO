@@ -1,0 +1,22 @@
+* need to document --sizes option
+
+* make iter(Chromosome) and friends return supercontigs in order
+* add supercontig gap length variable
+* add sequence length variable (set during load_seq)
+** allow full slicing once sequence length known for each chromosome
+
+* change supercontig.start and supercontig.end to unsigned ints, not
+  signed ints. then compile with -Wextra
+
+* needed tests:
+  ** multiple track headers in middle of file
+  ** tab-delimited track header
+
+* run coverage
+  <http://www.nedbatchelder.com/code/modules/coverage.html>
+
+* run fuzz
+
+* buildbot
+
+* C API

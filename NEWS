@@ -1,0 +1,168 @@
+1.3.4:
+
+* compile works with HDF5 setups even when they were built
+  --with-default-api-version=v16
+* doc fixes
+
+1.3.3:
+
+* genomedata-query: new command that prints data from a Genomedata archive for your
+  non-Python scripting needs (thanks to Max Libbrecht)
+* genomedata-histogram: new command that prints histograms from a Genomedata archive
+  (combination of a new module by Max Libbrecht and an old module by Michael Hoffman)
+* genomedata-info: add "contigs" subcommand (thanks to Max Libbrecht)
+* genomedata-info: friendlier error when unsupported command name used
+* genomedata-load-data: friendlier errors when invalid BED3+1/bedGraph data supplied
+* genomedata-load-seq: always makes chromosome and supercontig
+  coordinates with unsigned 32-bit integers instead of system int
+* genomedata-load-data: more detailed error message when initial file open fails
+* genomedata-load-data: bugfix
+* now compile with -Wextra
+* doc fixes
+
+1.3.2:
+
+* API: now allow array of tracks. For example: chromosome[245:270, array([7, 5])]
+
+1.3.1:
+
+* API: now allow lists of tracks when directly accessing chromosome data, for example:
+  chromosome[245:270, ["data1", "data3"]] or chromosome[245:270, [7, 5]]
+* genomedata-load-seq: add --assembly option which supports AGP files,
+  to allow avoid loading seq while still dealing with assembly gaps
+  properly
+* genomedata-load: now supports --assembly and --sizes options
+* genomedata-load-assembly: alias for genomedata-load-seq.
+  genomedata-load-seq will be deprecated in the future
+* genomedata-load-data: now support DOS-style line endings ("\r\n")
+* genomedata-load: print genomedata-load-data error code on failure
+* genomedata-load-data: print more informative messages when ignoring data
+* genomedata-load: all diagnostics messages to stderr
+* genomedata-load: some diagnostics now include timestamp so we can
+  see where performance bottlenecks are
+* genomedata-load: more descriptive error messages
+* genomedata-load-seq: print more descriptive error message when
+  attempting to load sequence from a non-FASTA file
+* genomedata-load: fixed issue 10: now compiles on gcc 4.6.2
+* docs: add links to source code
+* docs: genomedata-load: sequence "option" is mandatory. In a future
+  version, we should change this to an argument to reflect this.
+* test: add tests for DOS-style line-endings
+
+1.3.0:
+
+* genomedata supercontigs are no longer guaranteed to have seq data
+* add --sizes option to genomedata-load-seq, to allow avoid loading seq
+* Genome.add_track_continuous() has a significant performance
+  improvement. This also means that genomedata-open-data will run much
+  faster, as well as genomedata-load-data on fresh tracks
+* fix bug where genomedata-load-seq didn't work
+* fix bug where directory genomedata archive didn't work with only one chromosome
+
+1.2.3:
+
+* DO NOT USE: genomedata-load-seq doesn't work 
+* allow use with PyTables >=2.2
+* new command: genomedata-info: "genomedata-info tracknames ARCHIVE"
+  prints the tracknames for ARCHIVE
+* Genome.format_version will now return 0 when files are missing a
+  genomedata_format_version attribute
+* Genome.__init__: future-proof to future versions of file format by throwing an error
+* tests: add regression tests, lots of changes
+* docs: add man pages
+
+1.2.2:
+
+* genomedata-load: will now support track filenames with "=" in the names
+* genomedata-load: now supports UNIX glob wildcards as arguments to -s
+* genomedata-load-data: allow other delimiters besides space for
+  variableStep and fixedStep, allow wiggle_0 track specification
+* genomedata-load-data, genomedata-load: remove unused --chunk-size option
+* genomedata-close-data: fix bug where chunk_starts, chunk_ends not
+  written for supercontigs with zero present data
+* installation: move from path.py to forked-path
+* docs: fixed small errors
+* various: removed exclamation marks from error messages. It's not *that* exciting.
+* some portability improvements
+* tests: improve unit test interface
+
+1.2.1:
+
+* Fixed an installation bug where HDF5 installations later in
+  LIBRARY_PATH might override those specified first, leading to
+  linking errors during build.
+
+1.2.0:
+* Added support for adding additional tracks using genomedata-open-data and
+  Genome.add_track_continuous().
+* Added support for creating Genomedata archives without any tracks.
+* Made chromosome.start and chromosome.end be based upon sequence instead
+  of supercontigs.
+* Made iter(chromosome) and chromosome.itercontinuous() yield supercontigs
+  sorted by start index (instead of dictionary order).
+* Fixed pointer dereference bug that could cause segfault in
+  genomedata-load-data.
+* Improved installation script robustness and clarity.
+
+1.1.1:
+* Fixed format string warnings on Mac OS X
+* Included Gnulib for Mac OS X support
+* Updated docs to reflect OS X support
+
+1.1.0:
+* Fixed format warning on 32-bit systems
+* Fixed Ubuntu format string warnings (switched fprintf to fputs)
+* Fixed bug that caused segmentation fault when accessing
+  tracknames_continuous before data when Genome was not used as a
+  context manager.
+* Created a uniform interface for loading Genomedata archives, whether they
+  are a directory or a single file (untested). This includes calling improving
+  the handling of non-context-manager Genome objects by requiring a call
+  to Genome.close() when finished.
+* Added an option to genomedata-load-seq and genomedata-load
+  to specify the Genomedata archive implementation (directory/file). 
+  Default is directory if number of sequences is at least 100.
+* Added support for replacing data in Genomedata tracks.
+* General documentation improvements
+
+1.0.1:
+* Fixed OSX bug that caused installer to crash on sys.stdin.flush
+* Clarified write-once behavior in documentation
+* Added textinput to installation requirements
+
+1.0.0:
+* added test module with basic unit tests
+* improved documentation, examples
+* added verbose flags
+* compiled default types in __init__.py
+* added _load_data.py wrapper for genomedata_load_data.c
+
+0.1.6:
+
+* extend documentation, including examples
+* extended API with: chromosome[start:end], chromosome.seq[start:end],
+  and chromosome.supercontigs[start:end]
+* added reasonable repr and str return values for Genome, Chromosome, 
+  and Supercontig
+
+0.1.5:
+
+* add documentation
+* change ".h5" suffix to ".genomedata"
+
+0.1.4:
+
+* strip out seq_counts, seq_total_counts, etc. from metadata (big
+  speed increase for save-metadata)
+
+0.1.3:
+
+* add genomedata-report
+* export genomedata-load-seq script
+* _load_data now supports BED, bedGraph input
+* added slice support to genomedata.Chromosome
+* added genomedata.Supercontig.project()
+* Genome.__iter__() now iterates only through files ending in .h5
+* add Genome.sums, Genomes.sums_squares, Genome.num_datapoints
+* fix bug where use of context manager doesn't actually result in closing all open files
+* fix bug in save metadata that causes some regions with data to be ignored
