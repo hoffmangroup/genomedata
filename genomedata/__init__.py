@@ -9,7 +9,7 @@ but genomedata provides a transparent interface to interact with your
 underlying data without having to worry about the mess of repeatedly parsing
 large data files or having to keep them in memory for random access.
 
-Copyright 2009, 2010, 2011, 2012, 2013 Michael M. Hoffman <mmh1@washington.edu>
+Copyright 2009-2014 Michael M. Hoffman <mmh1@washington.edu>
 
 """
 
@@ -59,12 +59,12 @@ class _InactiveDict(dict):
         return
 
 
-def _open_file(*args, **kwargs):
+def _open_file(filename, *args, **kwargs):
     if not "BUFFER_TIMES" in kwargs:
         # eliminate spurious PerformanceWarning
         kwargs["BUFFER_TIMES"] = inf
 
-    return openFile(*args, **kwargs)
+    return openFile(str(filename), *args, **kwargs)
 
 
 class Genome(object):
