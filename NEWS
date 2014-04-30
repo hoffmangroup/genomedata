@@ -1,5 +1,6 @@
 1.3.4:
 
+* fixed bug related to updated PyTables
 * compile works with HDF5 setups even when they were built
   --with-default-api-version=v16
 * doc fixes
