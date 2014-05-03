@@ -5,7 +5,7 @@ Genomedata |version| documentation
 :Author: Michael M. Hoffman <mmh1 at uw dot edu>
 :Organization: University of Washington
 :Address: Department of Genome Sciences, PO Box 355065, Seattle, WA 98195-5065, United States of America
-:Copyright: 2009-2013 Michael M. Hoffman
+:Copyright: 2009-2014 Michael M. Hoffman
 
 For a broad overview, see the paper:
 
@@ -24,7 +24,7 @@ Installation
 
 A simple, interactive script_ has been created to install Genomedata
 (and most dependencies) on any Unix platform. Installation is as
-simple as downloading and running this script! For instance::
+simple as downloading and running this script. For instance::
 
   wget http://noble.gs.washington.edu/proj/genomedata/install.py
   python install.py
