@@ -1,10 +1,13 @@
 ==================================
 Genomedata |version| documentation
 ==================================
-:Website: http://noble.gs.washington.edu/proj/genomedata
-:Author: Michael M. Hoffman <mmh1 at uw dot edu>
-:Organization: University of Washington
-:Address: Department of Genome Sciences, PO Box 355065, Seattle, WA 98195-5065, United States of America
+:Website: http://pmgenomics.ca/hoffmanlab/proj/genomedata/
+:Author: Michael M. Hoffman <mhoffman at uhnresearch dot ca>
+:Organization: Princess Margaret Cancer Centre
+:Address: MaRS Centre, Toronto Medical Discovery Tower, 11-311, 
+    101 College St,
+    M5G 1L7, 
+    Toronto, Ontario, Canada
 :Copyright: 2009-2014 Michael M. Hoffman
 
 For a broad overview, see the paper:
@@ -22,14 +25,16 @@ Please cite this paper if you use Genomedata.
 Installation
 ============
 
-A simple, interactive script_ has been created to install Genomedata
-(and most dependencies) on any Unix platform. Installation is as
-simple as downloading and running this script. For instance::
+Both Python (2.6 or 2.7) and the Python package PyTables is required to be
+installed before you can install Genomedata.  Instructions on how to install
+PyTables can be found here:
 
-  wget http://noble.gs.washington.edu/proj/genomedata/install.py
-  python install.py
+    http://pytables.github.io/usersguide/installation.html
 
-.. _script: http://noble.gs.washington.edu/proj/genomedata/install.py
+After PyTables has been installed, Genomedata can be installed with pip by
+entering the following command at a prompt:
+
+    pip install genomedata
 
 .. note::
   The following are prerequisites:
@@ -38,7 +43,6 @@ simple as downloading and running this script. For instance::
       This software has been tested on Linux and Mac OS X systems.
       We would love to add support for other systems in the future and
       will gladly accept any contributions toward this end.
-  - Python 2.5-2.7
   - Zlib
 
 .. note:: For questions, comments, or troubleshooting, please refer to
@@ -630,7 +634,7 @@ Jay Hesselberth <jay dot hesselberth at ucdenver dot edu>.
 If you want to **report a bug or request a feature**, please do so using
 our issue tracker:
 
-  http://code.google.com/p/genomedata/issues/list
+  https://bitbucket.org/hoffmanlab/genomedata/issues
 
 For other support with Genomedata, or to provide feedback, please write
 contact the authors directly. We are interested in all comments regarding the
