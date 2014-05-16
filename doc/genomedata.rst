@@ -4,10 +4,7 @@ Genomedata |version| documentation
 :Website: http://pmgenomics.ca/hoffmanlab/proj/genomedata/
 :Author: Michael M. Hoffman <mhoffman at uhnresearch dot ca>
 :Organization: Princess Margaret Cancer Centre
-:Address: Toronto Medical Discovery Tower, 11-311, 
-    101 College St,
-    M5G 1L7, 
-    Toronto, Ontario, Canada
+:Address: Toronto Medical Discovery Tower 11-311, 101 College St, M5G 1L7, Toronto, Ontario, Canada
 :Copyright: 2009-2014 Michael M. Hoffman
 
 For a broad overview, see the paper:
