@@ -1,7 +1,7 @@
 ============
  Genomedata
 ============
-by Michael Hoffman <mmh1@washington.edu>
+by Michael Hoffman <mhoffman at uhnresearch dot ca>
 
 Description
 ===========
@@ -11,7 +11,7 @@ HDF5_ container.
 .. _HDF5: http://www.hdfgroup.org/
 
 Please see the following URL (and linked documentation) for information,
-installation, and support: http://noble.gs.washington.edu/proj/genomedata
+installation, and support: http://pmgenomics.ca/hoffmanlab/proj/genomedata/
 
 License
 =======
