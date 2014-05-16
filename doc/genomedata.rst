@@ -4,7 +4,7 @@ Genomedata |version| documentation
 :Website: http://pmgenomics.ca/hoffmanlab/proj/genomedata/
 :Author: Michael M. Hoffman <mhoffman at uhnresearch dot ca>
 :Organization: Princess Margaret Cancer Centre
-:Address: MaRS Centre, Toronto Medical Discovery Tower, 11-311, 
+:Address: Toronto Medical Discovery Tower, 11-311, 
     101 College St,
     M5G 1L7, 
     Toronto, Ontario, Canada
