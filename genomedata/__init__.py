@@ -25,7 +25,7 @@ from numpy import (add, amin, amax, append, array, empty, float32, inf,
                    nan, ndarray, square, uint8)
 from os import extsep
 from path import path
-from tables import Float32Atom, NoSuchNodeError, openFile, UInt8Atom
+from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
 
 FORMAT_VERSION = 1
@@ -60,11 +60,13 @@ class _InactiveDict(dict):
 
 
 def _open_file(filename, *args, **kwargs):
-    if not "BUFFER_TIMES" in kwargs:
+    # From pytables 3 docs:
+    # [open_file] recognizes the (lowercase) names of parameters present in tables/parameters.py
+    if not "buffer_times" in kwargs:
         # eliminate spurious PerformanceWarning
-        kwargs["BUFFER_TIMES"] = inf
+        kwargs["buffer_times"] = inf
 
-    return openFile(str(filename), *args, **kwargs)
+    return open_file(str(filename), *args, **kwargs)
 
 
 class Genome(object):
@@ -95,9 +97,9 @@ class Genome(object):
                          file that contains the entire genome or a
                          directory containing multiple chromosome files.
         :type filename: string
-        :param \*args: args passed on to openFile if single file or to
+        :param \*args: args passed on to open_file if single file or to
                        Chromosome if directory
-        :param \*\*kwargs: keyword args passed on to openFile if single file
+        :param \*\*kwargs: keyword args passed on to open_file if single file
                            or to Chromosome if directory
 
         Example:
@@ -169,7 +171,7 @@ class Genome(object):
         assert self.isopen
         if self._isfile:  # Chromosomes are groups
             # Iterate over child group of root
-            for group in self.h5file.iterNodes("/", classname="Group"):
+            for group in self.h5file.iter_nodes("/", classname="Group"):
                 groupname = group._v_name
                 yield self[groupname]
         else:  # Chromosomes are files
@@ -542,7 +544,7 @@ class Chromosome(object):
                                       " type: %r" % h5file)
 
         # Now, open the group that is the root of the chromosome
-        h5group = h5file.getNode(where, classname="Group")
+        h5group = h5file.get_node(where, classname="Group")
 
         # XXX: even though each chromosome has its own dirty bit, and
         # the metadata only needs to be recalculated on those where it is
@@ -582,11 +584,11 @@ since being closed with genomedata-close-data.""")
         :param mode: mode of interaction with the chromosome file,
                      with ``r``: read, ``w``: write, ``a``: append,
                      ``r+``: append but force file to exist (see documentation
-                     for tables.openFile().)
+                     for tables.open_file().)
 
         :type mode: string
-        :param \*args: args passed on to openFile
-        :param \*\*kwargs: keyword args passed on to openFile
+        :param \*args: args passed on to open_file
+        :param \*\*kwargs: keyword args passed on to open_file
 
         """
         filepath = path(filename).expand()
