@@ -239,7 +239,15 @@ Python interface
 ~~~~~~~~~~~~~~~~
 The data in Genomedata is accessed through the hierarchy described in
 :ref:`genomedata-overview`. A full :ref:`Python API <python-api>` is
-also available. To appreciate the full benefit of Genomedata,
+also available.
+
+.. note::
+    The Python API expects that a genomedata archive has already been created.
+    This can be done manually via the :ref:`genomedata-load` command.
+    Alternatively, this can be done programmatically using
+    :_load_seq:`load_seq`.
+
+To appreciate the full benefit of Genomedata,
 it is most easily used as a contextmanager::
 
     from genomedata import Genome
@@ -257,6 +265,7 @@ it is most easily used as a contextmanager::
 Basic usage
 -----------
 Genomedata is designed to make it easy to get to the data you want.
+
 Here are a few examples:
 
 **Get arbitrary sequence** (10-bp sequence starting at chr2:1423):
