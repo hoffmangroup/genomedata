@@ -3,6 +3,11 @@
 ============
 by Michael Hoffman <mhoffman at uhnresearch dot ca>
 
+|CIStatus|_
+
+.. |CIStatus| image:: https://drone.io/bitbucket.org/hoffmanlab/genomedata/status.png
+.. _CIStatus: https://drone.io/bitbucket.org/hoffmanlab/genomedata/latest
+
 Description
 ===========
 The genomedata package provides access to genome-scale data, using an
