@@ -23,15 +23,52 @@ Installation
 ============
 
 Both Python (2.6 or 2.7) and the Python package PyTables is required to be
-installed before you can install Genomedata.  Instructions on how to install
-PyTables can be found here:
+installed before you can install Genomedata.
+
+To install PyTables the HDF5 libraries and prerequisite python packages need to
+be installed manually.
+
+Installing HDF5
+---------------
+
+Ubuntu/Debian::
+
+    sudo apt-get install libhdf5-serial-dev hdf5-tools
+
+CentOS/RHEL/Fedora::
+
+    sudo yum -y install hdf5
+
+OpenSUSE::
+
+    sudo zypper in hdf5 hdf5-devel libhdf5
+
+Installing PyTables
+-------------------
+
+With Python 2.6 or 2.7 installed::
+
+    pip install numpy
+    pip install numexpr
+    pip install cython
+    pip install tables
+
+.. note::
+    For troubleshooting or more detailed instructions on how to configure and
+    install PyTables for various systems see the official webpage:
 
     http://pytables.github.io/usersguide/installation.html
 
+Installing Genomedata
+---------------------
+
 After PyTables has been installed, Genomedata can be installed with pip by
-entering the following command at a prompt:
+entering the following command at a prompt::
 
     pip install genomedata
+
+.. note::
+  Genomedata is only supported on 64 bit systems.
 
 .. note::
   The following are prerequisites:
