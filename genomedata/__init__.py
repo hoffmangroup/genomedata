@@ -9,7 +9,7 @@ but genomedata provides a transparent interface to interact with your
 underlying data without having to worry about the mess of repeatedly parsing
 large data files or having to keep them in memory for random access.
 
-Copyright 2009-2014 Michael M. Hoffman <mmh1@washington.edu>
+Copyright 2009-2014 Michael M. Hoffman <mhoffman@uhnresearch.ca>
 
 """
 
