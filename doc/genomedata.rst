@@ -210,7 +210,7 @@ without any tracks, however, using the following pipeline:
 .. _genomedata-load-example:
 
 Example
-~~~~~~~
+-------
 The following is a brief example for creating a Genomedata archive from
 sequence and signal files.
 
@@ -273,7 +273,7 @@ Genomedata usage
 ================
 
 Python interface
-~~~~~~~~~~~~~~~~
+----------------
 The data in Genomedata is accessed through the hierarchy described in
 :ref:`genomedata-overview`. A full :ref:`Python API <python-api>` is
 also available.
@@ -622,7 +622,7 @@ Technical matters
 =================
 
 Chunking and chunk cache overhead
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 Genomedata uses an HDF5 data store. The data is stored in chunks_.
 The chunk size is 10,000 bp and one data track of 32-bit
