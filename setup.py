@@ -256,7 +256,7 @@ if __name__ == "__main__":
           version=__version__,
           description=short_description,
           author="Michael Hoffman",
-          author_email="mmh1@washington.edu",
+          author_email="mhoffman@uhnresearch.ca",
           url=url,
           download_url=download_url,
           classifiers=classifiers,
