@@ -11,7 +11,7 @@ this format.
 
 __version__ = "1.3.4"
 
-# Copyright 2008-2013 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2014 Michael M. Hoffman <mhoffman@uhnresearch.ca>
 
 import os
 import sys

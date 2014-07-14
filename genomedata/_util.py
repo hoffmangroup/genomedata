@@ -3,7 +3,7 @@ from __future__ import division, with_statement
 
 __version__ = "$Revision$"
 
-# Copyright 2008-2009, 2012 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2014 Michael M. Hoffman <mhoffman@uhnresearch.ca>
 
 from contextlib import closing
 from gzip import open as _gzip_open

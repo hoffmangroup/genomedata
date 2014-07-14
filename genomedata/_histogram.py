@@ -7,7 +7,7 @@ _histogram: prints histogram
 
 __version__ = "$Revision$"
 
-# Copyright 2008, 2013 Michael M. Hoffman <mmh1@washington.edu>
+# Copyright 2008-2014 Michael M. Hoffman <mhoffman@uhnresearch.ca>
 
 import sys
 
