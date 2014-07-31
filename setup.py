@@ -261,6 +261,7 @@ if __name__ == "__main__":
           download_url=download_url,
           classifiers=classifiers,
           long_description=long_description,
+          setup_requires=["hgtools"],
           install_requires=install_requires,
           zip_safe=False,
           # XXX: this should be based off of __file__ instead
