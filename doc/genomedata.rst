@@ -56,8 +56,8 @@ With Python 2.6 or 2.7 installed::
 .. note::
     As of the time of writing this document, the latest PyTables release
     (3.1.1) currently doesn't not install with later versions of Cython. The
-    command listed above is a known commit that works with later versions of
-    Cython and with Genomedata.
+    command listed above is a known prerelease commit that works with later
+    versions of Cython and with Genomedata.
 
     If you would rather wish to install the latest (3.1.1) release of PyTables
     with an older compatable release of Cython you can run the following
