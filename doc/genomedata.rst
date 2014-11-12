@@ -37,7 +37,7 @@ Ubuntu/Debian::
 
 CentOS/RHEL/Fedora::
 
-    sudo yum -y install hdf5
+    sudo yum -y install hdf5 hdf5-devel
 
 OpenSUSE::
 
@@ -51,11 +51,23 @@ With Python 2.6 or 2.7 installed::
     pip install numpy
     pip install numexpr
     pip install cython
-    pip install tables
+    pip install git+https://github.com/PyTables/PyTables.git@1fd2bf#egg=tables
 
 .. note::
-    For troubleshooting or more detailed instructions on how to configure and
-    install PyTables for various systems see the official webpage:
+    As of the time of writing this document, the latest PyTables release
+    (3.1.1) currently doesn't not install with later versions of Cython. The
+    command listed above is a known prerelease commit that works with later
+    versions of Cython and with Genomedata.
+
+    If you would rather wish to install the latest (3.1.1) release of PyTables
+    with an older compatable release of Cython you can run the following
+    instead when installing Cython::
+
+        pip install cython==0.20.2
+        pip install tables
+
+    For more troubleshooting or more detailed instructions on how to configure
+    and install PyTables for various systems see the official webpage:
 
     http://pytables.github.io/usersguide/installation.html
 
