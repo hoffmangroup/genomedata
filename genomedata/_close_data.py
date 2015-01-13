@@ -7,7 +7,7 @@ _close_data: DESCRIPTION
 
 __version__ = "$Revision$"
 
-# Copyright 2008-2014 Michael M. Hoffman <mhoffman@uhnresearch.ca>
+# Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 import sys
 

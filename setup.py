@@ -11,7 +11,7 @@ this format.
 
 __version__ = "1.3.6"
 
-# Copyright 2008-2014 Michael M. Hoffman <mhoffman@uhnresearch.ca>
+# Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 import os
 import sys
@@ -256,7 +256,7 @@ if __name__ == "__main__":
           version=__version__,
           description=short_description,
           author="Michael Hoffman",
-          author_email="mhoffman@uhnresearch.ca",
+          author_email="michael.hoffman@utoronto.ca",
           url=url,
           download_url=download_url,
           classifiers=classifiers,

@@ -8,7 +8,7 @@ already has save_metadata() run
 
 __version__ = "$Revision$"
 
-# Copyright 2009-2014 Michael M. Hoffman <mhoffman@uhnresearch.ca>
+# Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 import sys
 
