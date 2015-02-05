@@ -184,6 +184,14 @@ def parse_options(args):
              "\nexample: %prog -t high=signal.high.wig -t low=signal.low.bed.gz"
              " -s chrX.fa -s chrY.fa.gz mygenomedata")
     version = "%%prog %s" % __version__
+    citation = \
+    "Citation: Hoffman MM, Buske OJ, Noble WS.\n" \
+    "2010. The Genomedata format for storing large-scale functional genomics data.\n" \
+    "Bioinformatics 26 (11):1458-1459.\n" \
+    "http://dx.doi.org/10.1093/bioinformatics/btq164"
+
+    usage += "\n" + citation
+
     description = ("Create Genomedata archive named GENOMEDATAFILE by loading"
                    " specified track data and sequences. If GENOMEDATAFILE"
                    " already exists, it will be overwritten."
