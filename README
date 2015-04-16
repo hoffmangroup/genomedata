@@ -3,10 +3,17 @@
 ============
 by Michael Hoffman <michael.hoffman at utoronto dot ca>
 
-|CIStatus|_
+.. image:: https://drone.io/bitbucket.org/hoffmanlab/genomedata/status.png
+    :target: https://drone.io/bitbucket.org/hoffmanlab/genomedata/latest
+    :alt: Build Status
 
-.. |CIStatus| image:: https://drone.io/bitbucket.org/hoffmanlab/genomedata/status.png
-.. _CIStatus: https://drone.io/bitbucket.org/hoffmanlab/genomedata/latest
+.. image:: https://pypip.in/version/genomedata/badge.png
+    :target: https://pypi.python.org/pypi/genomedata/
+    :alt: Latest Version
+
+.. image:: https://pypip.in/download/genomedata/badge.png
+    :target: https://pypi.python.org/pypi/genomedata/
+    :alt: Downloads
 
 Description
 ===========
