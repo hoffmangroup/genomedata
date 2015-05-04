@@ -807,7 +807,7 @@ void write_buf(chromosome_type *chromosome, char *trackname,
 
     /* write */
     if (verbose) {
-      fprintf(stderr, " writing %" PRI_HSIZE_T "floats...", mem_dataspace_dims[0]);
+      fprintf(stderr, " writing %" PRI_HSIZE_T " floats...", mem_dataspace_dims[0]);
     }
     assert(H5Dwrite(dataset, DTYPE, mem_dataspace, file_dataspace,
                     H5P_DEFAULT, buf_supercontig_start) >= 0);
