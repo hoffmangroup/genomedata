@@ -48,23 +48,15 @@ Installing PyTables
 
 With Python 2.6 or 2.7 installed::
 
-    pip install numpy
-    pip install numexpr
-    pip install cython
-    pip install git+https://github.com/PyTables/PyTables.git@1fd2bf#egg=tables
+    pip install tables
 
 .. note::
-    As of the time of writing this document, the latest PyTables release
-    (3.1.1) currently doesn't install with later versions of Cython. The
-    command listed above is a known prerelease commit that works with later
-    versions of Cython and with Genomedata.
-
-    If you would rather wish to install the latest (3.1.1) release of PyTables
-    with an older compatable release of Cython you can run the following
-    instead when installing Cython::
-
-        pip install cython==0.20.2
-        pip install tables
+    The latest version of PyTables requires later versions of pip (>= 6.1) for
+    PyTables to be installed using this method. Otherwise one it's dependency
+    numpy will fail to install correctly. You can update your pip using the
+    command::
+        
+        pip install --upgrade pip
 
     For more troubleshooting or more detailed instructions on how to configure
     and install PyTables for various systems see the official webpage:
