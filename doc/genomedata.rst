@@ -22,10 +22,10 @@ Please cite this paper if you use Genomedata.
 Installation
 ============
 
-Both Python (2.6 or 2.7) and the Python package PyTables is required to be
+Both Python (2.6 or 2.7) and the Python package numpy is required to be
 installed before you can install Genomedata.
 
-To install PyTables the HDF5 libraries and prerequisite python packages need to
+To install numpy and the HDF5 libraries and prerequisite python packages need to
 be installed manually.
 
 Installing HDF5
@@ -43,25 +43,21 @@ OpenSUSE::
 
     sudo zypper in hdf5 hdf5-devel libhdf5
 
-Installing PyTables
+Installing Numpy
 -------------------
 
 With Python 2.6 or 2.7 installed::
 
-    pip install tables
+    pip install numpy
 
 .. note::
-    The latest version of PyTables requires later versions of pip (>= 6.1) for
-    PyTables to be installed using this method. Otherwise one it's dependency
-    numpy will fail to install correctly. You can update your pip using the
-    command::
+    The latest version of numpy will not install with older versions of pip (< 6.0).
+    You can update your pip using the command::
         
         pip install --upgrade pip
 
-    For more troubleshooting or more detailed instructions on how to configure
-    and install PyTables for various systems see the official webpage:
-
-    http://pytables.github.io/usersguide/installation.html
+    Numpy needs to be installed separately because some of Genomedata's dependencies
+    will fail to install otherwise.
 
 Installing Genomedata
 ---------------------
