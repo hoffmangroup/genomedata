@@ -25,6 +25,13 @@ HDF5_ container.
 Please see the following URL (and linked documentation) for information,
 installation, and support: http://pmgenomics.ca/hoffmanlab/proj/genomedata/
 
+Documentation
+=============
+
+Live documentation based on this repository can be found on `Read the Docs`_.
+
+.. _Read the Docs: http://genomedata.readthedocs.org/en/latest/
+
 License
 ========
 Genomedata is free software: you can redistribute it and/or modify it under the terms of version 2 of the GNU General Public License as published by the Free Software Foundation.
