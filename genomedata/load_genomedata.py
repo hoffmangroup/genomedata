@@ -177,90 +177,82 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
     return gdfilename
 
 def parse_options(args):
-    from optparse import OptionGroup, OptionParser
 
-    usage = ("%prog [OPTIONS] GENOMEDATAFILE"
-             "\nexample: %prog -t high=signal.high.wig -t low=signal.low.bed.gz"
-             " -s chrX.fa -s chrY.fa.gz mygenomedata")
-    version = "%%prog %s" % __version__
+    from argparse import ArgumentParser, RawDescriptionHelpFormatter
+    from . import __version__
+
+    description = ("Create Genomedata archive named GENOMEDATAFILE by loading\n"
+                   " specified track data and sequences. If GENOMEDATAFILE\n"
+                   " already exists, it will be overwritten.\n"
+                   " --track and --sequence may be repeated to specify\n"
+                   " multiple trackname=trackfile pairings and sequence files,\n"
+                   " respectively.\n\n"
+                   " Example: %(prog)s -t high=signal.high.wig -t"
+                   " low=signal.low.bed.gz -s chrX.fa -s chrY.fa.gz"
+                   " gdarchive")
+
     citation = \
     "Citation: Hoffman MM, Buske OJ, Noble WS.\n" \
     "2010. The Genomedata format for storing large-scale functional genomics data.\n" \
     "Bioinformatics 26 (11):1458-1459.\n" \
     "http://dx.doi.org/10.1093/bioinformatics/btq164"
 
-    usage += "\n" + citation
+    parser = ArgumentParser(description=description,
+                            epilog=citation,
+                            formatter_class=RawDescriptionHelpFormatter,
+                            prog='genomedata-load',
+                            version=__version__)
 
-    description = ("Create Genomedata archive named GENOMEDATAFILE by loading"
-                   " specified track data and sequences. If GENOMEDATAFILE"
-                   " already exists, it will be overwritten."
-                   " --track and --sequence may be repeated to specify"
-                   " multiple trackname=trackfile pairings and sequence files,"
-                   " respectively.")
-    parser = OptionParser(usage=usage, version=version,
-                          description=description)
+    parser.add_argument('gdarchive', help='genomedata archive')
 
-#     parser.add_option("-c", "--chunk-size", dest="chunk_size",
-#                       metavar="NROWS", type="int",
-#                       default=DEFAULT_CHUNK_SIZE,
-#                       help="Chunk hdf5 data into blocks of NROWS. A higher"
-#                       " value increases compression but slows random access."
-#                       " Must always be smaller than the max size for a"
-#                       " dataset. [default: %default]")
-    group = OptionGroup(parser, "Flags")
-    group.add_option("-v", "--verbose", dest="verbose",
+    flags = parser.add_argument_group("Flags")
+    flags.add_argument("--verbose",
                       default=False, action="store_true",
                       help="Print status updates and diagnostic messages")
-    parser.add_option_group(group)
 
-    group = OptionGroup(parser, "Input data")
-    group.add_option("-s", "--sequence", action="append",
-                      default=[],
-                      help="Add the sequence data in the specified file or files"
-                      " (may use UNIX glob wildcard syntax)")
-    group.add_option("-t", "--track", action="append",
-                      dest="track", default=[], metavar="NAME=FILE",
-                      help="Add data from FILE as the track NAME,"
-                      " such as: -t signal=signal.wig")
-    parser.add_option("--assembly", action="store_const",
-                      const="agp", dest="seqfile_type",
-                      help="sequence files contain assembly (AGP) files instead of"
-                      " sequence")
-    parser.add_option("--sizes", action="store_const", const="sizes",
-                      dest="seqfile_type", default="fasta",
-                      help="sequence files contain list of sizes instead of"
-                      " sequence")
-    parser.add_option_group(group)
+    input_data = parser.add_argument_group("Input data")
+    input_data.add_argument("-s", "--sequence", nargs="+", required=True,
+                            help="Add the sequence data in the specified file or files"
+                            " (may use UNIX glob wildcard syntax)")
+    input_data.add_argument("-t", "--track", action="append",
+                            nargs="+", metavar="NAME=FILE", required=True,
+                            help="Add data from FILE as the track NAME,"
+                            " such as: -t signal=signal.wig")
+    input_data.add_argument("--assembly", action="store_const",
+                            const="agp", dest="seqfile_type",
+                            help="sequence files contain assembly (AGP) files instead of"
+                            " sequence")
+    input_data.add_argument("--sizes", action="store_const", const="sizes",
+                            dest="seqfile_type", default="fasta",
+                            help="sequence files contain list of sizes instead of"
+                            " sequence")
 
-    group = OptionGroup(parser, "Implementation")
-    group.add_option("-f", "--file-mode", dest="mode",
-                      default=None, action="store_const", const="file",
-                      help="If specified, the Genomedata archive will be"
-                      " implemented as a single file, with a separate h5 group"
-                      " for each Chromosome. This is recommended if there are"
-                      " a large number of Chromosomes. The default behavior is"
-                      " to use a single file if there are at least %s"
-                      " Chromosomes being added." % FILE_MODE_CHROMS)
-    group.add_option("-d", "--directory-mode", dest="mode",
-                      action="store_const", const="dir",
-                      help="If specified, the Genomedata archive will be"
-                      " implemented as a directory, with a separate file for"
-                      " each Chromosome. This is recommended if there are a"
-                      " small number of Chromosomes. The default behavior is"
-                      " to use a directory if there are fewer than %s"
-                      " Chromosomes being added." % FILE_MODE_CHROMS)
-    parser.add_option_group(group)
+    implementation = parser.add_argument_group("Implementation")
 
-    options, args = parser.parse_args(args)
+    implementation.add_argument("-f", "--file-mode", dest="mode",
+                                default=None, action="store_const", const="file",
+                                help="If specified, the Genomedata archive will be"
+                                " implemented as a single file, with a separate h5 group"
+                                " for each Chromosome. This is recommended if there are"
+                                " a large number of Chromosomes. The default behavior is"
+                                " to use a single file if there are at least %s"
+                                " Chromosomes being added." % FILE_MODE_CHROMS)
 
-    if not len(args) == 1:
-        parser.error("Expected only one argument. Instead, got: %s" % " ".join(args))
+    implementation.add_argument("-d", "--directory-mode", dest="mode",
+                               action="store_const", const="dir",
+                               help="If specified, the Genomedata archive will be"
+                               " implemented as a directory, with a separate file for"
+                               " each Chromosome. This is recommended if there are a"
+                               " small number of Chromosomes. The default behavior is"
+                               " to use a directory if there are fewer than %s"
+                               " Chromosomes being added." % FILE_MODE_CHROMS)
 
-    return options, args
+    args = parser.parse_args(args)
+
+    return args
 
 def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
-    gdfilename = args[0]
+    args = parse_options(args)
 
     # list of lists
     seqfilenames_list = [glob(globname) for globname in options.sequence]
@@ -269,18 +261,18 @@ def main(args=sys.argv[1:]):
     # Parse tracks into list of tuples
     try:
         tracks = []
-        for track_expr in options.track:
+        for track_expr in args.track:
             track_name, _, track_filename = track_expr.partition("=")
             tracks.append((track_name, track_filename))  # Tuple
     except ValueError:
         die(("Error parsing track expression: %s\Specify tracks"
              "in NAME=FILE form, such as: -t high=signal.high") % track_expr)
 
-    kwargs = {"verbose": options.verbose,
-              "mode": options.mode}
-#              "chunk_size": options.chunk_size
-    load_genomedata(gdfilename, tracks, seqfilenames,
-                    seqfile_type=options.seqfile_type, **kwargs)
+    kwargs = {"verbose": args.verbose,
+              "mode": args.mode}
+
+    load_genomedata(args.gdarchive, tracks, seqfilenames,
+                    seqfile_type=args.seqfile_type, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())
