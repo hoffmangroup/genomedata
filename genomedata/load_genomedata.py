@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
+from future_builtins import ascii, filter, hex, map, oct, zip
 
 """
 load_genomedata: DESCRIPTION
@@ -23,18 +25,15 @@ from ._load_seq import load_seq
 from ._open_data import open_data
 from ._load_data import DEFAULT_CHUNK_SIZE, load_data
 from ._close_data import close_data
-
-def die(msg="Unexpected error."):
-    print >>sys.stderr, msg
-    sys.exit(1)
+from ._util import die
 
 def print_timestamp(msg=""):
-    print >>sys.stderr, ">> %s: %s" % (datetime.now().isoformat(), msg)
+    print(">> %s: %s" % (datetime.now().isoformat(), msg), file=sys.stderr)
 
 def repack(infilename, outfilename, verbose=False):
     if verbose:
-        print >>sys.stderr, ">> Repacking: %s -> %s" % (infilename,
-                                                        outfilename)
+        print(">> Repacking: %s -> %s" % (infilename,
+                                                        outfilename), file=sys.stderr)
 
     retcode = call(["h5repack", "-f", "GZIP=1", infilename, outfilename])
     if retcode != 0:
@@ -78,7 +77,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             raise ValueError("Unknown mode: %s" % mode)
 
         if verbose:
-            print >>sys.stderr, ">> Using temporary Genomedata archive: %s" % tempdatapath
+            print(">> Using temporary Genomedata archive: %s" % tempdatapath, file=sys.stderr)
 
         # Load sequences if any are specified
         if not seqfilenames:
@@ -152,13 +151,13 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
         else:
             repack(tempdatapath, gdpath, verbose)
     except:
-        print >>sys.stderr, "Error creating genomedata."
+        print("Error creating genomedata.", file=sys.stderr)
         raise
     finally:
         try:
             # Remove temp directory and all contents
             if verbose:
-                print >>sys.stderr, ">> Cleaning up...",
+                print(">> Cleaning up...", end=' ', file=sys.stderr)
 
             sys.stdout.flush()
             if tempdatapath.isfile():
@@ -167,13 +166,13 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                 tempdatapath.rmtree()
 
             if verbose:
-                print >>sys.stderr, "done"
-        except Exception, e:
-            print >>sys.stderr, "\nCleanup failed: %s" % str(e)
+                print("done", file=sys.stderr)
+        except Exception as e:
+            print("\nCleanup failed: %s" % str(e), file=sys.stderr)
 
     if verbose:
-        print >>sys.stderr, "\n===== Genomedata archive successfully created: %s =====\n" % \
-            gdfilename
+        print("\n===== Genomedata archive successfully created: %s =====\n" % \
+            gdfilename, file=sys.stderr)
 
     return gdfilename
 

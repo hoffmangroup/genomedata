@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
+from future_builtins import ascii, filter, hex, map, oct, zip
 
 """
 _histogram: prints histogram
 """
-
-__version__ = "$Revision$"
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
@@ -44,11 +44,11 @@ def calc_histogram(genome, track_index, data_range, num_bins, include_coords):
 
 def print_histogram(hist, edges):
     for row in zip(edges, hist.tolist() + ["NA"]):
-        print "\t".join(map(str, row))
+        print("\t".join(map(str, row)))
 
 
 def _histogram(genomedataname, trackname, num_bins, include_coords):
-    print "\t".join(FIELDNAMES)  # lower_edge, count
+    print("\t".join(FIELDNAMES))  # lower_edge, count
 
     with Genome(genomedataname) as genome:
         track_index = genome.index_continuous(trackname)
@@ -65,35 +65,36 @@ def _histogram(genomedataname, trackname, num_bins, include_coords):
 
 
 def parse_options(args):
-    from optparse import OptionParser
 
-    usage = "%prog [OPTION]... ARCHIVE TRACKNAME"
-    version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version)
+    from argparse import ArgumentParser
+    from . import __version__
 
-    parser.add_option("--include-coords", metavar="FILE",
-                      help="limit summary to genomic coordinates in FILE")
+    description = ("Print a histogram of values from a genomedata"
+                   " archive")
 
-    parser.add_option("-b", "--num-bins", metavar="BINS", type=int,
-                      default=100, help="use BINS bins")
+    parser = ArgumentParser(description=description,
+                            prog='genomedata-histogram',
+                            version=__version__)
 
-    options, args = parser.parse_args(args)
+    parser.add_argument("--include-coords", metavar="FILE",
+                        help="limit summary to genomic coordinates in FILE")
 
-    if not len(args) >= 1:
-        parser.print_usage()
-        sys.exit(1)
+    parser.add_argument("-b", "--num-bins", metavar="BINS", type=int,
+                        default=100, help="use BINS bins")
+
+    args = parser.parse_args(args)
 
     return options, args
 
 
 def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
+    args = parse_options(args)
 
-    if options.include_coords:
+    if args.include_coords:
         raise NotImplementedError
 
-    return _histogram(*args, num_bins=options.num_bins,
-                      include_coords=options.include_coords)
+    return _histogram(*args, num_bins=args.num_bins,
+                      include_coords=args.include_coords)
 
 if __name__ == "__main__":
     sys.exit(main())

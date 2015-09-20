@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
+from future_builtins import ascii, filter, hex, map, oct, zip
 
 __version__ = "$Revision$"
 
@@ -17,6 +19,10 @@ FILTERS_GZIP = Filters(complevel=1)
 
 EXT_GZ = "gz"
 SUFFIX_GZ = extsep + EXT_GZ
+
+def die(msg="Unexpected error."):
+    print(msg, file=sys.stderr)
+    sys.exit(1)
 
 class LightIterator(object):
     def __init__(self, handle):

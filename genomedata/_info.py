@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
+from future_builtins import ascii, filter, hex, map, oct, zip
 
 """
 _info: DESCRIPTION
@@ -13,57 +15,65 @@ import sys
 
 from . import Genome
 
-# XXX: add sizes command that produces tab-delimited file of sizes,
-# compatible with UCSC bigWig tab-delimited specification file, for
-# checking
-
-
-def die(msg="Unexpected error."):
-    print >>sys.stderr, msg
-    sys.exit(1)
 
 
 def print_tracknames_continuous(genome):
-    print "\n".join(genome.tracknames_continuous)
+    print("\n".join(genome.tracknames_continuous))
 
 
 def print_contigs(genome):
     for chrom in genome:
         for contig in chrom:
-            print "%s\t%s\t%s" % (chrom.name, contig.start, contig.end)
+            print("%s\t%s\t%s" % (chrom.name, contig.start, contig.end))
 
 
-def _info(cmd, filename):
-    choices = ["tracknames", "tracknames_continuous", "contigs"]
-    if cmd not in frozenset(choices):
-        die("CMD must be one of: %s" % ",".join(choices))
+def print_sizes(genome):
+    for chrom in genome:
+        # add 1 because chrom sizes files are 1-based, genomedata are
+        # 0-based
+        print('%s\t%d' % (chrom, chrom.end + 1))
 
-    with Genome(filename) as genome:
+
+def _info(cmd, gdarchive):
+
+    with Genome(gdarchive) as genome:
         if cmd in ["tracknames_continuous", "tracknames"]:
             print_tracknames_continuous(genome)
         if cmd == "contigs":
             print_contigs(genome)
+        if cmd == 'sizes':
+            print_sizes(genome)
 
 
 def parse_options(args):
-    from optparse import OptionParser
 
-    usage = "%prog [OPTION]... CMD ARCHIVE"
-    version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version)
+    from argparse import ArgumentParser
+    from . import __version__
 
-    options, args = parser.parse_args(args)
+    # usage = "%(prog)s [OPTION]... CMD GENOMEDATAFILE"
+    description = ("Print information about a genomedata archive.")
 
-    if not len(args) == 2:
-        parser.error("incorrect number of arguments")
+    parser = ArgumentParser(description=description,
+                            prog='genomedata-info',
+                            version=__version__)
+                            
+    choices = ["tracknames", "tracknames_continuous", "contigs", "sizes"]
 
-    return options, args
+    parser.add_argument("command", choices=choices,
+                        help='available commands')
+
+    parser.add_argument('gdarchive', help='genomedata archive')
+
+    args = parser.parse_args(args)
+
+    return args
 
 
 def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
+    args = parse_options(args)
 
-    return _info(*args)
+    return _info(args.command, args.gdarchive)
+
 
 if __name__ == "__main__":
     sys.exit(main())

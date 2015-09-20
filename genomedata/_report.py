@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
+from future_builtins import ascii, filter, hex, map, oct, zip
 
 """
 report: report some summary statistics on a genomedata archive that
 already has save_metadata() run
 """
-
-__version__ = "$Revision$"
 
 # Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
@@ -15,33 +15,32 @@ import sys
 from genomedata import Genome
 from tabdelim import ListWriter
 
-def report(genomedata):
+def report(gdarchive):
     writer = ListWriter()
 
-    with Genome(genomedata) as genome:
+    with Genome(archive) as genome:
         writer.writerow(["measurement"] + genome.tracknames_continuous)
         writer.writerow(["mean"] + list(genome.means))
         writer.writerow(["var"] + list(genome.vars))
 
 def parse_options(args):
-    from optparse import OptionParser
 
-    usage = "%prog [OPTION]..."
-    version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version)
+    from argparse import ArgumentParser
+    from . import __version__
 
-    options, args = parser.parse_args(args)
+    parser = ArgumentParser(prog='genomedata-report',
+                            version=__version__)
 
-    if not len(args) == 1:
-        parser.print_usage()
-        sys.exit(1)
+    parser.add_argument('gdarchive', help='genomedata archive')
 
-    return options, args
+    args = parser.parse_args(args)
+
+    return args
 
 def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
+    args = parse_options(args)
 
-    return report(*args)
+    return report(args.gdarchive)
 
 if __name__ == "__main__":
     sys.exit(main())

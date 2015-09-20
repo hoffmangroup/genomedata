@@ -1,4 +1,8 @@
-    #!/usr/bin/env python
+#!/usr/bin/env python
+
+from __future__ import absolute_import, division, print_function
+from future_builtins import ascii, filter, hex, map, oct, zip
+
 """
 Genomedata is a module to store and access large-scale functional
 genomics data in a format which is both space-efficient and allows
@@ -13,9 +17,9 @@ Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 """
 
-from __future__ import division, with_statement
+__version__ = "1.3.5"
+__package__ = 'genomedata'
 
-__version__ = "$Revision$"
 
 import sys
 
@@ -43,15 +47,6 @@ SUFFIX = extsep + EXT
 # is to implement the Genomedata archive as a directory. If there are
 # more than this many, it will be a single file by default.
 FILE_MODE_CHROMS = 100
-
-try:
-    PKG = __package__  # Python 2.6
-except NameError:
-    if __name__ == "__main__":
-        PKG = "genomedata"
-    else:
-        PKG = __name__
-
 
 class _InactiveDict(dict):
     """A fake dict that can't be added to."""
@@ -275,7 +270,7 @@ class Genome(object):
         # Whether a single file or a directory, close all the chromosomes
         # so they know they shouldn't be read. Do this before closing
         # Genome.h5file in case the chromosomes need access to it in closing.
-        for name, chromosome in self.open_chromosomes.iteritems():
+        for name, chromosome in self.open_chromosomes.items():
             # Only close those not closed manually by the user
             if chromosome.isopen:
                 chromosome.close()
@@ -419,7 +414,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
         # else: self is a directory
         chromosomes = iter(self)
         try:
-            first_chromosome = chromosomes.next()
+            first_chromosome = next(chromosomes)
         except StopIteration:
             return None
 
@@ -677,7 +672,7 @@ since being closed with genomedata-close-data.""")
         # just like NumPy, direct indexing results in output shape
         # change (at end of method)
         base_direct_index = isinstance(base_key, int)
-        track_direct_index = isinstance(track_key, (basestring, int))
+        track_direct_index = isinstance(track_key, (str, int))
 
         # convert base_key
         base_key = slice(*_key_to_tuple(base_key))
@@ -692,7 +687,7 @@ since being closed with genomedata-close-data.""")
 
         else:
             track_subset_indexes = slice(None)  # everything
-            if isinstance(track_key, basestring):
+            if isinstance(track_key, str):
                 track_key = self.index_continuous(track_key)
             if isinstance(track_key, int):
                 track_key = slice(track_key, track_key + 1, 1)
@@ -705,7 +700,7 @@ since being closed with genomedata-close-data.""")
                             track_key)
 
         nrows = base_key.stop - base_key.start
-        ncols = len(xrange(track_key.start, track_key.stop, track_key.step))
+        ncols = len(range(track_key.start, track_key.stop, track_key.step))
         dtype = self._continuous_dtype
 
         # Handle degenerate case
@@ -787,7 +782,7 @@ since being closed with genomedata-close-data.""")
         Convert track_key to index only when it is a basestring.
         Otherwise return track_key unchanged.
         """
-        if isinstance(track_key, basestring):
+        if isinstance(track_key, str):
             return self.index_continuous(track_key)
 
         return track_key

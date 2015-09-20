@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
+from future_builtins import ascii, filter, hex, map, oct, zip
 
 """
 _load_data.py: A python interface for genome_load_data.c
@@ -11,15 +13,11 @@ import sys
 
 from subprocess import PIPE, Popen
 
-from ._util import SUFFIX_GZ
+from ._util import SUFFIX_GZ, die
 
 DEFAULT_CHUNK_SIZE = 10000
 LOAD_DATA_CMD = "genomedata-load-data"
 MSG_LOAD_ERROR = "Error loading data from track file %%s. %s returned %%s." % LOAD_DATA_CMD
-
-def die(msg="Unexpected error."):
-    print >>sys.stderr, msg
-    sys.exit(1)
 
 def load_data(gdfilename, trackname, datafile, verbose=False):
     """Loads data from datafile into specific track of Genomedata archive
@@ -29,7 +27,7 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
     datafile: file to read data from
     """
     if verbose:
-        print ">> Loading data for track: %s" % trackname
+        print(">> Loading data for track: %s" % trackname)
 
     if datafile.endswith(SUFFIX_GZ):
         read_cmd = ["zcat"]
@@ -45,7 +43,7 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
     if verbose:
         read_cmdline = " ".join(read_cmd)
         load_cmdline = " ".join(load_cmd)
-        print >>sys.stderr, "%s | %s" % (read_cmdline, load_cmdline)
+        print("%s | %s" % (read_cmdline, load_cmdline), file=sys.stderr)
 
     # Pipe read command into load command
     reader = Popen(read_cmd, stdout=PIPE)
@@ -56,37 +54,42 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
         die(MSG_LOAD_ERROR % (datafile, retcode))
 
 def parse_args(args):
-    from optparse import OptionParser
-    usage = "%prog [OPTION]... GENOMEDATAFILE TRACKNAME DATAFILE"
-    version = "%%prog %s" %__version__
+
+    from argparse import ArgumentParser
+    from . import __version__
+
     description = ("Load data from DATAFILE into the specified TRACKNAME"
                    " of the Genomedata archive")
-    parser = OptionParser(usage=usage, version=version,
-                          description=description)
 
-    parser.add_option("-c", "--chunk-size", dest="chunk_size",
-                      metavar="NROWS", type="int",
-                      default=DEFAULT_CHUNK_SIZE,
-                      help="Chunk hdf5 data into blocks of NROWS."
-                      " A higher value increases compression but slows"
-                      " random access. Must always be smaller than the"
-                      " max size for a dataset. [default: %default]")
-    parser.add_option("-v", "--verbose", dest="verbose",
-                      default=False, action="store_true",
+    parser = ArgumentParser(description=description,
+                            prog='genomedata-load-data',
+                            version=__version__)
+
+    parser.add_argument('gdarchive', help='genomedata archive')
+    parser.add_argument('trackname', help='track name')
+    parser.add_argument('datafile', help='data file')
+
+    parser.add_argument("-c", "--chunk-size",
+                        metavar="NROWS", type=int,
+                        default=DEFAULT_CHUNK_SIZE,
+                        help="Chunk hdf5 data into blocks of NROWS."
+                        " A higher value increases compression but slows"
+                        " random access. Must always be smaller than the"
+                        " max size for a dataset. [default: %(default)s]")
+
+    parser.add_argument("--verbose", default=False, action="store_true",
                       help="Print status and diagnostic messages")
 
-    options, args = parser.parse_args(args)
+    args = parser.parse_args(args)
 
-    if not len(args) == 3:
-        parser.error("Inappropriate number of arguments")
+    return args
 
-    return options, args
 
 def main(args=sys.argv[1:]):
-    options, args = parse_args(args)
-    kwargs = {"verbose": options.verbose,
-              "chunk_size": options.chunk_size}
-    load_data(*args, **kwargs)
+    args = parse_args(args)
+    kwargs = {"verbose": args.verbose,
+              "chunk_size": args.chunk_size}
+    load_data(args.gdarchive, args.trackname, args.datafile, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())
