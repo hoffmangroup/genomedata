@@ -76,6 +76,9 @@ def parse_options(args):
                             prog='genomedata-histogram',
                             version=__version__)
 
+    parser.add_argument('gdarchive', help='genomedata archive')
+    parser.add_argument('trackname', help='track name')
+
     parser.add_argument("--include-coords", metavar="FILE",
                         help="limit summary to genomic coordinates in FILE")
 
@@ -84,7 +87,7 @@ def parse_options(args):
 
     args = parser.parse_args(args)
 
-    return options, args
+    return args
 
 
 def main(args=sys.argv[1:]):
@@ -93,8 +96,8 @@ def main(args=sys.argv[1:]):
     if args.include_coords:
         raise NotImplementedError
 
-    return _histogram(*args, num_bins=args.num_bins,
-                      include_coords=args.include_coords)
+    return _histogram(args.gdarchive, args.trackname, args.num_bins,
+                      args.include_coords)
 
 if __name__ == "__main__":
     sys.exit(main())
