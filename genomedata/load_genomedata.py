@@ -176,7 +176,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
 
     return gdfilename
 
-def parse_options(args):
+def parse_cmdline(cmdline):
 
     from argparse import ArgumentParser, RawDescriptionHelpFormatter
     from . import __version__
@@ -191,11 +191,10 @@ def parse_options(args):
                    " low=signal.low.bed.gz -s chrX.fa -s chrY.fa.gz"
                    " gdarchive")
 
-    citation = \
-    "Citation: Hoffman MM, Buske OJ, Noble WS.\n" \
-    "2010. The Genomedata format for storing large-scale functional genomics data.\n" \
-    "Bioinformatics 26 (11):1458-1459.\n" \
-    "http://dx.doi.org/10.1093/bioinformatics/btq164"
+    citation = ("Citation: Hoffman MM, Buske OJ, Noble WS.\n"
+                "2010. The Genomedata format for storing large-scale functional genomics data.\n"
+                "Bioinformatics 26 (11):1458-1459.\n"
+                "http://dx.doi.org/10.1093/bioinformatics/btq164")
 
     parser = ArgumentParser(description=description,
                             epilog=citation,
@@ -211,26 +210,32 @@ def parse_options(args):
                       help="Print status updates and diagnostic messages")
 
     input_data = parser.add_argument_group("Input data")
-    input_data.add_argument("-s", "--sequence", nargs="+", required=True,
+    input_data.add_argument("-s", "--sequence", action='append', required=True,
+                            default=None,
                             help="Add the sequence data in the specified file or files"
                             " (may use UNIX glob wildcard syntax)")
-    input_data.add_argument("-t", "--track", action="append",
-                            nargs="+", metavar="NAME=FILE", required=True,
+    input_data.add_argument("-t", "--track", action='append', 
+                            default=None,
+                            metavar="NAME=FILE", required=True,
                             help="Add data from FILE as the track NAME,"
                             " such as: -t signal=signal.wig")
-    input_data.add_argument("--assembly", action="store_const",
+
+    input_data_ex = input_data.add_mutually_exclusive_group()
+    input_data_ex.add_argument("--assembly", action="store_const",
+                            default=None,
                             const="agp", dest="seqfile_type",
                             help="sequence files contain assembly (AGP) files instead of"
                             " sequence")
-    input_data.add_argument("--sizes", action="store_const", const="sizes",
-                            dest="seqfile_type", default="fasta",
+    input_data_ex.add_argument("--sizes", action="store_const",
+                            default=None,
+                            const="sizes", dest="seqfile_type", 
                             help="sequence files contain list of sizes instead of"
                             " sequence")
-
     implementation = parser.add_argument_group("Implementation")
-
-    implementation.add_argument("-f", "--file-mode", dest="mode",
-                                default=None, action="store_const", const="file",
+    implementation_ex = implementation.add_mutually_exclusive_group()
+    implementation_ex.add_argument("-f", "--file-mode", dest="mode",
+                                default='file',
+                                action="store_const", const="file",
                                 help="If specified, the Genomedata archive will be"
                                 " implemented as a single file, with a separate h5 group"
                                 " for each Chromosome. This is recommended if there are"
@@ -238,24 +243,28 @@ def parse_options(args):
                                 " to use a single file if there are at least %s"
                                 " Chromosomes being added." % FILE_MODE_CHROMS)
 
-    implementation.add_argument("-d", "--directory-mode", dest="mode",
-                               action="store_const", const="dir",
-                               help="If specified, the Genomedata archive will be"
-                               " implemented as a directory, with a separate file for"
-                               " each Chromosome. This is recommended if there are a"
-                               " small number of Chromosomes. The default behavior is"
-                               " to use a directory if there are fewer than %s"
-                               " Chromosomes being added." % FILE_MODE_CHROMS)
+    implementation_ex.add_argument("-d", "--directory-mode", dest="mode",
+                                action="store_const", const="dir",
+                                help="If specified, the Genomedata archive will be"
+                                " implemented as a directory, with a separate file for"
+                                " each Chromosome. This is recommended if there are a"
+                                " small number of Chromosomes. The default behavior is"
+                                " to use a directory if there are fewer than %s"
+                                " Chromosomes being added." % FILE_MODE_CHROMS)
 
-    args = parser.parse_args(args)
+    args = parser.parse_args(cmdline)
 
     return args
 
-def main(args=sys.argv[1:]):
-    args = parse_options(args)
+def main(cmdline=sys.argv[1:]):
+    args = parse_cmdline(cmdline)
+
+    # default
+    if not args.seqfile_type:
+        args.seqfile_type = 'fasta'
 
     # list of lists
-    seqfilenames_list = [glob(globname) for globname in options.sequence]
+    seqfilenames_list = [glob(globname) for globname in args.sequence]
     seqfilenames = sum(seqfilenames_list, [])
 
     # Parse tracks into list of tuples
