@@ -270,7 +270,7 @@ class Genome(object):
         # Whether a single file or a directory, close all the chromosomes
         # so they know they shouldn't be read. Do this before closing
         # Genome.h5file in case the chromosomes need access to it in closing.
-        for name, chromosome in self.open_chromosomes.items():
+        for name, chromosome in self.open_chromosomes.iteritems():
             # Only close those not closed manually by the user
             if chromosome.isopen:
                 chromosome.close()
@@ -700,7 +700,7 @@ since being closed with genomedata-close-data.""")
                             track_key)
 
         nrows = base_key.stop - base_key.start
-        ncols = len(range(track_key.start, track_key.stop, track_key.step))
+        ncols = len(xrange(track_key.start, track_key.stop, track_key.step))
         dtype = self._continuous_dtype
 
         # Handle degenerate case
