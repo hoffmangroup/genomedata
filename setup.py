@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 
-"""genomedata: tools for accessing large amounts of genomic data
+from __future__ import absolute_import, division, print_function
+
+__doc__ = '''genomedata: tools for accessing large amounts of genomic data
 
 Genomedata is a format for efficient storage of multiple tracks of
 numeric data anchored to a genome. The format allows fast random
 access to hundreds of gigabytes of data, while retaining a small disk
 space footprint. We have also developed utilities to load data into
 this format.
-"""
+'''
 
-__version__ = "1.3.6"
+__version__ = '1.3.6'
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
@@ -26,6 +28,10 @@ from platform import system, processor
 from setuptools import find_packages, setup
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call
+
+if sys.version_info[0] != 2 or sys.version_info[1] < 7:
+    print("Genomedata requires Python version 2.7+")
+    sys.exit(1)
 
 doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")
@@ -120,11 +126,11 @@ class CleanWrapper(clean):
     def run(self):
         clean.run(self)
         if include_gnulib:
-            print >>sys.stderr, ">> Cleaning Gnulib build directory"
+            print(">> Cleaning Gnulib build directory", file=sys.stderr)
             try:
                 check_call(["make", "clean"], cwd=GNULIB_BUILD_DIR)
             except CalledProcessError:
-                print >>sys.stderr, ">> WARNING: Failed to clean Gnulib build!"
+                print(">> WARNING: Failed to clean Gnulib build!", file=sys.stderr)
 
 
 class BuildScriptWrapper(build_scripts):
@@ -170,7 +176,7 @@ class BuildScriptWrapper(build_scripts):
 
         # Remove DNDEBUG flag from all compile statements
         bad_flag = "-DNDEBUG"
-        for k, v, in compiler.__dict__.items():
+        for k, v, in list(compiler.__dict__.items()):
             try:
                 v.remove(bad_flag)
             except (AttributeError, TypeError, ValueError):
@@ -179,7 +185,7 @@ class BuildScriptWrapper(build_scripts):
         return compiler
 
     def run(self):
-        print "##################################################"
+        print("##################################################")
         compiler = self._get_compiler()
         extra_postargs = ["-std=c99", "-pedantic",
                           "-Wextra", "-Wno-missing-field-initializers",
@@ -189,7 +195,7 @@ class BuildScriptWrapper(build_scripts):
         output_dir = os.path.join(self.build_dir, arch)
         try:
             binaries = []
-            for bin, srcs in self.scripts.iteritems():
+            for bin, srcs in self.scripts.items():
                 # Only compile srcs with c files
                 try:
                     if not any([src.endswith(".c") for src in srcs]):
@@ -214,26 +220,26 @@ class BuildScriptWrapper(build_scripts):
         except AttributeError:  # Not a dict
             pass
 
-        print "##################################################"
+        print("##################################################")
 
         build_scripts.run(self)  # Call actual script
 
         # If success, remove script build dir
         if os.path.isdir(output_dir):
-            print "Removing script build dir: %s" % output_dir
+            print("Removing script build dir: %s" % output_dir)
             rmtree(output_dir)
 
 
 def make_gnulib():
-    print ">> Not a Linux system: configuring and making Gnulib libraries..."
+    print(">> Not a Linux system: configuring and making Gnulib libraries...")
 
     libfilename = "%s/libgnu.a" % GNULIB_LIB_DIR
     if os.path.isfile(libfilename):
-        print ">> Found libgnu.a... skipping configure and make"
+        print(">> Found libgnu.a... skipping configure and make")
     else:
         commands = ["./configure", "make"]
         for command in commands:
-            print ">> %s" % command
+            print(">> %s" % command)
             try:
                 check_call(command, cwd=GNULIB_BUILD_DIR)
             except CalledProcessError:
@@ -245,18 +251,18 @@ def make_gnulib():
     to_rm = ["%s/getopt.h" % GNULIB_LIB_DIR]
     for filename in to_rm:
         if os.path.isfile(filename):
-            print ">> Removing: %s" % filename
+            print(">> Removing: %s" % filename)
             os.remove(filename)
 
-    print ">> Gnulib libraries successfully created!"
+    print(">> Gnulib libraries successfully created!")
 
 if __name__ == "__main__":
     # Configure and make gnulib if not on Linux
     if include_gnulib:
         try:
             make_gnulib()
-        except InstallationError, e:
-            print >>sys.stderr, ">> ERROR: %s" % e
+        except InstallationError as e:
+            print(">> ERROR: %s" % e, file=sys.stderr)
             sys.exit(1)
 
     setup(name=name,
