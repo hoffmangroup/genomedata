@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, division, print_function
-
-__doc__ = '''genomedata: tools for accessing large amounts of genomic data
+'''genomedata: tools for accessing large amounts of genomic data
 
 Genomedata is a format for efficient storage of multiple tracks of
 numeric data anchored to a genome. The format allows fast random
@@ -11,15 +9,14 @@ space footprint. We have also developed utilities to load data into
 this format.
 '''
 
-__version__ = '1.3.6'
+from __future__ import absolute_import, division, print_function
+
+__version__ = '1.3.7'
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 import os
 import sys
-
-from ez_setup import use_setuptools
-use_setuptools()
 
 from distutils.command.clean import clean
 from distutils.command.build_scripts import build_scripts
