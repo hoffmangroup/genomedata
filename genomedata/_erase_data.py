@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
-from future_builtins import ascii, filter, hex, map, oct, zip
 
 """
 _erase_data.py: wipe the data for a specified track in such a way

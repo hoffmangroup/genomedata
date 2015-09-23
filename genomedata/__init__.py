@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
-from future_builtins import ascii, filter, hex, map, oct, zip
 
 """
 Genomedata is a module to store and access large-scale functional

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import, division, print_function
 
 """
 _info: report specific information about a genomedata archive.
