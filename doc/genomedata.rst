@@ -379,7 +379,7 @@ Command-line usage information::
 
     usage: genomedata-load [-h] [-v] [--verbose] -s SEQUENCE -t NAME=FILE
                            [--assembly | --sizes] [-f | -d]
-                           gdarchive
+                           GENOMEDATAFILE
 
     Create Genomedata archive named GENOMEDATAFILE by loading
      specified track data and sequences. If GENOMEDATAFILE
@@ -460,7 +460,7 @@ these sequence files and the data loaded later with
 ::
 
     usage: genomedata-load-seq [-h] [-v] [-a] [-s] [-f] [-d] [--verbose]
-                               gdarchive seqfiles [seqfiles ...]
+                               GENOMEDATAFILE seqfiles [seqfiles ...]
 
     Start a Genomedata archive at GENOMEDATAFILE with the provided sequences.
     SEQFILEs should be in fasta format, and a separate Chromosome will be created
@@ -474,7 +474,7 @@ these sequence files and the data loaded later with
       -h, --help            show this help message and exit
       -v, --version         show program's version number and exit
       -a, --assembly        SEQFILE contains assembly (AGP) files instead of
-                            sequenc
+                            sequence
       -s, --sizes           SEQFILE contains list of sizes instead of sequence
       -f, --file-mode       If specified, the Genomedata archive will be
                             implemented as a single file, with a separate h5 group

@@ -12,6 +12,9 @@ import sys
 
 from subprocess import PIPE, Popen
 
+from argparse import ArgumentParser
+
+from . import __version__
 from ._util import SUFFIX_GZ, die
 
 DEFAULT_CHUNK_SIZE = 10000
@@ -53,9 +56,6 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
         die(MSG_LOAD_ERROR % (datafile, retcode))
 
 def parse_args(args):
-
-    from argparse import ArgumentParser
-    from . import __version__
 
     description = ("Load data from DATAFILE into the specified TRACKNAME"
                    " of the Genomedata archive")

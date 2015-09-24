@@ -10,10 +10,12 @@ _histogram: prints histogram
 
 import sys
 
+from argparse import ArgumentParser
 from functools import partial
+
 from numpy import array, histogram
 
-from . import Genome
+from . import Genome, __version__
 
 FIELDNAMES = ["lower_edge", "count"]
 
@@ -64,9 +66,6 @@ def _histogram(genomedataname, trackname, num_bins, include_coords):
 
 
 def parse_options(args):
-
-    from argparse import ArgumentParser
-    from . import __version__
 
     description = ("Print a histogram of values from a genomedata"
                    " archive")

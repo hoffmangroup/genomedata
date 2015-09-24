@@ -11,21 +11,20 @@ already has save_metadata() run
 
 import sys
 
-from genomedata import Genome
+from argparse import ArgumentParser
+
+from . import Genome, __version__
 from tabdelim import ListWriter
 
 def report(gdarchive):
     writer = ListWriter()
 
-    with Genome(archive) as genome:
+    with Genome(gdarchive) as genome:
         writer.writerow(["measurement"] + genome.tracknames_continuous)
         writer.writerow(["mean"] + list(genome.means))
         writer.writerow(["var"] + list(genome.vars))
 
 def parse_options(args):
-
-    from argparse import ArgumentParser
-    from . import __version__
 
     parser = ArgumentParser(prog='genomedata-report',
                             version=__version__)

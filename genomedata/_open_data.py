@@ -13,7 +13,9 @@ import sys
 
 import warnings
 
-from . import Genome
+from argparse import ArgumentParser
+
+from . import Genome, __version__
 
 def open_data(gdarchive, tracknames, verbose):
     warnings.simplefilter("ignore")
@@ -25,9 +27,6 @@ def open_data(gdarchive, tracknames, verbose):
     warnings.resetwarnings()
 
 def parse_options(args):
-
-    from argparse import ArgumentParser
-    from . import __version__
 
     description = ("Open one or more tracks in"
                    " the specified Genomedata archive.")
@@ -50,7 +49,7 @@ def parse_options(args):
 
 def main(args=sys.argv[1:]):
     args = parse_options(args)
-    kwargs = {"verbose": options.verbose}
+    kwargs = {"verbose": args.verbose}
     return open_data(args.gdarchive, args.tracknames, **kwargs)
 
 if __name__ == "__main__":

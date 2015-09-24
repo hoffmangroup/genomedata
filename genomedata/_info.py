@@ -12,9 +12,9 @@ __version__ = "$Revision$"
 
 import sys
 
-from . import Genome
+from argparse import ArgumentParser
 
-from ._util import die
+from . import Genome, __version__
 
 # XXX: add sizes command that produces tab-delimited file of sizes,
 # compatible with UCSC bigWig tab-delimited specification file, for
@@ -42,10 +42,6 @@ def _info(cmd, filename):
 
 def parse_options(args):
 
-    from argparse import ArgumentParser
-    from . import __version__
-
-    # usage = "%(prog)s [OPTION]... CMD GENOMEDATAFILE"
     description = ("Print information about a genomedata archive.")
 
     parser = ArgumentParser(description=description,

@@ -2,8 +2,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-__version__ = "$Revision$"
-
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 from contextlib import closing

@@ -12,11 +12,14 @@ from re import compile, VERBOSE
 import sys
 import warnings
 
+from argparse import ArgumentParser
+
 from numpy import frombuffer, uint32
 from path import path
 from tabdelim import DictReader
 
-from . import SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, FORMAT_VERSION, Genome
+from . import SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, \
+              FORMAT_VERSION, Genome, __version__
 from ._util import FILTERS_GZIP, LightIterator, maybe_gzip_open
 
 MIN_GAP_LEN = 100000
@@ -263,10 +266,6 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     warnings.resetwarnings()
 
 def parse_options(args):
-
-
-    from argparse import ArgumentParser
-    from . import __version__
 
     description = ("Start a Genomedata archive at GENOMEDATAFILE with the"
                    " provided sequences. SEQFILEs should be in fasta format,"

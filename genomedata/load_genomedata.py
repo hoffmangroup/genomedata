@@ -19,7 +19,9 @@ from subprocess import call
 import sys
 from tempfile import mkdtemp, mkstemp
 
-from . import EXT, FILE_MODE_CHROMS, SUFFIX
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+
+from . import EXT, FILE_MODE_CHROMS, SUFFIX, __version__
 from ._load_seq import load_seq
 from ._open_data import open_data
 from ._load_data import DEFAULT_CHUNK_SIZE, load_data
@@ -171,14 +173,11 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
 
     if verbose:
         print("\n===== Genomedata archive successfully created: %s =====\n" % \
-            gdfilename, file=sys.stderr)
+              gdfilename, file=sys.stderr)
 
     return gdfilename
 
 def parse_cmdline(cmdline):
-
-    from argparse import ArgumentParser, RawDescriptionHelpFormatter
-    from . import __version__
 
     description = ("Create Genomedata archive named GENOMEDATAFILE by loading\n"
                    " specified track data and sequences. If GENOMEDATAFILE\n"
@@ -187,8 +186,9 @@ def parse_cmdline(cmdline):
                    " multiple trackname=trackfile pairings and sequence files,\n"
                    " respectively.\n\n"
                    " Example: %(prog)s -t high=signal.high.wig -t"
-                   " low=signal.low.bed.gz -s chrX.fa -s chrY.fa.gz"
-                   " gdarchive")
+                   " low=signal.low.bed.gz"
+                   " -s chrX.fa -s chrY.fa.gz"
+                   " GENOMEDATAFILE")
 
     citation = ("Citation: Hoffman MM, Buske OJ, Noble WS.\n"
                 "2010. The Genomedata format for storing large-scale functional genomics data.\n"
@@ -201,7 +201,8 @@ def parse_cmdline(cmdline):
                             prog='genomedata-load',
                             version=__version__)
 
-    parser.add_argument('gdarchive', help='genomedata archive')
+    parser.add_argument('gdarchive', help='genomedata archive',
+                        metavar='GENOMEDATAFILE')
 
     flags = parser.add_argument_group("Flags")
     flags.add_argument("--verbose",

@@ -9,7 +9,9 @@ that the data can be reloaded (essentially replacing the track data)
 
 import sys
 
-from . import Genome
+from argparse import ArgumentParser
+
+from . import Genome, __version__
 
 LINE_WIDTH = 70
 
@@ -34,9 +36,6 @@ def erase_data(gdfilename, trackname, verbose=False):
             print("\ndone", file=sys.stderr)
 
 def parse_options(args):
-
-    from argparse import ArgumentParser
-    from . import __version__
 
     description = ("Erase the specified tracks from the Genomedata archive"
                    " in such a way that the track data can be replaced"

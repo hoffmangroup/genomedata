@@ -10,11 +10,13 @@ _close_data: DESCRIPTION
 
 import sys
 
+from argparse import ArgumentParser
+
 from numpy import (amin, amax, array, diff, hstack, isfinite,
                    NINF, PINF, square)
 from tables import NoSuchNodeError
 
-from . import Genome
+from . import Genome, __version__
 from ._load_seq import MIN_GAP_LEN
 from ._util import fill_array, init_num_obs, new_extrema
 
@@ -64,7 +66,6 @@ def write_metadata(chromosome, verbose=False):
         chromosome.attrs.dirty = False
         return
 
-    h5file = chromosome.h5file
     tracknames = chromosome.tracknames_continuous
 
     num_obs = len(tracknames)
@@ -137,9 +138,6 @@ def close_data(gdfilename, verbose=False):
                 write_metadata(chromosome, verbose=verbose)
 
 def parse_options(args):
-    from argparse import ArgumentParser
-    from . import __version__
-
     description = ("Compute summary statistics for data in Genomedata archive"
                    " and ready for accessing.")
 

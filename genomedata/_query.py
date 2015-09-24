@@ -12,9 +12,9 @@ __version__ = "$Revision$"
 
 import sys
 
-from . import Genome
-from ._util import die
+from argparse import ArgumentParser
 
+from . import Genome, __version__
 
 def _query(filename, trackname, chromosome_name, begin, end):
 
@@ -27,9 +27,6 @@ def _query(filename, trackname, chromosome_name, begin, end):
 
 
 def parse_options(args):
-
-    from argparse import ArgumentParser
-    from . import __version__
 
     description = ('print data from genomedata archive in specified '
                    ' trackname and coordinates')
