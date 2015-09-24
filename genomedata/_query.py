@@ -6,8 +6,6 @@ from __future__ import absolute_import, division, print_function
 _query: DESCRIPTION
 """
 
-__version__ = "$Revision$"
-
 # Copyright 2012, 2013 Michael M. Hoffman <mmh1@uw.edu>
 
 import sys
@@ -46,8 +44,8 @@ def parse_options(args):
     return args
 
 
-def main(args=sys.argv[1:]):
-    args = parse_options(args)
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
 
     return _query(args.gdarchive, args.trackname, args.chrom,
                   args.begin, args.end)

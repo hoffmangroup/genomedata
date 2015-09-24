@@ -35,8 +35,8 @@ def parse_options(args):
 
     return args
 
-def main(args=sys.argv[1:]):
-    args = parse_options(args)
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
 
     return report(args.gdarchive)
 

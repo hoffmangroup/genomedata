@@ -50,15 +50,15 @@ def parse_options(args):
     parser.add_argument("--trackname", required=True, nargs='+', 
                         help="tracknames to erase")
 
-    parser.add_argument("--verbose",default=False, action="store_true",
+    parser.add_argument("--verbose", default=False, action="store_true",
                         help="Print status updates and diagnostic messages")
 
     args = parser.parse_args(args)
 
     return args
 
-def main(args=sys.argv[1:]):
-    args = parse_options(args)
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
     gdarchive = args.archive
     kwargs = {"verbose": args.verbose}
 

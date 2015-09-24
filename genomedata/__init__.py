@@ -17,7 +17,6 @@ Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 """
 
 __version__ = "1.3.6"
-__package__ = 'genomedata'
 
 
 import sys
@@ -1267,7 +1266,7 @@ def _key_to_tuple(key):
     return start, end
 
 
-def main(args=sys.argv[1:]):
+def main(argv=sys.argv[1:]):
     pass
 
 if __name__ == "__main__":

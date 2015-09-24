@@ -6,13 +6,10 @@ from __future__ import absolute_import, division, print_function
 _load_data.py: A python interface for genome_load_data.c
 """
 
-__version__ = "$Revision$"
-
 import sys
 
-from subprocess import PIPE, Popen
-
 from argparse import ArgumentParser
+from subprocess import PIPE, Popen
 
 from . import __version__
 from ._util import SUFFIX_GZ, die
@@ -45,7 +42,7 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
     if verbose:
         read_cmdline = " ".join(read_cmd)
         load_cmdline = " ".join(load_cmd)
-        print("%s | %s" % (read_cmdline, load_cmdline), file=sys.stderr)
+        print(read_cmdline, load_cmdline, sep=" | ",  file=sys.stderr)
 
     # Pipe read command into load command
     reader = Popen(read_cmd, stdout=PIPE)
@@ -84,8 +81,8 @@ def parse_args(args):
     return args
 
 
-def main(args=sys.argv[1:]):
-    args = parse_args(args)
+def main(argv=sys.argv[1:]):
+    args = parse_args(argv)
     kwargs = {"verbose": args.verbose,
               "chunk_size": args.chunk_size}
     load_data(args.gdarchive, args.trackname, args.datafile, **kwargs)

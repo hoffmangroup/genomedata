@@ -6,11 +6,10 @@ from __future__ import absolute_import, division, print_function
 load_genomedata: DESCRIPTION
 """
 
-__version__ = "$Revision$"
-
 # Copyright 2009, 2011 Orion Buske <orion.buske@gmail.com>
 # Copyright 2010 Michael Hoffman <mmh1@uw.edu>
 
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from datetime import datetime
 from glob import glob
 from os import close, extsep
@@ -18,8 +17,6 @@ from path import path
 from subprocess import call
 import sys
 from tempfile import mkdtemp, mkstemp
-
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
 from . import EXT, FILE_MODE_CHROMS, SUFFIX, __version__
 from ._load_seq import load_seq
@@ -34,7 +31,7 @@ def print_timestamp(msg=""):
 def repack(infilename, outfilename, verbose=False):
     if verbose:
         print(">> Repacking: %s -> %s" % (infilename,
-                                                        outfilename), file=sys.stderr)
+                                          outfilename), file=sys.stderr)
 
     retcode = call(["h5repack", "-f", "GZIP=1", infilename, outfilename])
     if retcode != 0:

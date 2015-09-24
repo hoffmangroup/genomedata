@@ -45,11 +45,11 @@ def calc_histogram(genome, track_index, data_range, num_bins, include_coords):
 
 def print_histogram(hist, edges):
     for row in zip(edges, hist.tolist() + ["NA"]):
-        print("\t".join(map(str, row)))
+        print(*row, sep="\t")
 
 
 def _histogram(genomedataname, trackname, num_bins, include_coords):
-    print("\t".join(FIELDNAMES))  # lower_edge, count
+    print(FIELDNAMES, sep="\t")  # lower_edge, count
 
     with Genome(genomedataname) as genome:
         track_index = genome.index_continuous(trackname)
@@ -88,8 +88,8 @@ def parse_options(args):
     return args
 
 
-def main(args=sys.argv[1:]):
-    args = parse_options(args)
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
 
     if args.include_coords:
         raise NotImplementedError

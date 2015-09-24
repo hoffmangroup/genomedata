@@ -18,8 +18,8 @@ from numpy import frombuffer, uint32
 from path import path
 from tabdelim import DictReader
 
-from . import SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, \
-              FORMAT_VERSION, Genome, __version__
+from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, 
+              FORMAT_VERSION, Genome, __version__)
 from ._util import FILTERS_GZIP, LightIterator, maybe_gzip_open
 
 MIN_GAP_LEN = 100000
@@ -312,8 +312,8 @@ def parse_options(args):
 
     return args
 
-def main(args=sys.argv[1:]):
-    args = parse_options(args)
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
 
     kwargs = {'verbose': args.verbose,
               'mode': args.mode,

@@ -6,8 +6,6 @@ from __future__ import absolute_import, division, print_function
 _info: report specific information about a genomedata archive.
 """
 
-__version__ = "$Revision$"
-
 # Copyright 2010, 2012, 2013 Michael M. Hoffman <mmh1@uw.edu>
 
 import sys
@@ -22,13 +20,13 @@ from . import Genome, __version__
 
 
 def print_tracknames_continuous(genome):
-    print("\n".join(genome.tracknames_continuous))
+    print(genome.tracknames_continuous, sep="\n")
 
 
 def print_contigs(genome):
     for chrom in genome:
         for contig in chrom:
-            print("%s\t%s\t%s" % (chrom.name, contig.start, contig.end))
+            print(chrom.name, contig.start, contig.end, sep="\t")
 
 
 def _info(cmd, filename):
@@ -60,8 +58,8 @@ def parse_options(args):
     return args
 
 
-def main(args=sys.argv[1:]):
-    args = parse_options(args)
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
 
     return _info(args.command, args.gdarchive)
 
