@@ -631,6 +631,11 @@ displays the list of continous tracks. Running::
 displays the list of contigs in BED format (0-based, half-open
 indexing).
 
+This command generates a tab-delimited file containing chromosome name and
+sizes, suitable for use as a UCSC "chrom sizes" file::
+
+   genomedata-info sizes genomedata
+
 ::
 
     usage: genomedata-info [-h] [-v]

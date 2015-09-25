@@ -14,9 +14,12 @@ from argparse import ArgumentParser
 
 from . import Genome, __version__
 
-# XXX: add sizes command that produces tab-delimited file of sizes,
-# compatible with UCSC bigWig tab-delimited specification file, for
-# checking
+
+def print_sizes(genome):
+    # sorted by chrom size, big to small
+    chrom_sizes = [(chrom.end, chrom) for chrom in genome]
+    for size, chrom in reversed(sorted(chrom_sizes)):
+        print(chrom, size, sep="\t")
 
 
 def print_tracknames_continuous(genome):
@@ -36,6 +39,8 @@ def _info(cmd, filename):
             print_tracknames_continuous(genome)
         if cmd == "contigs":
             print_contigs(genome)
+        if cmd == "sizes":
+            print_sizes(genome)
 
 
 def parse_options(args):
@@ -45,8 +50,8 @@ def parse_options(args):
     parser = ArgumentParser(description=description,
                             prog='genomedata-info',
                             version=__version__)
-                            
-    choices = ["tracknames", "tracknames_continuous", "contigs"]
+
+    choices = ["tracknames", "tracknames_continuous", "contigs", "sizes"]
 
     parser.add_argument("command", choices=choices,
                         help='available commands')
