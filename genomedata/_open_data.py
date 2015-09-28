@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import, division, print_function
+
 """
 Open one or more tracks in the specified Genomedata archive.
 These tracks can then be loaded with data using genomedata-load-data.
 """
-
-from __future__ import division, with_statement
-
-__version__ = "$Revision$"
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
@@ -15,11 +13,13 @@ import sys
 
 import warnings
 
-from . import Genome
+from argparse import ArgumentParser
 
-def open_data(gdfilename, tracknames, verbose=False):
+from . import Genome, __version__
+
+def open_data(gdarchive, tracknames, verbose):
     warnings.simplefilter("ignore")
-    with Genome(gdfilename, "r+") as genome:
+    with Genome(gdarchive, "r+") as genome:
         # XXXopt: it would be more efficient to add them all at once
         for trackname in tracknames:
             genome.add_track_continuous(trackname)
@@ -27,30 +27,30 @@ def open_data(gdfilename, tracknames, verbose=False):
     warnings.resetwarnings()
 
 def parse_options(args):
-    from optparse import OptionParser
 
-    usage = "%prog [OPTION]... GENOMEDATAFILE TRACKNAME..."
-    version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version,
-                          description=__doc__.strip())
+    description = ("Open one or more tracks in"
+                   " the specified Genomedata archive.")
 
-    parser.add_option("-v", "--verbose", dest="verbose",
-                      default=False, action="store_true",
-                      help="Print status updates and diagnostic messages")
+    parser = ArgumentParser(description=description,
+                            prog='genomedata-open-data',
+                            version=__version__)
 
-    options, args = parser.parse_args(args)
+    parser.add_argument('gdarchive', help='genomedata archive')
 
-    if not len(args) >= 2:
-        parser.error("Inappropriate number of arguments")
+    parser.add_argument("--trackname", required=True, nargs='+', 
+                        help="tracknames to open")
 
-    return options, args
+    parser.add_argument("--verbose", default=False, action="store_true",
+                        help="Print status updates and diagnostic messages")
 
-def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
-    gdfilename = args[0]
-    tracknames = args[1:]
-    kwargs = {"verbose": options.verbose}
-    return open_data(gdfilename, tracknames, **kwargs)
+    args = parser.parse_args(args)
+
+    return args
+
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
+    kwargs = {"verbose": args.verbose}
+    return open_data(args.gdarchive, args.tracknames, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

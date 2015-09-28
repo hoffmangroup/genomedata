@@ -377,20 +377,54 @@ See the :ref:`full example <genomedata-load-example>` for more details.
 
 Command-line usage information::
 
- Usage: genomedata-load [OPTIONS] GENOMEDATAFILE
+    usage: genomedata-load [-h] [-v] [--verbose] -s SEQUENCE -t NAME=FILE
+                           [--assembly | --sizes] [-f | -d]
+                           GENOMEDATAFILE
 
- --track and --sequence may be repeated to specify multiple trackname=trackfile
- pairings and sequence files, respectively
+    Create Genomedata archive named GENOMEDATAFILE by loading
+     specified track data and sequences. If GENOMEDATAFILE
+     already exists, it will be overwritten.
+     --track and --sequence may be repeated to specify
+     multiple trackname=trackfile pairings and sequence files,
+     respectively.
 
- Options:
-   --version             show program's version number and exit
-   -h, --help            show this help message and exit
-   -s SEQFILE, --sequence=SEQFILE
-                         Add the sequence data in the specified file
-   -t TRACK, --track=TRACK
-                         Add data for the given track. TRACK should be
-                         specified in the form: NAME=FILE, such as: -t
-                         signal=signal.dat
+     Example: genomedata-load -t high=signal.high.wig -t low=signal.low.bed.gz -s chrX.fa -s chrY.fa.gz gdarchive
+
+    positional arguments:
+      gdarchive             genomedata archive
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
+
+    Flags:
+      --verbose             Print status updates and diagnostic messages
+
+    Input data:
+      -s SEQUENCE, --sequence SEQUENCE
+                            Add the sequence data in the specified file or files
+                            (may use UNIX glob wildcard syntax)
+      -t NAME=FILE, --track NAME=FILE
+                            Add data from FILE as the track NAME, such as: -t
+                            signal=signal.wig
+      --assembly            sequence files contain assembly (AGP) files instead of
+                            sequence
+      --sizes               sequence files contain list of sizes instead of
+                            sequence
+
+    Implementation:
+      -f, --file-mode       If specified, the Genomedata archive will be
+                            implemented as a single file, with a separate h5 group
+                            for each Chromosome. This is recommended if there are
+                            a large number of Chromosomes. The default behavior is
+                            to use a single file if there are at least 100
+                            Chromosomes being added.
+      -d, --directory-mode  If specified, the Genomedata archive will be
+                            implemented as a directory, with a separate file for
+                            each Chromosome. This is recommended if there are a
+                            small number of Chromosomes. The default behavior is
+                            to use a directory if there are fewer than 100
+                            Chromosomes being added.
 
 Alternately, as described in :ref:`genomedata-overview`, the underlying
 Python and C load scripts are also accessible for more finely-grained control.
@@ -407,10 +441,10 @@ If you aren't going to use the sequence later on, loading the assembly from
 an AGP file will be faster and take less memory during loading, and
 disk space afterward.
 
-.. _genomedata-load-assembly:
+.. _genomedata-load-seq:
 
-genomedata-load-assembly
-------------------------
+genomedata-load-seq
+-------------------
 
 This command adds the provided sequence files to the specified
 Genomedata, archive creating it if it does not already exist. Sequence
@@ -425,12 +459,36 @@ these sequence files and the data loaded later with
 
 ::
 
- Usage: genomedata-load-assembly [OPTION]... GENOMEDATAFILE SEQFILE...
+    usage: genomedata-load-seq [-h] [-v] [-a] [-s] [-f] [-d] [--verbose]
+                               GENOMEDATAFILE seqfiles [seqfiles ...]
 
- Options:
-   -g, --gap-length  XXX: Implement this.
-   --version         show program's version number and exit
-   -h, --help        show this help message and exit
+    Start a Genomedata archive at GENOMEDATAFILE with the provided sequences.
+    SEQFILEs should be in fasta format, and a separate Chromosome will be created
+    for each definition line.
+
+    positional arguments:
+      gdarchive             genomedata archive
+      seqfiles              sequences in FASTA format
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
+      -a, --assembly        SEQFILE contains assembly (AGP) files instead of
+                            sequence
+      -s, --sizes           SEQFILE contains list of sizes instead of sequence
+      -f, --file-mode       If specified, the Genomedata archive will be
+                            implemented as a single file, with a separate h5 group
+                            for each Chromosome. This is recommended if there are
+                            a large number of Chromosomes. The default behavior is
+                            to use a single file if there are at least 100
+                            Chromosomes being added.
+      -d, --directory-mode  If specified, the Genomedata archive will be
+                            implemented as a directory, with a separate file for
+                            each Chromosome. This is recommended if there are a
+                            small number of Chromosomes. The default behavior is
+                            to use a directory if there are fewer than 100
+                            Chromosomes being added.
+      --verbose             Print status updates and diagnostic messages
 
 
 .. _genomedata-open-data:
@@ -443,11 +501,21 @@ allowing data for those tracks to be loaded with :ref:`genomedata-load-data`.
 
 ::
 
- Usage: genomedata-open-data [OPTION]... GENOMEDATAFILE TRACKNAME...
+    usage: genomedata-open-data [-h] [-v] --trackname TRACKNAME [TRACKNAME ...]
+                                [--verbose]
+                                gdarchive
 
- Options:
-   --version   show program's version number and exit
-   -h, --help  show this help message and exit
+    Open one or more tracks in the specified Genomedata archive.
+
+    positional arguments:
+      gdarchive             genomedata archive
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
+      --trackname TRACKNAME [TRACKNAME ...]
+                            tracknames to open
+      --verbose             Print status updates and diagnostic messages
 
 
 .. _genomedata-load-data:
@@ -501,11 +569,18 @@ Closes the specified Genomedata arhive.
 
 ::
 
- Usage: genomedata-close-data [OPTION]... GENOMEDATAFILE
+    usage: genomedata-close-data [-h] [-v] [--verbose] gdarchive
 
- Options:
-   --version   show program's version number and exit
-   -h, --help  show this help message and exit
+    Compute summary statistics for data in Genomedata archive and ready for
+    accessing.
+
+    positional arguments:
+      gdarchive      genomedata archive
+
+    optional arguments:
+      -h, --help     show this help message and exit
+      -v, --version  show program's version number and exit
+      --verbose      Print status updates and diagnostic messages
 
 
 .. _genomedata-erase-data:
@@ -522,16 +597,22 @@ then be replaced. The pipeline for replacing a data track is:
 
 ::
 
- Usage: genomedata-erase-data [OPTION]... GENOMEDATAFILE TRACKNAME...
+    usage: genomedata-erase-data [-h] [-v] --trackname TRACKNAME [TRACKNAME ...]
+                                 [--verbose]
+                                 gdarchive
 
- Erase the specified tracks from the Genomedata archive in such a way that
- the track can be replaced (via genomedata-load-data).
+    Erase the specified tracks from the Genomedata archive in such a way that the
+    track data can be replaced (via genomedata-load-data).
 
- Options:
-   --version      show program's version number and exit
-   -h, --help     show this help message and exit
-   -v, --verbose  Print status updates and diagnostic messages
+    positional arguments:
+      gdarchive             genomedata archive
 
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
+      --trackname TRACKNAME [TRACKNAME ...]
+                            tracknames to erase
+      --verbose             Print status updates and diagnostic messages
 
 .. _genomedata-info:
 
@@ -552,12 +633,20 @@ indexing).
 
 ::
 
- Usage: genomedata-info [OPTION]... CMD ARCHIVE
+    usage: genomedata-info [-h] [-v]
+                           {tracknames,tracknames_continuous,contigs,sizes}
+                           gdarchive
 
- Options:
-   --version   show program's version number and exit
-   -h, --help  show this help message and exit
+    Print information about a genomedata archive.
 
+    positional arguments:
+      {tracknames,tracknames_continuous,contigs,sizes}
+                            available commands
+      gdarchive             genomedata archive
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
 
 .. _genomedata-query:
 
@@ -572,11 +661,20 @@ so it should not be used for large regions.
 
 ::
 
- Usage: genomedata-query [OPTION]... ARCHIVE TRACKNAME CHROM BEGIN END
+    usage: genomedata-query [-h] [-v] gdarchive trackname chrom begin end
 
- Options:
-   --version   show program's version number and exit
-   -h, --help  show this help message and exit
+    print data from genomedata archive in specified trackname and coordinates
+
+    positional arguments:
+      gdarchive      genomedata archive
+      trackname      track name
+      chrom          chromosome name
+      begin          chromosome start
+      end            chromosome end
+
+    optional arguments:
+      -h, --help     show this help message and exit
+      -v, --version  show program's version number and exit
 
 
 .. _python-api:

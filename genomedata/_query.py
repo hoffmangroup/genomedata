@@ -1,54 +1,54 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
 
 """
 _query: DESCRIPTION
 """
 
-__version__ = "$Revision$"
-
 # Copyright 2012, 2013 Michael M. Hoffman <mmh1@uw.edu>
 
 import sys
 
-from . import Genome
+from argparse import ArgumentParser
 
-
-def die(msg="Unexpected error."):
-    print >>sys.stderr, msg
-    sys.exit(1)
-
+from . import Genome, __version__
 
 def _query(filename, trackname, chromosome_name, begin, end):
-    begin = int(begin)
-    end = int(end)
+
     with Genome(filename) as genome:
         chromosome = genome[chromosome_name]
         track_index = genome.index_continuous(trackname)
         data = chromosome[begin:end, track_index]
         for index, point in enumerate(data):
-            print point
+            print(point)
 
 
 def parse_options(args):
-    from optparse import OptionParser
 
-    usage = "%prog [OPTION]... ARCHIVE TRACKNAME CHROM BEGIN END"
-    version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version)
+    description = ('print data from genomedata archive in specified '
+                   ' trackname and coordinates')
 
-    options, args = parser.parse_args(args)
+    parser = ArgumentParser(prog='genomedata-query',
+                            description=description,
+                            version=__version__)
+    
+    parser.add_argument('gdarchive', help='genomedata archive')
+    parser.add_argument('trackname', help='track name')
+    parser.add_argument('chrom', help='chromosome name')
+    parser.add_argument('begin', help='chromosome start', type=int)
+    parser.add_argument('end', help='chromosome end', type=int)
 
-    if not len(args) == 5:
-        parser.error("incorrect number of arguments")
+    args = parser.parse_args(args)
 
-    return options, args
+    return args
 
 
-def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
 
-    return _query(*args)
+    return _query(args.gdarchive, args.trackname, args.chrom,
+                  args.begin, args.end)
 
 if __name__ == "__main__":
     sys.exit(main())

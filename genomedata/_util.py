@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
 
-__version__ = "$Revision$"
+from __future__ import absolute_import, division, print_function
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
@@ -17,6 +16,10 @@ FILTERS_GZIP = Filters(complevel=1)
 
 EXT_GZ = "gz"
 SUFFIX_GZ = extsep + EXT_GZ
+
+def die(msg="Unexpected error."):
+    print(msg, file=sys.stderr)
+    sys.exit(1)
 
 class LightIterator(object):
     def __init__(self, handle):

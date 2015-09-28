@@ -1,47 +1,44 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
 
 """
 report: report some summary statistics on a genomedata archive that
 already has save_metadata() run
 """
 
-__version__ = "$Revision$"
-
 # Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 import sys
 
-from genomedata import Genome
+from argparse import ArgumentParser
+
+from . import Genome, __version__
 from tabdelim import ListWriter
 
-def report(genomedata):
+def report(gdarchive):
     writer = ListWriter()
 
-    with Genome(genomedata) as genome:
+    with Genome(gdarchive) as genome:
         writer.writerow(["measurement"] + genome.tracknames_continuous)
         writer.writerow(["mean"] + list(genome.means))
         writer.writerow(["var"] + list(genome.vars))
 
 def parse_options(args):
-    from optparse import OptionParser
 
-    usage = "%prog [OPTION]..."
-    version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version)
+    parser = ArgumentParser(prog='genomedata-report',
+                            version=__version__)
 
-    options, args = parser.parse_args(args)
+    parser.add_argument('gdarchive', help='genomedata archive')
 
-    if not len(args) == 1:
-        parser.print_usage()
-        sys.exit(1)
+    args = parser.parse_args(args)
 
-    return options, args
+    return args
 
-def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
 
-    return report(*args)
+    return report(args.gdarchive)
 
 if __name__ == "__main__":
     sys.exit(main())

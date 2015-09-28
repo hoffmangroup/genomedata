@@ -1,21 +1,22 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
 
 """
 _close_data: DESCRIPTION
 """
 
-__version__ = "$Revision$"
-
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 import sys
+
+from argparse import ArgumentParser
 
 from numpy import (amin, amax, array, diff, hstack, isfinite,
                    NINF, PINF, square)
 from tables import NoSuchNodeError
 
-from . import Genome
+from . import Genome, __version__
 from ._load_seq import MIN_GAP_LEN
 from ._util import fill_array, init_num_obs, new_extrema
 
@@ -59,13 +60,12 @@ def find_chunks(mask_rows_any_present):
 
 def write_metadata(chromosome, verbose=False):
     if verbose:
-        print >>sys.stderr, "writing metadata for %s" % chromosome
+        print("writing metadata for %s" % chromosome, file=sys.stderr)
 
     if chromosome.num_tracks_continuous == 0:
         chromosome.attrs.dirty = False
         return
 
-    h5file = chromosome.h5file
     tracknames = chromosome.tracknames_continuous
 
     num_obs = len(tracknames)
@@ -78,7 +78,7 @@ def write_metadata(chromosome, verbose=False):
 
     for supercontig in chromosome:
         if verbose:
-            print >>sys.stderr, " scanning %s" % supercontig
+            print(" scanning %s" % supercontig, file=sys.stderr)
 
         try:
             continuous = supercontig.continuous
@@ -98,7 +98,7 @@ def write_metadata(chromosome, verbose=False):
         # revisions <= r243
         for col_index, trackname in enumerate(tracknames):
             if verbose:
-                print >>sys.stderr, "  %s" % trackname
+                print("  %s" % trackname, file=sys.stderr)
 
             ## read data
             col = continuous[:, col_index]
@@ -138,31 +138,27 @@ def close_data(gdfilename, verbose=False):
                 write_metadata(chromosome, verbose=verbose)
 
 def parse_options(args):
-    from optparse import OptionParser
-
-    usage = "%prog [OPTION]... GENOMEDATAFILE"
-    version = "%%prog %s" % __version__
     description = ("Compute summary statistics for data in Genomedata archive"
                    " and ready for accessing.")
-    parser = OptionParser(usage=usage, version=version,
-                          description=description)
 
-    parser.add_option("-v", "--verbose", dest="verbose",
-                      default=False, action="store_true",
-                      help="Print status updates and diagnostic messages")
+    parser = ArgumentParser(description=description,
+                            prog='genomedata-close-data',
+                            version=__version__)
 
-    options, args = parser.parse_args(args)
+    parser.add_argument('gdarchive', help='genomedata archive')
 
-    if not len(args) == 1:
-        parser.error("Inappropriate number of arguments")
+    parser.add_argument("--verbose", default=False, action="store_true",
+                        help="Print status updates and diagnostic messages")
 
-    return options, args
+    args = parser.parse_args(args)
 
-def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
-    gdfilename = args[0]
-    kwargs = {"verbose": options.verbose}
-    return close_data(gdfilename, **kwargs)
+    return args
+
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
+    gdarchive = args.gdarchive
+    kwargs = {"verbose": args.verbose}
+    return close_data(gdarchive, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

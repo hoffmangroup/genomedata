@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
 
 """
 load_seq: DESCRIPTION
 """
-
-__version__ = "$Revision$"
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
@@ -13,11 +12,14 @@ from re import compile, VERBOSE
 import sys
 import warnings
 
+from argparse import ArgumentParser
+
 from numpy import frombuffer, uint32
 from path import path
 from tabdelim import DictReader
 
-from . import SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, FORMAT_VERSION, Genome
+from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, 
+              FORMAT_VERSION, Genome, __version__)
 from ._util import FILTERS_GZIP, LightIterator, maybe_gzip_open
 
 MIN_GAP_LEN = 100000
@@ -221,7 +223,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
         if verbose:
             msg = ("Implementation unspecified. Found %d"
                    "chromosomes/scaffolds, so using: %s" % (num_seq, mode))
-            print >>sys.stderr, msg
+            print(msg, file=sys.stderr)
     if mode == "dir":
         if gdpath.exists():
             assert gdpath.isdir()
@@ -241,14 +243,14 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     warnings.simplefilter("ignore")
     with Genome(gdpath, mode="w", filters=FILTERS_GZIP) as genome:
         if seqfile_type == "sizes":
-            for name, size in sizes.iteritems():
+            for name, size in sizes.items():
                 chromosome = create_chromosome(genome, name, mode)
                 size_chromosome(chromosome, size)
         else:
             assert seqfile_type in frozenset(["agp", "fasta"])
             for filename in filenames:
                 if verbose:
-                    print >>sys.stderr, filename
+                    print(filename, file=sys.stderr)
 
                 with maybe_gzip_open(filename) as infile:
                     if seqfile_type == "agp":
@@ -264,59 +266,60 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     warnings.resetwarnings()
 
 def parse_options(args):
-    from optparse import OptionParser
 
-    usage = "%prog [OPTION]... GENOMEDATAFILE SEQFILE..."
-    version = "%%prog %s" % __version__
     description = ("Start a Genomedata archive at GENOMEDATAFILE with the"
                    " provided sequences. SEQFILEs should be in fasta format,"
                    " and a separate Chromosome will be created for each"
                    " definition line.")
-    parser = OptionParser(usage=usage, version=version,
-                          description=description)
 
-    parser.add_option("-v", "--verbose",
-                      default=False, action="store_true",
+    parser = ArgumentParser(description=description,
+                            prog='genomedata-load-seq',
+                            version=__version__)
+
+    parser.add_argument('gdarchive', help='genomedata archive')
+
+    parser.add_argument('seqfiles', nargs='+',
+                        help='sequences in FASTA format')
+
+    parser.add_argument("-a", "--assembly", action="store_const",
+                        const="agp", dest="seqfile_type",
+                        help="SEQFILE contains assembly (AGP) files instead of"
+                        " sequenc")
+    parser.add_argument("-s", "--sizes", action="store_const", const="sizes",
+                        dest="seqfile_type", default="fasta",
+                        help="SEQFILE contains list of sizes instead of"
+                        " sequence")
+    parser.add_argument("-f", "--file-mode", dest="mode",
+                        default=None, action="store_const", const="file",
+                        help="If specified, the Genomedata archive will be"
+                        " implemented as a single file, with a separate h5 group"
+                        " for each Chromosome. This is recommended if there are"
+                        " a large number of Chromosomes. The default behavior is"
+                        " to use a single file if there are at least %s"
+                        " Chromosomes being added." % FILE_MODE_CHROMS)
+    parser.add_argument("-d", "--directory-mode", dest="mode",
+                        action="store_const", const="dir",
+                        help="If specified, the Genomedata archive will be"
+                        " implemented as a directory, with a separate file for"
+                        " each Chromosome. This is recommended if there are a"
+                        " small number of Chromosomes. The default behavior is"
+                        " to use a directory if there are fewer than %s"
+                        " Chromosomes being added." % FILE_MODE_CHROMS)
+    parser.add_argument("--verbose",default=False, action="store_true",
                       help="Print status updates and diagnostic messages")
-    parser.add_option("-a", "--assembly", action="store_const",
-                      const="agp", dest="seqfile_type",
-                      help="SEQFILE contains assembly (AGP) files instead of"
-                      " sequence")
-    parser.add_option("-s", "--sizes", action="store_const", const="sizes",
-                      dest="seqfile_type", default="fasta",
-                      help="SEQFILE contains list of sizes instead of"
-                      " sequence")
-    parser.add_option("-f", "--file-mode", dest="mode",
-                      default=None, action="store_const", const="file",
-                      help="If specified, the Genomedata archive will be"
-                      " implemented as a single file, with a separate h5 group"
-                      " for each Chromosome. This is recommended if there are"
-                      " a large number of Chromosomes. The default behavior is"
-                      " to use a single file if there are at least %s"
-                      " Chromosomes being added." % FILE_MODE_CHROMS)
-    parser.add_option("-d", "--directory-mode", dest="mode",
-                      action="store_const", const="dir",
-                      help="If specified, the Genomedata archive will be"
-                      " implemented as a directory, with a separate file for"
-                      " each Chromosome. This is recommended if there are a"
-                      " small number of Chromosomes. The default behavior is"
-                      " to use a directory if there are fewer than %s"
-                      " Chromosomes being added." % FILE_MODE_CHROMS)
 
-    options, args = parser.parse_args(args)
+    args = parser.parse_args(args)
 
-    if not len(args) >= 2:
-        parser.error("Inappropriate number of arguments")
+    return args
 
-    return options, args
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
 
-def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
-    gdfilename = args[0]
-    seqfiles = args[1:]
+    kwargs = {'verbose': args.verbose,
+              'mode': args.mode,
+              'seqfile_type': args.seqfile_type}
 
-    return load_seq(gdfilename, seqfiles, verbose=options.verbose,
-                    mode=options.mode, seqfile_type=options.seqfile_type)
+    return load_seq(args.gdarchive, args.seqfiles, **kwargs)
 
 if __name__ == "__main__":
     sys.exit(main())

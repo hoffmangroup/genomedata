@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
 
 """
 test_genomedata: DESCRIPTION
@@ -408,22 +409,20 @@ def test_genomedata(*args):
 
 
 def parse_options(args):
-    from optparse import OptionParser
 
-    usage = "%prog [OPTION]..."
-    version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version)
+    from argparse import ArgumentParser
+    from . import __version__
 
-    options, args = parser.parse_args(args)
+    parser = ArgumentParser(prog='test_genomedata',
+                            version=__version__)
 
-    if not len(args) == 0:
-        parser.error("incorrect number of arguments")
+    args = parser.parse_args(args)
 
-    return options, args
+    return args
 
 
 def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
+    args = parse_options(args)
 
     return test_genomedata(*args)
 

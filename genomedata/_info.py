@@ -1,42 +1,35 @@
 #!/usr/bin/env python
-from __future__ import division, with_statement
+
+from __future__ import absolute_import, division, print_function
 
 """
-_info: DESCRIPTION
+_info: report specific information about a genomedata archive.
 """
-
-__version__ = "$Revision$"
 
 # Copyright 2010, 2012, 2013 Michael M. Hoffman <mmh1@uw.edu>
 
 import sys
 
-from . import Genome
+from argparse import ArgumentParser
+
+from . import Genome, __version__
 
 # XXX: add sizes command that produces tab-delimited file of sizes,
 # compatible with UCSC bigWig tab-delimited specification file, for
 # checking
 
 
-def die(msg="Unexpected error."):
-    print >>sys.stderr, msg
-    sys.exit(1)
-
-
 def print_tracknames_continuous(genome):
-    print "\n".join(genome.tracknames_continuous)
+    print(genome.tracknames_continuous, sep="\n")
 
 
 def print_contigs(genome):
     for chrom in genome:
         for contig in chrom:
-            print "%s\t%s\t%s" % (chrom.name, contig.start, contig.end)
+            print(chrom.name, contig.start, contig.end, sep="\t")
 
 
 def _info(cmd, filename):
-    choices = ["tracknames", "tracknames_continuous", "contigs"]
-    if cmd not in frozenset(choices):
-        die("CMD must be one of: %s" % ",".join(choices))
 
     with Genome(filename) as genome:
         if cmd in ["tracknames_continuous", "tracknames"]:
@@ -46,24 +39,29 @@ def _info(cmd, filename):
 
 
 def parse_options(args):
-    from optparse import OptionParser
 
-    usage = "%prog [OPTION]... CMD ARCHIVE"
-    version = "%%prog %s" % __version__
-    parser = OptionParser(usage=usage, version=version)
+    description = ("Print information about a genomedata archive.")
 
-    options, args = parser.parse_args(args)
+    parser = ArgumentParser(description=description,
+                            prog='genomedata-info',
+                            version=__version__)
+                            
+    choices = ["tracknames", "tracknames_continuous", "contigs"]
 
-    if not len(args) == 2:
-        parser.error("incorrect number of arguments")
+    parser.add_argument("command", choices=choices,
+                        help='available commands')
 
-    return options, args
+    parser.add_argument('gdarchive', help='genomedata archive')
+
+    args = parser.parse_args(args)
+
+    return args
 
 
-def main(args=sys.argv[1:]):
-    options, args = parse_options(args)
+def main(argv=sys.argv[1:]):
+    args = parse_options(argv)
 
-    return _info(*args)
+    return _info(args.command, args.gdarchive)
 
 if __name__ == "__main__":
     sys.exit(main())
