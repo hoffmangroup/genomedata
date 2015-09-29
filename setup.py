@@ -24,7 +24,10 @@ from setuptools import find_packages, setup
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call
 
-from genomedata import __version__
+# XXX: Find a way to implement a central version number without importing the
+# genomedata module
+#from genomedata import __version__
+__version__ = "1.3.6"
 
 if sys.version_info[0] != 2 or sys.version_info[1] < 7:
     print("Genomedata requires Python version 2.7+")
