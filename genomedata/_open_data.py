@@ -49,8 +49,7 @@ def parse_options(args):
 
 def main(argv=sys.argv[1:]):
     args = parse_options(argv)
-    kwargs = {"verbose": args.verbose}
-    return open_data(args.gdarchive, args.tracknames, **kwargs)
+    return open_data(args.gdarchive, args.tracknames, verbose=args.verbose)
 
 if __name__ == "__main__":
     sys.exit(main())

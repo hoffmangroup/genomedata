@@ -274,11 +274,9 @@ def main(cmdline=sys.argv[1:]):
         die(("Error parsing track expression: %s\Specify tracks"
              "in NAME=FILE form, such as: -t high=signal.high") % track_expr)
 
-    kwargs = {"verbose": args.verbose,
-              "mode": args.mode}
-
     load_genomedata(args.gdarchive, tracks, seqfilenames,
-                    seqfile_type=args.seqfile_type, **kwargs)
+                    seqfile_type=args.seqfile_type, verbose=args.verbose,
+                    mode=args.mode)
 
 if __name__ == "__main__":
     sys.exit(main())

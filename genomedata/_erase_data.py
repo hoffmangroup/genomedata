@@ -60,10 +60,9 @@ def parse_options(args):
 def main(argv=sys.argv[1:]):
     args = parse_options(argv)
     gdarchive = args.archive
-    kwargs = {"verbose": args.verbose}
 
     for trackname in args.tracknames:
-        erase_data(gdarchive, trackname, **kwargs)
+        erase_data(gdarchive, trackname, verbose=args.verbose)
 
 if __name__ == "__main__":
     sys.exit(main())

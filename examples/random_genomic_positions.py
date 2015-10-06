@@ -105,11 +105,10 @@ def parse_args(args):
 
 def main(args=sys.argv[1:]):
     options, args = parse_args(args)
-    kwargs = {"n": options.count,
-              "chrom": options.chrom,
-              "one_chrom": options.one_chrom,
-              "in_supercontigs": options.supercontig}
-    print_random_coordinates(args[0], **kwargs)
+
+    print_random_coordinates(args[0], n=options.count, chrom=options.chrom,
+                             one_chrom=options.one_chrom,
+                             in_supercontigs=options.supercontig)
 
 if __name__ == "__main__":
     sys.exit(main())

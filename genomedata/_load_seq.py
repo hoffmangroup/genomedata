@@ -315,11 +315,8 @@ def parse_options(args):
 def main(argv=sys.argv[1:]):
     args = parse_options(argv)
 
-    kwargs = {'verbose': args.verbose,
-              'mode': args.mode,
-              'seqfile_type': args.seqfile_type}
-
-    return load_seq(args.gdarchive, args.seqfiles, **kwargs)
+    return load_seq(args.gdarchive, args.seqfiles, verbose=args.verbose,
+                    mode=args.mode, seqfile_type=args.seqfile_type)
 
 if __name__ == "__main__":
     sys.exit(main())

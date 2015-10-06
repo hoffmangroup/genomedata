@@ -83,9 +83,8 @@ def parse_args(args):
 
 def main(argv=sys.argv[1:]):
     args = parse_args(argv)
-    kwargs = {"verbose": args.verbose,
-              "chunk_size": args.chunk_size}
-    load_data(args.gdarchive, args.trackname, args.datafile, **kwargs)
+    load_data(args.gdarchive, args.trackname, args.datafile,
+              verbose=args.verbose, chunk_size=args.chunk_size)
 
 if __name__ == "__main__":
     sys.exit(main())

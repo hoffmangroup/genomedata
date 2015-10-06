@@ -157,8 +157,7 @@ def parse_options(args):
 def main(argv=sys.argv[1:]):
     args = parse_options(argv)
     gdarchive = args.gdarchive
-    kwargs = {"verbose": args.verbose}
-    return close_data(gdarchive, **kwargs)
+    return close_data(gdarchive, verbose=args.verbose)
 
 if __name__ == "__main__":
     sys.exit(main())
