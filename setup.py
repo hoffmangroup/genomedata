@@ -48,7 +48,7 @@ classifiers = ["Natural Language :: English",
                "Topic :: Scientific/Engineering :: Bio-Informatics",
                "Operating System :: Unix",
                "Programming Language :: Python",
-               "Programming Language :: Python 2"]
+               "Programming Language :: Python :: 2.7"]
 
 entry_points = """
 [console_scripts]
