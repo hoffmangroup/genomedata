@@ -2,7 +2,7 @@
 Genomedata |version| documentation
 ==================================
 :Website: http://pmgenomics.ca/hoffmanlab/proj/genomedata/
-:Author: Michael M. Hoffman <mhoffman at uhnresearch dot ca>
+:Author: Michael M. Hoffman <michael dot hoffman at utoronto dot ca>
 :Organization: Princess Margaret Cancer Centre
 :Address: Toronto Medical Discovery Tower 11-311, 101 College St, M5G 1L7, Toronto, Ontario, Canada
 :Copyright: 2009-2014 Michael M. Hoffman
@@ -445,7 +445,7 @@ genomedata-load-seq
 This command adds the provided sequence files to the specified
 Genomedata, archive creating it if it does not already exist. Sequence
 files should be in |sequence file formats| format. Gaps of >= 100,000
-base pairs (specified as :option:`gap-length`) in the reference
+base pairs in the reference
 sequence, are used to divide the sequence into supercontigs. The FASTA
 definition line will be used as the name for the chromosomes/scaffolds
 created within the Genomedata archive and must be consistent between
