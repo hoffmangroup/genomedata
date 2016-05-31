@@ -88,15 +88,15 @@ def is_big_wig(filename):
     with open(filename, "rb") as big_wig_file:
         signature_string = big_wig_file.read(BIG_WIG_SIGNATURE_BYTE_SIZE)
 
-        # unpack returns a tuple regardless of length
-        # the kent reference checks both little endian and big endian packing
-        # of the 4 byte signature
-        little_endian_signature = struct.unpack("<L", signature_string)[0]
-        big_endian_signature = struct.unpack(">L", signature_string)[0]
+    # unpack returns a tuple regardless of length
+    # the kent reference checks both little endian and big endian packing
+    # of the 4 byte signature
+    little_endian_signature = struct.unpack("<L", signature_string)[0]
+    big_endian_signature = struct.unpack(">L", signature_string)[0]
 
-        if (little_endian_signature == BIG_WIG_SIGNATURE or
-           big_endian_signature == BIG_WIG_SIGNATURE):
-            return True
+    if (little_endian_signature == BIG_WIG_SIGNATURE or
+       big_endian_signature == BIG_WIG_SIGNATURE):
+        return True
 
     return False
 
