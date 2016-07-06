@@ -269,6 +269,15 @@ def main(cmdline=sys.argv[1:]):
         tracks = []
         for track_expr in args.track:
             track_name, _, track_filename = track_expr.partition("=")
+            # if either is empty, ie '-t track.bed' was submitted
+            # (no "=" delimiter)
+            if not track_name or not track_filename:
+                # get rid of absolute filepath and extensions: ie,
+                # "/blah/blah/blah/test.a.b.c" has track name 'test'
+                track_name = track_expr.split('/')[-1].split('.')[0]
+                track_filename = track_expr
+            print("track name: %s from track file: %s" %(track_name, track_filename),
+                  file=sys.stderr)
             tracks.append((track_name, track_filename))  # Tuple
     except ValueError:
         die(("Error parsing track expression: %s\Specify tracks"
