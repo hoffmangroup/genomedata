@@ -213,9 +213,10 @@ def parse_cmdline(cmdline):
                             " (may use UNIX glob wildcard syntax)")
     input_data.add_argument("-t", "--track", action='append', 
                             default=None,
-                            metavar="NAME=FILE", required=True,
+                            metavar="NAME=FILE or FILE", required=True,
                             help="Add data from FILE as the track NAME,"
-                            " such as: -t signal=signal.wig")
+                            " such as: -t signal=signal.wig, or identically,"
+                            " -t signal.wig")
 
     input_data_ex = input_data.add_mutually_exclusive_group()
     input_data_ex.add_argument("--assembly", action="store_const",
