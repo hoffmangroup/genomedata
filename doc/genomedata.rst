@@ -158,6 +158,12 @@ sequence and numerical data into a Genomedata archive with the
 
     genomedata-load [-t trackname=signalfile]... [-s sequencefile]... GENOMEDATAFILE
 
+Alternatively,::
+
+    genomedata-load [-t signal.ext]... [-s sequencefile]... GENOMEDATAFILE
+
+where the track name will be 'signal'.
+
 This command is a user-friendly shortcut to the typical workflow. The
 underlying commands are still installed and may be used if more
 fine-grained control is required (for instance, parallel data loading
@@ -373,7 +379,7 @@ See the :ref:`full example <genomedata-load-example>` for more details.
 
 Command-line usage information::
 
-    usage: genomedata-load [-h] [-v] [--verbose] -s SEQUENCE -t NAME=FILE
+    usage: genomedata-load [-h] [-v] [--verbose] -s SEQUENCE -t [NAME=]FILE
                            [--assembly | --sizes] [-f | -d]
                            GENOMEDATAFILE
 
