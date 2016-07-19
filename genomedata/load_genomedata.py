@@ -271,7 +271,8 @@ def main(cmdline=sys.argv[1:]):
             track_name, _, track_filename = track_expr.partition("=")
             # if either is empty, ie '-t track.bed' was submitted
             # (no "=" delimiter)
-            if not track_name or not track_filename:
+            if (not track_name or
+                not track_filename):
                 # get rid of absolute filepath and extensions: ie,
                 # "/blah/blah/blah/test.a.b.c" has track name 'test'
                 track_name = track_expr.split('/')[-1].split('.')[0]
