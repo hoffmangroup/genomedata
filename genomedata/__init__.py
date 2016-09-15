@@ -885,9 +885,9 @@ since being closed with genomedata-close-data.""")
             except NoSuchNodeError:
                 # Define an extendible array in the second dimension (0)
                 supercontig_shape = (supercontig_length, 0)
-                self.h5file.createEArray(supercontig.h5group, "continuous",
-                                         CONTINUOUS_ATOM, supercontig_shape,
-                                         chunkshape=CONTINUOUS_CHUNK_SHAPE)
+                self.h5file.create_earray(supercontig.h5group, "continuous",
+                                          CONTINUOUS_ATOM, supercontig_shape,
+                                          chunkshape=CONTINUOUS_CHUNK_SHAPE)
                 continuous = supercontig.continuous
 
             # Add column to supercontig continuous array
