@@ -75,11 +75,11 @@ def create_supercontig(chromosome, index, seq=None, start=None, end=None):
     name = SUPERCONTIG_NAME_FMT % index
     h5file = chromosome.h5file
     where = chromosome.h5group
-    supercontig = h5file.createGroup(where, name)
+    supercontig = h5file.create_group(where, name)
 
     if seq is not None:
         seq_array = frombuffer(seq, SEQ_DTYPE)
-        h5file.createCArray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
+        h5file.create_carray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
 
         # XXXopt: does this result in compression?
         supercontig.seq[...] = seq_array
@@ -189,7 +189,7 @@ def create_chromosome(genome, name, mode):
         res = genome[name]
     else: # mode == "file"
         h5file = genome.h5file
-        h5file.createGroup("/", name, filters=FILTERS_GZIP)
+        h5file.create_group("/", name, filters=FILTERS_GZIP)
         res = genome[name]
 
     res.attrs.dirty = True
