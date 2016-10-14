@@ -1,3 +1,5 @@
+1.3.7:
+
 1.3.6:
 * `sizes` command added to `genomedata-info` (Jay Hesselberth)
 * Updated installation instructions for installing with PyTables 3.1.1
