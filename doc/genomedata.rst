@@ -762,7 +762,8 @@ Support
 To stay informed of **new releases**, subscribe to the moderated
 ``genomedata-announce`` mailing list (mail volume very low):
 
-  https://mailman2.u.washington.edu/mailman/listinfo/genomedata-announce
+  https://listserv.utoronto.ca/cgi-bin/wa?A0=genomedata-announce-l
+  
 
 For **discussion and questions** about the use of the Genomedata system,
 there is a ``genomedata-users`` mailing list:
