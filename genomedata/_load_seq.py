@@ -282,9 +282,9 @@ def parse_options(args):
                         help='sequences in FASTA format')
 
     parser.add_argument("-a", "--assembly", action="store_const",
-                        const="agp", dest="seqfile_type",
+                        const="agp", dest="seqfile_type", default="fasta",
                         help="SEQFILE contains assembly (AGP) files instead of"
-                        " sequenc")
+                        " sequence")
     parser.add_argument("-s", "--sizes", action="store_const", const="sizes",
                         dest="seqfile_type", default="fasta",
                         help="SEQFILE contains list of sizes instead of"
