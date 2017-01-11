@@ -1,4 +1,6 @@
 1.3.7:
+* genomedata-load-seq: fix assertion failure on argument parsing when loading
+  fasta sequence (thanks to Kate Cook)
 
 1.3.6:
 * genomedata-load-data now support bigWig files if the bigWigToBedGraph
