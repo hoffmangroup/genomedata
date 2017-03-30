@@ -52,8 +52,8 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
     gdpath = path(gdfilename).expand()
     try:
         if mode is None:
-            if (seqfilenames is not None
-                and len(seqfilenames) > FILE_MODE_CHROMS):
+            if (seqfilenames is not None and
+               len(seqfilenames) > FILE_MODE_CHROMS):
                 mode = "file"
             else:
                 mode = "dir"
@@ -92,6 +92,9 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
 
         if verbose:
             print_timestamp("Loading %s files:" % seqfile_desc)
+            for seqfilename in seqfilenames:
+                print_timestamp("%s" % seqfilename)
+
 
         load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode,
                  seqfile_type=seqfile_type)
@@ -220,12 +223,12 @@ def parse_cmdline(cmdline):
     input_data_ex = input_data.add_mutually_exclusive_group()
     input_data_ex.add_argument("--assembly", action="store_const",
                             default=None,
-                            const="agp", dest="seqfile_type",
+                            const="agp",
                             help="sequence files contain assembly (AGP) files instead of"
                             " sequence")
     input_data_ex.add_argument("--sizes", action="store_const",
                             default=None,
-                            const="sizes", dest="seqfile_type", 
+                            const="sizes",
                             help="sequence files contain list of sizes instead of"
                             " sequence")
     implementation = parser.add_argument_group("Implementation")
@@ -256,9 +259,20 @@ def parse_cmdline(cmdline):
 def main(cmdline=sys.argv[1:]):
     args = parse_cmdline(cmdline)
 
-    # default
-    if not args.seqfile_type:
-        args.seqfile_type = 'fasta'
+    # NB: both assembly and sizes options have been set to be mutually
+    # exclusive from the argument parser
+
+    # If assembly has been specified
+    if args.assembly:
+        # Set the sequence file type to agp
+        seqfile_type = args.assembly
+    # Else if sizes has been specified
+    elif args.sizes:
+        # Set the sequence file type to sizes
+        seqfile_type = args.sizes
+    # Otherwise set the sequence file type to fasta
+    else:
+        seqfile_type = 'fasta'
 
     # list of lists
     seqfilenames_list = [glob(globname) for globname in args.sequence]
@@ -275,7 +289,7 @@ def main(cmdline=sys.argv[1:]):
              "in NAME=FILE form, such as: -t high=signal.high") % track_expr)
 
     load_genomedata(args.gdarchive, tracks, seqfilenames,
-                    seqfile_type=args.seqfile_type, verbose=args.verbose,
+                    seqfile_type=seqfile_type, verbose=args.verbose,
                     mode=args.mode)
 
 if __name__ == "__main__":
