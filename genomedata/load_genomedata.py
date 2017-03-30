@@ -92,9 +92,6 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
 
         if verbose:
             print_timestamp("Loading %s files:" % seqfile_desc)
-            for seqfilename in seqfilenames:
-                print_timestamp("%s" % seqfilename)
-
 
         load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode,
                  seqfile_type=seqfile_type)
