@@ -262,7 +262,7 @@ or the following pipeline::
           sequence file with two sequences.
 .. note:: If using a glob syntax for your sequence files, remember to put the
           glob filename in quotes to avoid having your shell expand the glob
-          before it genomedata-load uses it
+          before it genomedata-load uses it (e.g. -s "chr*.agp.gz")
 
 .. warning:: 
     AGP files cannot be combined into a single sequence file. The chromosome
