@@ -20,7 +20,7 @@ from tabdelim import DictReader
 
 from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, 
               FORMAT_VERSION, Genome, __version__)
-from ._util import FILTERS_GZIP, LightIterator, maybe_gzip_open
+from ._util import FILTERS_GZIP, LightIterator, maybe_gzip_open, peek_line
 
 MIN_GAP_LEN = 100000
 assert not MIN_GAP_LEN % 2 # must be even for division
@@ -254,9 +254,35 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
 
                 with maybe_gzip_open(filename) as infile:
                     if seqfile_type == "agp":
-                        name = path(filename).name.rpartition(".agp")[0]
-                        chromosome = create_chromosome(genome, name, mode)
-                        read_assembly(chromosome, infile)
+                        # Read the entire assembly into a buffer
+                        # Filter out comments
+                        agp_lines = ignore_comments(infile.readlines())
+
+                        # Split AGP buffer by chromosome entries
+                        agp_chromosome_dict = {}
+                        # For every AGP line
+                        for agp_line in agp_lines:
+                            chr_name = agp_line.split("\t")[0]
+                            # If the chromosome has not been added to our dict
+                            if chr_name not in agp_chromosome_dict:
+                                # Add the chromosome as a key with an empty
+                                # list as entry
+                                agp_chromosome_dict[chr_name] = []
+
+                            # Add the line by chromsome name in the dict
+                            agp_chromosome_dict[chr_name].append(agp_line)
+
+                        # For each chromosome and it's agp lines
+                        for chromosome_name in agp_chromosome_dict:
+                            # Create the chromosome in genomedata
+                            chromosome = create_chromosome(genome,
+                                                           chromosome_name,
+                                                           mode)
+                            # Read the assembly in to the chromosome entry in
+                            # genomedata
+                            read_assembly(chromosome,
+                                          agp_chromosome_dict[chromosome_name])
+
                     else:
                         for defline, seq in LightIterator(infile):
                             chromosome = create_chromosome(genome, defline, mode)

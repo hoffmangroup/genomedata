@@ -78,6 +78,15 @@ def maybe_gzip_open(filename, *args, **kwargs):
         return open(filename, *args, **kwargs)
 
 
+def peek_line(file_handle):
+    """ Returns the current line without advancing the file pointer """
+    current_position = file_handle.tell()
+    peeked_line = file_handle.readline()
+
+    file_handle.seek(current_position)
+    return peeked_line
+
+
 def init_num_obs(num_obs, continuous):
     curr_num_obs = continuous.shape[1]
     assert num_obs is None or num_obs == curr_num_obs
