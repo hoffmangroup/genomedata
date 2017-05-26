@@ -661,11 +661,14 @@ since being closed with genomedata-close-data.""")
         # self.end is the full length of the chromsome? need to check this -MMH
 
         # Sanitize the input
-        if isinstance(key, tuple):
-            base_key, track_key = key
-        else:
-            base_key = key
-            track_key = slice(None)  # All tracks
+        # if isinstance(key, tuple):
+        #     base_key, track_key = key
+        # else:
+        #     base_key = key
+        #     track_key = slice(None)  # All tracks
+
+        # Get the chromsomal base key and track key
+        base_key, track_key = self._get_base_and_track_key(key)
 
         # just like NumPy, direct indexing results in output shape
         # change (at end of method)
@@ -747,6 +750,66 @@ since being closed with genomedata-close-data.""")
         if base_direct_index:
             data = data[0]
         return data
+
+    def __setitem__(self, key, value):
+        if (not self.isopen or
+           self.h5file.mode != "r+"):  # r+ is the only open mode for writing
+            raise KeyError("Genomedata archive not opened for writing")
+
+        # XXX: Assume value is scalar for now. In future it should match
+        # dimensions in length for the key indexed and dimensions in height for
+        # the number of tracks specified and should raise a ValueError
+        # otherwise. e.g.
+        # ValueError: cannot copy sequence with size 2 to array axis with
+        # dimension 3
+
+        # Get the chromsomal base key and track key
+        base_key, track_key = self._get_base_and_track_key(key)
+
+        # Convert base key to slice for indexing
+        base_key = slice(*_key_to_tuple(base_key))
+
+        # >>> a = range(10)
+        # >>> a[1:1] = [42]
+        # >>> a
+        # [0, 42, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        # Get a list of supercontigs from our base key
+        supercontigs = self.supercontigs[base_key]
+
+        # For each supercontig
+        for supercontig in supercontigs:
+            # Ensure the chromosomal base indicies overlap with with the
+            # supercontig region
+            assert (base_key.start < supercontig.end and
+                    base_key.stop > supercontig.start)
+
+            # Cap the chromsomal coordinates to the supercontig start and end
+            # if necessary
+            chr_start = max(base_key.start, supercontig.start)
+            chr_end = min(base_key.stop, supercontig.end)
+
+            # Get the indexes for the underlying continuous data
+            supercontig_slice = slice(supercontig.project(chr_start),
+                                      supercontig.project(chr_end))
+
+            # try block? verbosity?
+            print("Writing:", value, "to ",
+                  supercontig.continuous[supercontig_slice])
+            # supercontig.continuous[supercontig_slice] = value[chr_start:chr_end]
+            supercontig.continuous[supercontig_slice] = value
+
+
+    # TODO: Move lower to other helper functions
+    def _get_base_and_track_key(self, key):
+        # Sanitize the input
+        if isinstance(key, tuple):
+            base_key, track_key = key
+        else:
+            base_key = key
+            track_key = slice(None)  # All tracks
+
+        return base_key, track_key
 
     def __str__(self):
         return str(self.name)
