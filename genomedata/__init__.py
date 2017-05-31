@@ -660,13 +660,6 @@ since being closed with genomedata-close-data.""")
         # XXX: I think this should no longer be a problem now that
         # self.end is the full length of the chromsome? need to check this -MMH
 
-        # Sanitize the input
-        # if isinstance(key, tuple):
-        #     base_key, track_key = key
-        # else:
-        #     base_key = key
-        #     track_key = slice(None)  # All tracks
-
         # Get the chromsomal base key and track key
         base_key, track_key = self._get_base_and_track_key(key)
 
@@ -756,13 +749,6 @@ since being closed with genomedata-close-data.""")
            self.h5file.mode != "r+"):  # r+ is the only open mode for writing
             raise KeyError("Genomedata archive not opened for writing")
 
-        # XXX: Assume value is scalar for now. In future it should match
-        # dimensions in length for the key indexed and dimensions in height for
-        # the number of tracks specified and should raise a ValueError
-        # otherwise. e.g.
-        # ValueError: cannot copy sequence with size 2 to array axis with
-        # dimension 3
-
         # Get the chromsomal base key and track key
         base_key, track_key = self._get_base_and_track_key(key)
 
@@ -844,7 +830,6 @@ since being closed with genomedata-close-data.""")
                                  self._name, base_key.start, base_key.stop))
 
 
-    # TODO: Move lower to other helper functions
     def _get_base_and_track_key(self, key):
         # Sanitize the input
         if isinstance(key, tuple):
