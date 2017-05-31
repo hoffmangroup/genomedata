@@ -773,8 +773,8 @@ since being closed with genomedata-close-data.""")
                 if any([(sorted_contigs[i].start - sorted_contigs[i-1].end) > 0
                         for i in range(1, num_supercontigs)]):
                     # Do not support writing between gaps in supercontigs
-                    raise ValueError("{} {} {} sequence does not overlap any "
-                                     "supercontig (nothing written)".format(
+                    raise ValueError("{} {} {} sequence overlaps gaps in"
+                                     "supercontigs (nothing written)".format(
                                          self._name,
                                          base_key.start,
                                          base_key.stop))
