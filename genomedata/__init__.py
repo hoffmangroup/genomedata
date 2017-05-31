@@ -769,35 +769,79 @@ since being closed with genomedata-close-data.""")
         # Convert base key to slice for indexing
         base_key = slice(*_key_to_tuple(base_key))
 
-        # >>> a = range(10)
-        # >>> a[1:1] = [42]
-        # >>> a
-        # [0, 42, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        # Convert track key to numbered list if necessary
+        if isinstance(track_key, (list, ndarray)):
+            track_key = array([self._index_continuous(item)
+                               for item in track_key])
 
         # Get a list of supercontigs from our base key
         supercontigs = self.supercontigs[base_key]
 
-        # For each supercontig
-        for supercontig in supercontigs:
-            # Ensure the chromosomal base indicies overlap with with the
-            # supercontig region
-            assert (base_key.start < supercontig.end and
-                    base_key.stop > supercontig.start)
+        num_supercontigs = len(supercontigs)
+        # If there is at least 1 supercontig
+        if num_supercontigs > 0:
+            # If there is more than 1 supercontig
+            if num_supercontigs > 1:
+                # If there is a gap between any supercontig
+                sorted_contigs = sorted(supercontigs, key=lambda c: c.start)
+                if any([(sorted_contigs[i-1].end - sorted_contigs[i].start) > 0
+                        for i in range(1, num_supercontigs)]):
+                    # Do not support writing between gaps in supercontigs
+                    raise ValueError("{} {} {} sequence does not overlap any "
+                                     "supercontig (nothing written)".format(
+                                         self._name,
+                                         base_key.start,
+                                         base_key.stop))
 
-            # Cap the chromsomal coordinates to the supercontig start and end
-            # if necessary
-            chr_start = max(base_key.start, supercontig.start)
-            chr_end = min(base_key.stop, supercontig.end)
+            # If the specified chromosomal base start index is before the
+            # first supercontig coordinate
+            first_supercontig = min(supercontigs, key=lambda s: s.start)
+            if base_key.start < first_supercontig.start:
+                # Do not support writing before the first supercontig
+                raise ValueError("{} {} {} sequence overlaps before beginning "
+                                 " of earliest supercontig (nothing "
+                                 "written)".format(
+                                     self._name,
+                                     base_key.start,
+                                     base_key.stop))
 
-            # Get the indexes for the underlying continuous data
-            supercontig_slice = slice(supercontig.project(chr_start),
-                                      supercontig.project(chr_end))
+            # If the the specified chrosomal end index is after the furtherst
+            # supercontig coordinate
+            furthest_supercontig = max(supercontigs, key=lambda s: s.end)
+            if base_key.stop > furthest_supercontig.end:
+                # Do not support writing before the first supercontig
+                raise ValueError("{} {} {} sequence overlaps after end of "
+                                 "furthest supercontig (nothing "
+                                 "written)".format(
+                                     self._name,
+                                     base_key.start,
+                                     base_key.stop))
 
-            # try block? verbosity?
-            print("Writing:", value, "to ",
-                  supercontig.continuous[supercontig_slice])
-            # supercontig.continuous[supercontig_slice] = value[chr_start:chr_end]
-            supercontig.continuous[supercontig_slice] = value
+            # For each supercontig
+            for supercontig in supercontigs:
+
+                # Ensure the chromosomal base indicies overlap with with the
+                # supercontig region
+                # XXX: This is the same as in read and this should be
+                # guaranteed at this point
+                assert (base_key.start < supercontig.end and
+                        base_key.stop > supercontig.start)
+
+                # Cap the chromsomal coordinates to the supercontig start and
+                # end if necessary
+                chr_start = max(base_key.start, supercontig.start)
+                chr_end = min(base_key.stop, supercontig.end)
+
+                # Get the indexes for the underlying continuous data
+                supercontig_slice = slice(supercontig.project(chr_start),
+                                          supercontig.project(chr_end))
+
+                # Write values to supercontig
+                supercontig.continuous[supercontig_slice, track_key] = value
+        else:
+            raise ValueError("{} {} {} sequence does not overlap any "
+                             "supercontig (nothing written)".format(
+                                 self._name, base_key.start, base_key.stop))
 
 
     # TODO: Move lower to other helper functions
