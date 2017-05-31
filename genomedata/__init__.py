@@ -791,11 +791,11 @@ since being closed with genomedata-close-data.""")
                                      base_key.start,
                                      base_key.stop))
 
-            # If the the specified chrosomal end index is after the furtherst
+            # If the specified chrosomal end index is after the furtherst
             # supercontig coordinate
             furthest_supercontig = max(supercontigs, key=lambda s: s.end)
             if base_key.stop > furthest_supercontig.end:
-                # Do not support writing before the first supercontig
+                # Do not support writing after the last supercontig
                 raise ValueError("{} {} {} sequence overlaps after end of "
                                  "furthest supercontig (nothing "
                                  "written)".format(
@@ -806,14 +806,14 @@ since being closed with genomedata-close-data.""")
             # For each supercontig
             for supercontig in supercontigs:
 
-                # Ensure the chromosomal base indicies overlap with with the
+                # Ensure the chromosomal base indicies overlap with the
                 # supercontig region
                 # XXX: This is the same as in read and this should be
                 # guaranteed at this point
                 assert (base_key.start < supercontig.end and
                         base_key.stop > supercontig.start)
 
-                # Cap the chromsomal coordinates to the supercontig start and
+                # Cap the chromosomal coordinates to the supercontig start and
                 # end if necessary
                 chr_start = max(base_key.start, supercontig.start)
                 chr_end = min(base_key.stop, supercontig.end)
