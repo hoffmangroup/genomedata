@@ -1,4 +1,5 @@
 1.3.7:
+* Genome: add ability to open archives for writing
 * genomedata-load-seq: fix assertion failure on argument parsing when loading
   fasta sequence (thanks to Kate Cook)
 * genomedata-load: fix agp files not being recognized from this entry point
