@@ -64,7 +64,11 @@ genomedata-report = genomedata._report:main
 genomedata-erase-data = genomedata._erase_data:main
 """
 
-install_requires = ["numpy", "forked-path", "tables>=3.0", "textinput"]
+# Exclude PyTables 3.4.1 - incorrect binary distribution causes core dumps
+# See:
+# https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
+install_requires = ["numpy", "forked-path", "tables>=3.0,!=3.4.1",
+                    "textinput"]
 
 arch = "_".join([system(), processor()])
 
