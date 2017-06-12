@@ -1,4 +1,4 @@
-1.3.7:
+1.4.0:
 * Genome: add ability to open archives for writing
 * genomedata-load-seq: fix assertion failure on argument parsing when loading
   fasta sequence (thanks to Kate Cook)
