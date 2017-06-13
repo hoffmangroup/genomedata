@@ -1,4 +1,5 @@
-1.3.7:
+1.4.0:
+* Genome: add ability to open archives for writing
 * genomedata-load-seq: AGP are now correctly loaded regardless of filename and
   may be concatenated together
 * genomedata-load-seq: fix assertion failure on argument parsing when loading
