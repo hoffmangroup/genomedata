@@ -44,6 +44,7 @@ class GenomedataTesterBase(unittest.TestCase):
         # Defaults
         # XXX: adding verbosity when unittest is run with verbosity would be useful
         self.verbose = False
+        self.write = True
         self.mode = "dir"
         self.tracks = {"vertebrate":
                        "chr1.phyloP44way.vertebrate.short.wigFix",
@@ -70,7 +71,15 @@ class GenomedataTesterBase(unittest.TestCase):
             self.fail("%r != %r" % (observed, expected))
 
     def test_interface(self):
-        with Genome(self.gdfilepath) as genome:
+        original_num_datapoints = 0
+        if self.write:
+            mode = "r+"
+        else:
+            mode = "r"
+
+        with Genome(self.gdfilepath, mode=mode) as genome:
+            original_num_datapoints = genome.num_datapoints
+
             self.assertTrue("chr1" in genome)
             self.assertFalse("chrZ" in genome)
 
@@ -119,12 +128,79 @@ class GenomedataTesterBase(unittest.TestCase):
             self.assertArraysEqual(chromosome[290, array([1, 0])],
                                    [-2.327, -2.297])
 
+
             # Test filling of unassigned continuous segments
             chromosome = genome["chrY"]
             # Get first supercontig
             for supercontig in chromosome:
                 break
             self.assertArraysEqual(supercontig.continuous[0, 2], nan)
+
+            # If we are testing writing to archives
+            if self.write:
+                # Test writing scalars to various indexing methods
+                chromosome = genome["chr1"]
+                # Test writing scalar to multiple tracks
+                chromosome[290] = 100.0
+                # Test writing scalar to tracks by named list
+                chromosome[291, ["placental", "primate", "vertebrate"]] = 101.0
+                # Test writing scalar to select tracks by named list
+                chromosome[292, ["placental", "vertebrate"]] = 102.0
+                # Test writing scalar to tracks by index
+                chromosome[293, [0, 2]] = 103.0
+                chromosome[294, [2, 0]] = 104.0
+
+                # Test writing arrays to various indexing methods
+                # Test writing an array to a single index
+                chromosome[295] = [105.0, 106.0, 107.0]
+                # Test writing a subarray to a index subset
+                chromosome[296, ["placental", "vertebrate"]] = [108.0, 109.0]
+
+                # Test removing datapoints by writing NaN
+                chromosome[297, ["primate"]] = nan
+
+                # Test writing around supercontig boundaries
+                # <Supercontig 'supercontig_0', [0:24950]>
+                # Test writing outside a supercontig
+                try:
+                    chromosome[300000] = 110.0
+                except ValueError:
+                    pass  # we expect a value error here
+
+                # Test writing overlap across supercontig to no supercontig
+                try:
+                    chromosome[24900:30000] = 111.0
+                except ValueError:
+                    pass  # we expect a value error here
+
+        # Check write output after closing if testing writes
+        if self.write:
+            # Close with newly written data
+            close_data(self.gdfilepath, verbose=self.verbose)
+            # Read data and verify new data and parameters
+            with Genome(self.gdfilepath) as genome:
+                chromosome = genome["chr1"]
+
+                self.assertArraysEqual(chromosome[290],
+                                       [100.0, 100.0, 100.0])
+                self.assertArraysEqual(chromosome[291],
+                                       [101.0, 101.0, 101.0])
+                self.assertArraysEqual(chromosome[292],  # L14 in primate wigFix
+                                       [102.0, 0.371, 102.0])
+                self.assertArraysEqual(chromosome[293],
+                                       [103.0, 0.372, 103.0])
+                self.assertArraysEqual(chromosome[294],
+                                       [104.0, 0.372, 104.0])
+                self.assertArraysEqual(chromosome[295],
+                                       [105.0, 106.0, 107.0])
+                self.assertArraysEqual(chromosome[296],
+                                       [108.0, -2.327, 109.0])
+                # Check if one datapoint was successfully removed
+                self.assertArraysEqual(original_num_datapoints,
+                                       [genome.num_datapoints[0],
+                                        genome.num_datapoints[1] + 1,
+                                        genome.num_datapoints[2]])
+
 
     def test_repr_str(self):
         genome = Genome(self.gdfilepath, mode="r")
