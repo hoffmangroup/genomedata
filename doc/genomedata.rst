@@ -264,9 +264,6 @@ or the following pipeline::
           glob filename in quotes to avoid having your shell expand the glob
           before it genomedata-load uses it (e.g. -s "chr*.agp.gz")
 
-.. warning:: 
-    AGP files cannot be combined into a single sequence file. The chromosome
-    name is inferred from the filename of the AGP file.
 .. warning::
    It is important that the sequence names (`chrY`, `chr1`) in the signal files
    match the sequence identifiers in the sequence files exactly.

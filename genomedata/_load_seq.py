@@ -13,6 +13,7 @@ import sys
 import warnings
 
 from argparse import ArgumentParser
+from collections import defaultdict
 
 from numpy import frombuffer, uint32
 from path import path
@@ -33,6 +34,7 @@ DNA_LETTERS_UNAMBIG = "ACGTacgt"
 
 SUPERCONTIG_NAME_FMT = "supercontig_%s"
 
+# https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/
 AGP_FIELDNAMES = ["object", "object_beg", "object_end", "part_number",
                   "component_type", "col6", "col7", "col8", "col9"]
 
@@ -254,9 +256,31 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
 
                 with maybe_gzip_open(filename) as infile:
                     if seqfile_type == "agp":
-                        name = path(filename).name.rpartition(".agp")[0]
-                        chromosome = create_chromosome(genome, name, mode)
-                        read_assembly(chromosome, infile)
+                        # Read the entire assembly into a buffer
+                        # Filter out comments
+                        agp_lines = ignore_comments(infile.readlines())
+
+                        # Split AGP buffer by chromosome entries
+                        agp_chromosome_buffer = defaultdict(list)
+                        # For every AGP line
+                        agp_object_index = AGP_FIELDNAMES.index("object")
+                        for agp_line in agp_lines:
+                            chr_name = agp_line.split("\t")[agp_object_index]
+
+                            # Add the line by chromsome name in the dict
+                            agp_chromosome_buffer[chr_name].append(agp_line)
+
+                        # For each chromosome and its agp lines
+                        for chromosome_name in agp_chromosome_buffer:
+                            # Create the chromosome in genomedata
+                            chromosome = create_chromosome(genome,
+                                                           chromosome_name,
+                                                           mode)
+                            # Read the assembly in to the chromosome entry in
+                            # genomedata
+                            read_assembly(chromosome,
+                                          agp_chromosome_buffer[chromosome_name])
+
                     else:
                         for defline, seq in LightIterator(infile):
                             chromosome = create_chromosome(genome, defline, mode)
