@@ -624,9 +624,11 @@ since being closed with genomedata-close-data.""")
         for start, supercontig in supercontigs:
             yield supercontig
 
-    def __check_region_inside_supercontigs(self, supercontigs, start, end):
-        """ Checks if the given region given by start and end overlap with
-        regions not covered by the given supercontigs """
+    def _check_region_inside_supercontigs(self, supercontigs, start, end):
+        """
+        Checks if the given region given by start and end overlap with
+        regions not covered by the given supercontigs
+        """
 
         num_supercontigs = len(supercontigs)
         # If there are no supercontigs
@@ -662,7 +664,7 @@ since being closed with genomedata-close-data.""")
                                      start,
                                      end))
 
-            # If the specified chrosomal end index is after the furthest
+            # If the specified chromosomal end index is after the furthest
             # supercontig coordinate
             last_supercontig = max(supercontigs, key=attrgetter("end"))
             if end > last_supercontig.end:
@@ -674,9 +676,11 @@ since being closed with genomedata-close-data.""")
                                      start,
                                      end))
 
-    def __get_base_and_track_key(self, key):
-        """ Takes a given key indexed into a chromsome and splits the key into
-        a base and track key if necessary """
+    def _get_base_and_track_key(self, key):
+        """
+        Takes a given key indexed into a chromsome and splits the key into
+        a base and track key if necessary
+        """
         # Sanitize the input
         if isinstance(key, tuple):
             base_key, track_key = key
