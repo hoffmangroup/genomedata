@@ -84,7 +84,6 @@ def maybe_gzip_open(filename, *args, **kwargs):
     else:
         return open(filename, *args, **kwargs)
 
-
 def init_num_obs(num_obs, continuous):
     curr_num_obs = continuous.shape[1]
     assert num_obs is None or num_obs == curr_num_obs
