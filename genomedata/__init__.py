@@ -728,7 +728,7 @@ since being closed with genomedata-close-data.""")
         # self.end is the full length of the chromsome? need to check this -MMH
 
         # Get the chromosomal base key and track key
-        base_key, track_key = self.__get_base_and_track_key(key)
+        base_key, track_key = self._get_base_and_track_key(key)
 
         # just like NumPy, direct indexing results in output shape
         # change (at end of method)
@@ -817,7 +817,7 @@ since being closed with genomedata-close-data.""")
             raise IOError("Genomedata archive not opened for writing")
 
         # Split the given key to its chromosomal and track key
-        base_key, track_key = self.__get_base_and_track_key(key)
+        base_key, track_key = self._get_base_and_track_key(key)
 
         # Convert base key to slice for indexing
         base_key = slice(*_key_to_tuple(base_key))
@@ -831,7 +831,7 @@ since being closed with genomedata-close-data.""")
         supercontigs = self.supercontigs[base_key]
 
         # Check if the given region overlaps with any gap in the assembly
-        self. __check_region_inside_supercontigs(supercontigs,
+        self._check_region_inside_supercontigs(supercontigs,
                                                  base_key.start,
                                                  base_key.stop)
 
