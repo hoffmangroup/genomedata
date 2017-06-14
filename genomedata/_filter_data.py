@@ -25,48 +25,35 @@ def filter_data(gd_filename, track_names, filter_filename,
 
     # Open the archive for reading and writing
     with Genome(gd_filename, mode="r+") as genome, \
-         maybe_gzip_open(filter_filename) as filter_file:
+            maybe_gzip_open(filter_filename) as filter_file:
 
-        # If track names were specified
-        if track_names:
-            if is_verbose:
+        # Create NaN mask based on number of tracks to filter
+        num_filter_tracks = len(track_names)
+        nan_mask = np.full(num_filter_tracks, np.nan)
+
+        if is_verbose:
+            if track_names:
                 print("Filtering tracks: ", track_names)
-            # Get track indexes based on given track names
-            track_indexes = [genome.index_continuous(track_name) for track_name
-                             in track_names]
-        # Otherwise
-        else:
-            if is_verbose:
+            else:
                 print("Filtering all tracks: ", genome.tracknames_continuous)
-            # Get all track indexes
-            track_indexes = range(genome.num_tracks_continuous)
-
-        # Create NaN mask based on number of tracks
-        nan_mask = np.full(len(track_indexes), np.nan)
 
         # For every chromosome and filter region
         for chromosome_name, filter_start, filter_end in \
-        get_next_genomic_filter_region(filter_file, filter_threshold):
+                get_next_genomic_filter_region(filter_file, filter_threshold):
 
             if is_verbose:
                 print("Filtering out region: ", chromosome_name, filter_start,
                       filter_end)
 
-            # XXX: Check if start < end?
-            filter_region = slice(filter_start, filter_end)
+            # Mask out filter region with NaNs
             chromosome = genome[chromosome_name]
-
-            # Get list of supercontigs from region
-            supercontigs = chromosome.supercontigs[filter_region]
-            for supercontig in supercontigs:
-                # Write in NaNs in region based on track indexes
-                supercontig.continuous[filter_region, track_indexes] = nan_mask
+            chromosome[filter_start:filter_end, track_names] = nan_mask
 
 
 def get_filter_filetype(filter_filename):
     if filter_filename.endswith("bed"):
         return BED_FILETYPE
-    
+
     # No filetype detected
     return None
 
