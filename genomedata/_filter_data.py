@@ -1,5 +1,8 @@
 from __future__ import print_function
 import argparse
+from functools import partial
+import operator
+from re import match
 import sys
 
 from . import __version__
@@ -11,12 +14,32 @@ import numpy as np
 BED_FILETYPE = "bed"
 WIGGLE_FILETYPE = "wig"
 
+# NB: operator.op(a,b) is the same as "a op b"
+# These operators are partially evaluated with the 'a' value being checked
+# against
+# E.g. filter out all values <0.5, where the value being considered is "b"
+# Return a function where b<0.5 is true or 0.5>b is true
+FILTER_OPERATORS = {
+    ">=": operator.le,
+    ">": operator.lt,
+    "<=": operator.ge,
+    "<": operator.gt,
+    "==": operator.eq,
+    "=": operator.eq,
+    "!=": operator.ne,
+    "~": operator.ne,
+}
+
 
 def filter_data(gd_filename, track_names, filter_filename,
-                filter_threshold=None, is_verbose=False):
+                filter_threshold=None, verbose=False):
+
+    # TODO: Make filter_threshold a function that takes the current value under
+    # consideration, where if it evaluates to true, the value given is filtered
+    # out
 
     # Get the genomic file type of the filter
-    filter_filetype = get_filter_filetype()
+    filter_filetype = get_filter_filetype(filter_filename)
     # If no filetype is detected or supported
     if not filter_filetype:
         # Report an error
@@ -31,7 +54,7 @@ def filter_data(gd_filename, track_names, filter_filename,
         num_filter_tracks = len(track_names)
         nan_mask = np.full(num_filter_tracks, np.nan)
 
-        if is_verbose:
+        if verbose:
             if track_names:
                 print("Filtering tracks: ", track_names)
             else:
@@ -41,7 +64,7 @@ def filter_data(gd_filename, track_names, filter_filename,
         for chromosome_name, filter_start, filter_end in \
                 get_next_genomic_filter_region(filter_file, filter_threshold):
 
-            if is_verbose:
+            if verbose:
                 print("Filtering out region: ", chromosome_name, filter_start,
                       filter_end)
 
@@ -58,11 +81,35 @@ def get_filter_filetype(filter_filename):
     return None
 
 
-def get_next_genomic_filter_region(filter_file_handle):
+def get_next_genomic_filter_region(filter_file_handle, filter_threshold):
     # Assume BED3 for now
     for line in filter_file_handle:
         fields = line.split("\t")
         yield fields[0], int(fields[1]), int(fields[2].rstrip())
+
+
+def parse_filter_option(filter_option):
+    """Gets a operator/value combination as a string and returns a function
+    that performs the specified operation (e.g. '>=0.3')
+    """
+    # Get the value and the operator from the filter string given from options
+    re_match = match(r"(?P<operator>\W+)\s*(?P<value>\d+(.\d+)?)",
+                     filter_option)
+    if not re_match:
+        raise ValueError("Could not understand the filter option of "
+                         "'{}'".format(filter_option))
+
+    filter_operator = re_match.group("operator")
+    filter_value = re_match.group("value")
+
+    try:
+        filter_function = partial(FILTER_OPERATORS[filter_operator],
+                                  filter_value)
+    except KeyError:
+        raise ValueError("The operator {} is not understood or "
+                         "supported".format(filter_operator))
+
+    return filter_function
 
 
 def main():
@@ -77,9 +124,14 @@ def main():
     parser.add_argument("-t", "--trackname", nargs="+",
                         help="Track(s) to be filtered (default: all)")
     # TODO: Use a threshold string (e.g. ">=0.4") as a parameter and parse
-    parser.add_argument("--threshold", default=None, type=float,
-                        help="Filter all values less than or equal to a "
-                        "specified threshold value (default: no threshold)")
+    # parser.add_argument("--threshold", default=none, type=float,
+    #                     help="filter all values less than or equal to a "
+    #                     "specified threshold value (default: no threshold)")
+    parser.add_argument("--filter",
+                        help="Specify a comparison operation on a value to "
+                        "filter out (e.g. \"<=0.5\") (default: all values "
+                        "filtered)")
+
     parser.add_argument("--verbose", default=False, action="store_true",
                         help="Print status and diagnostic messages")
 
@@ -88,10 +140,14 @@ def main():
     gd_filename = args.gdarchive
     track_names = args.trackname
     filter_filename = args.filterfile
-    filter_threshold = args.threshold
+    # filter_threshold = args.threshold
+    # If a filter was specified
+    if args.filter:
+        # Parse the given string to get a filter function
+        filter_function = parse_filter_string(args.filter)
     is_verbose = args.verbose
 
-    filter_data(gd_filename, track_names, filter_filename, filter_threshold,
+    filter_data(gd_filename, track_names, filter_filename, filter_function,
                 is_verbose)
 
 
