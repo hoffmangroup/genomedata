@@ -7,7 +7,7 @@ import sys
 
 from . import __version__
 from _close_data import write_genome_metadata
-from _util import maybe_gzip_open
+from _util import EXT_GZ, maybe_gzip_open
 from _filter_data_parsers import get_bed_filter_region, get_wig_filter_region
 
 from genomedata import Genome
@@ -87,7 +87,7 @@ def get_filter_filetype(filter_filename):
     filename = filter_filename
     filter_filetype = None
 
-    if filter_filename.endswith(".gz"):
+    if filter_filename.endswith("." + EXT_GZ):
         # Find the extension before gzip extension
         filename = filter_filename[:-3]  # Remove ".gz"
 

@@ -7,15 +7,10 @@ from __future__ import absolute_import, division, print_function
 from contextlib import closing
 from gzip import open as _gzip_open
 from os import extsep
-import struct
 import sys
 
 from numpy import array, empty
 from tables import Filters
-
-BIG_WIG_FIELD_COUNT = 4
-BIG_WIG_SIGNATURE = 0x888FFC26
-BIG_WIG_SIGNATURE_BYTE_SIZE = 4
 
 FILTERS_GZIP = Filters(complevel=1)
 
@@ -92,24 +87,6 @@ def new_extrema(func, data, extrema):
     curr_extrema = func(data, 0)
 
     return func([extrema, curr_extrema], 0)
-
-
-def is_big_wig(filename):
-    """ Checks that the given filename refers to a valid bigWig file """
-    with open(filename, "rb") as big_wig_file:
-        signature_string = big_wig_file.read(BIG_WIG_SIGNATURE_BYTE_SIZE)
-
-    # unpack returns a tuple regardless of length
-    # the kent reference checks both little endian and big endian packing
-    # of the 4 byte signature
-    little_endian_signature = struct.unpack("<L", signature_string)[0]
-    big_endian_signature = struct.unpack(">L", signature_string)[0]
-
-    if (little_endian_signature == BIG_WIG_SIGNATURE or
-       big_endian_signature == BIG_WIG_SIGNATURE):
-        return True
-
-    return False
 
 
 def ignore_comments(iterable):
