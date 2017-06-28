@@ -7,8 +7,6 @@ from __future__ import absolute_import, division, print_function
 from contextlib import closing
 from gzip import open as _gzip_open
 from os import extsep
-from pybedtools import BedTool
-from pybedtools.contrib.bigwig import bigwig_to_bedgraph
 import struct
 import sys
 
@@ -96,40 +94,6 @@ def new_extrema(func, data, extrema):
     return func([extrema, curr_extrema], 0)
 
 
-def get_float_from_filter_score(score):
-    try:
-        result = float(score)
-    except ValueError:
-        print("Found ", score, "in filter value, could not convert to a "
-              "number")
-        raise
-    return result
-        
-
-def score_filter(bed_interval, threshold):
-    """ Returns true or false if the given  BED interval object
-    (pybedtools.Interval) if the value assigned to that interval is greater
-    or equal to the threshold given. Attempts to work with both a properly
-    formatted bigWig and BED file """
-    # NB: a bigwig file will have the "score" in the 4th field while a
-    # regular bed file will have it's score in it's normal 5th field
-
-    bed_interval_field_count = len(bed_interval.fields)
-    # If there are only 4 fields (bigWig or a bedGraph)
-    # Attempt to only use the 4th field for the score to compare against
-    if bed_interval_field_count == BIG_WIG_FIELD_COUNT:
-        score = get_float_from_filter_score(bed_interval[BIG_WIG_FIELD_COUNT-1])
-    # If there are more fields than a bedGraph, assume a bed format
-    elif bed_interval_field_count > BIG_WIG_FIELD_COUNT:
-        score = get_float_from_filter_score(bed_interval.score)
-    # Otherwise if there are too few fields
-    else:
-        # Raise an error with an appropriate message
-        raise ValueError("No value for a threshold found in filter file")
-
-    return score >= threshold
-
-
 def is_big_wig(filename):
     """ Checks that the given filename refers to a valid bigWig file """
     with open(filename, "rb") as big_wig_file:
@@ -146,17 +110,6 @@ def is_big_wig(filename):
         return True
 
     return False
-
-
-def get_bed_from_track_file(filename):
-    """ Returns a pybedtools.BedTool object from a given filename. Attempts to
-    automatically detect the bigWig format and convert"""
-    # If the file is a bigWig
-    if is_big_wig(filename):
-        return bigwig_to_bedgraph(filename)
-    # Otherwise read in normal bed file
-    else:
-        return BedTool(filename)
 
 
 def ignore_comments(iterable):

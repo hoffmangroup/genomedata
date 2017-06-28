@@ -84,9 +84,6 @@ def filter_data(gd_filename, filter_filename, track_names=None,
 
 
 def get_filter_filetype(filter_filename):
-    # extension_regex = "\.(?P<extension>\w+)(\.gz)?$"
-    # or use splitext from os.path
-
     filename = filter_filename
     filter_filetype = None
 
