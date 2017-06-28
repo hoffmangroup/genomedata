@@ -25,11 +25,13 @@ from genomedata._load_data import load_data
 from genomedata._close_data import close_data
 from genomedata._erase_data import erase_data
 from genomedata._filter_data import filter_data
+from genomedata._open_data import open_data
 
 test_filename = lambda filename: os.path.join("data", filename)
 
 DEFAULT_TRACK_FILTER_THRESHOLD = 0.5
 UNFILTERED_TRACKNAME = "zunfiltered"
+UNFILTERED_TRACK_FILENAME = "unfiltered.bed"
 
 def seq2str(seq):
     return seq.tostring().lower()
@@ -49,9 +51,8 @@ class GenomedataTesterBase(unittest.TestCase):
         self.tracks = {"vertebrate":
                        "chr1.phyloP44way.vertebrate.short.wigFix",
                        "placental": "chr1.phyloP44way.placental.short.wigFix",
-                       "primate": "chr1.phyloP44way.primate.short.wigFix",
-                       UNFILTERED_TRACKNAME: "unfiltered.bed"} # Set as last track
-                       # }
+                       "primate": "chr1.phyloP44way.primate.short.wigFix"}
+        # UNFILTERED_TRACKNAME: "unfiltered.bed"} # Set as last track
         # Track to be added by test_add_track
         self.new_track = ("dnase", "chr1.wgEncodeDukeDNaseSeqBase"
                           "OverlapSignalK562V2.wig")
@@ -331,53 +332,31 @@ class GenomedataTester(GenomedataTesterBase):
                                    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0])
 
     def test_filter_track(self):
-        filter_data(self.gdfilepath, UNFILTERED_TRACKNAME,
-                    test_filename(self.filter), self.filter_threshold,
+        # Add filter track
+        open_data(self.gdfilepath, [UNFILTERED_TRACKNAME],
+                  verbose=self.verbose)
+        load_data(self.gdfilepath, UNFILTERED_TRACKNAME,
+                  test_filename(UNFILTERED_TRACK_FILENAME),
+                  verbose=self.verbose)
+        close_data(self.gdfilepath, verbose=self.verbose)
+
+        # Perform filtering on data
+        filter_data(self.gdfilepath, test_filename(self.filter),
+                    [UNFILTERED_TRACKNAME],
+                    lambda x: x < self.filter_threshold,
                     verbose=self.verbose)
 
         # Make sure filtering was successful
         genome = Genome(self.gdfilepath)
         with genome:
-            self.assertArraysEqual(genome["chr1"][98:102, UNFILTERED_TRACKNAME],
+            self.assertArraysEqual(genome["chr1"][0:4, UNFILTERED_TRACKNAME],
                                    [nan, nan, nan, nan])
             self.assertArraysEqual(genome["chr1"][128:132, UNFILTERED_TRACKNAME],
+                                   [nan, nan, 0.5, 0.5])
+            self.assertArraysEqual(genome["chr1"][168:172, UNFILTERED_TRACKNAME],
+                                   [0.9, 0.9, nan, nan])
+            self.assertArraysEqual(genome["chr1"][206:210, UNFILTERED_TRACKNAME],
                                    [nan, nan, nan, nan])
-            self.assertArraysEqual(genome["chr1"][129:131, UNFILTERED_TRACKNAME],
-                                   [nan, 0.5, 0.5])
-            self.assertArraysEqual(genome["chr1"][139:141, UNFILTERED_TRACKNAME],
-                                   [0.5, 0.2, 0.2])
-            self.assertArraysEqual(genome["chr1"][149:151, UNFILTERED_TRACKNAME],
-                                   [0.2, 0.6, 0.6])
-            self.assertArraysEqual(genome["chr1"][159:161, UNFILTERED_TRACKNAME],
-                                   [0.6, 0.9, 0.9])
-            self.assertArraysEqual(genome["chr1"][169:171, UNFILTERED_TRACKNAME],
-                                   [0.9, nan, nan])
-            self.assertArraysEqual(genome["chr1"][200:202, UNFILTERED_TRACKNAME],
-                                   [nan, nan, nan])
-        #     # Check unfiltered portion of the track
-        #     if self.filter:
-        #         self.assertArraysEqual(genome["chr1"][200:221, new_track_name],
-        #                                [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
-        #                                 0.8, 0.9, 1, 0.9, 0.8, 0.7, 0.6, 0.5,
-        #                                 0.4, 0.3, 0.2, 0.1, 0])
-        #
-        # # If there's a filter
-        # if self.filter:
-        #     # Filter
-        #     filter_data(self.gdfilepath, new_track_name,
-        #                 test_filename(self.filter), self.filter_threshold,
-        #                 verbose=self.verbose)
-        #
-        #     # Check filtered portion of genomedata
-        #     genome = Genome(self.gdfilepath)
-        #
-        #     # Check unfiltered portion of the track
-        #     if self.filter:
-        #         self.assertArraysEqual(genome["chr1"][200:221, new_track_name],
-        #                                [nan, nan, nan, 0.3, 0.4, 0.5, 0.6, 0.7,
-        #                                 0.8, 0.9, 1, nan, nan, 0.7, 0.6, 0.5,
-        #                                 0.4, 0.3, 0.2, 0.1, nan])
-        #
 
 
     def test_delete_tracks(self):

@@ -159,6 +159,10 @@ def get_bed_from_track_file(filename):
         return BedTool(filename)
 
 
+def ignore_comments(iterable):
+    return (item for item in iterable if not item.startswith("#"))
+
+
 def main(args=sys.argv[1:]):
     pass
 

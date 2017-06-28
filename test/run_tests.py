@@ -50,11 +50,18 @@ class TestGenomedataFile(test_genomedata.GenomedataTester):
         self.mode = "file"
 
 
+class TestFilterWigFixed(test_genomedata.GenomedataTester):
+    def init(self):
+        self.mode = "file"
+        self.filter = "filter_fixed.wig"
+
+
 class TestParseWigVar(test_genomedata.GenomedataTester):
     def init(self):
         self.mode = "file"
         self.new_track = ("dnase", "wgEncodeDukeDNaseSeqBase"
                           "OverlapSignalK562V2.wigVar")
+        self.filter = "filter_variable.wig.gz"
 
 
 class TestParseBed(test_genomedata.GenomedataTester):

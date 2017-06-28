@@ -131,11 +131,17 @@ def write_metadata(chromosome, verbose=False):
     chromosome_attrs.num_datapoints = num_datapoints
     chromosome_attrs.dirty = False
 
+
+def write_genome_metadata(genome, verbose):
+    for chromosome in genome:
+        if chromosome.attrs.dirty:
+            write_metadata(chromosome, verbose=verbose)
+
+
 def close_data(gdfilename, verbose=False):
     with Genome(gdfilename, mode="r+") as genome:
-        for chromosome in genome:
-            if chromosome.attrs.dirty:
-                write_metadata(chromosome, verbose=verbose)
+        write_genome_metadata(genome, verbose)
+
 
 def parse_options(args):
     description = ("Compute summary statistics for data in Genomedata archive"
@@ -153,6 +159,7 @@ def parse_options(args):
     args = parser.parse_args(args)
 
     return args
+
 
 def main(argv=sys.argv[1:]):
     args = parse_options(argv)
