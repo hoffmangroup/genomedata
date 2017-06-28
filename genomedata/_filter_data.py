@@ -145,7 +145,7 @@ def parse_filter_option(filter_option):
 
 def main():
     description = ("Filter TRACKNAME(s) from a genomedata archive with "
-                   "FILTERFILE using an optional give threshold value.")
+                   "FILTERFILE using an optional filter operator.")
     parser = argparse.ArgumentParser(description=description,
                                      prog="genomedata-filter-data",
                                      version=__version__)
@@ -160,7 +160,7 @@ def main():
                         "than 0.5) (default: all values filtered)")
     parser.add_argument("--no-close", default=False, action="store_true",
                         help="Do not close the genomedata archive after "
-                        "filtering.")
+                        "filtering")
     parser.add_argument("--dry-run", default=False, action="store_true",
                         help="Do not perform any filtering. Useful with "
                         "verbosity set to see what regions would be filtered")
