@@ -202,6 +202,19 @@ without any tracks, however, using the following pipeline:
 .. versionadded:: 1.2
    The ability to create an archive without any data tracks.
 
+Additionally, any tracks loaded may be have portions of their data removed from
+the archive by filtering the specified data tracks. This can be done anytime
+after loading in data and unless specified otherwise will automatically close
+the archive as well. A track can be loaded and filtered with the following
+pipeline:
+
+1. :ref:`genomedata-open-data`
+#. :ref:`genomedata-load-data`
+#. :ref:`genomedata-filter-data`
+
+.. versionadded:: 1.4
+   The ability to filter data tracks.
+
 .. note:: A call to :program:`h5repack` after
           :ref:`genomedata-close-data` may be used to
           transparently compress the data.
@@ -518,6 +531,41 @@ allowing data for those tracks to be loaded with :ref:`genomedata-load-data`.
       --trackname TRACKNAME [TRACKNAME ...]
                             tracknames to open
       --verbose             Print status updates and diagnostic messages
+
+
+.. _genomedata-filter-data:
+
+genomedata-filter-data
+--------------------
+
+This command filters out regions from tracks in the Genomedata archive.
+
+::
+
+    usage: genomedata-filter-data [-h] [-v] [-t TRACKNAME [TRACKNAME ...]]
+                                  [--filter FILTER] [--no-close] [--dry-run]
+                                  [--verbose]
+                                  filterfile gdarchive
+
+    Filter TRACKNAME(s) from a genomedata archive with FILTERFILE using an
+    optional filter operator.
+
+    positional arguments:
+      filterfile            filter file
+      gdarchive             genomedata archive
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
+      -t TRACKNAME [TRACKNAME ...], --trackname TRACKNAME [TRACKNAME ...]
+                            Track(s) to be filtered (default: all)
+      --filter FILTER       Specify a comparison operation on a value to filter
+                            out (e.g. "<0.5" will remove all values less than 0.5)
+                            (default: all values filtered)
+      --no-close            Do not close the genomedata archive after filtering.
+      --dry-run             Do not perform any filtering. Useful with verbosity
+                            set to see what regions would be filtered
+      --verbose             Print status and diagnostic messages
 
 
 .. _genomedata-load-data:
