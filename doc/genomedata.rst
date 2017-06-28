@@ -39,6 +39,9 @@ CentOS/RHEL/Fedora::
 OpenSUSE::
 
     sudo zypper in hdf5 hdf5-devel libhdf5
+    
+If HDF5 has been installed from source, set the HDF5_DIR environment variable to the
+directory where it was installed.
 
 Installing Numpy
 -------------------
