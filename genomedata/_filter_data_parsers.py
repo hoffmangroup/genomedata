@@ -7,6 +7,13 @@ from ._util import ignore_comments
 WIG_VARIABLE_STEP_DEFINITION = "variableStep"
 WIG_FIXED_STEP_DEFINITION = "fixedStep"
 WIG_DEFAULT_SPAN_VALUE = 1
+WIG_VARIABLE_START_INDEX = 0
+WIG_VARIABLE_VALUE_INDEX = 1
+
+BED_CHROM_NAME_FIELD_INDEX = 0
+BED_START_FIELD_INDEX = 1
+BED_END_FIELD_INDEX = 2
+BED_SCORE_FIELD_INDEX = 4
 
 
 def passes_filter(filter_function, value):
@@ -19,8 +26,8 @@ def passes_filter(filter_function, value):
 
 
 def get_wiggle_span(span):
-    """If the span exists, return it's value otherwise return the default span
-    for the wiggle format (1)"""
+    """If the span exists, return its value otherwise return the default span
+    for the wiggle format (default 1)"""
     if span:
         return int(span)
     else:
@@ -42,7 +49,7 @@ def get_bed_filter_region(filter_file_handle, filter_function):
             # Read a score from the BED line
             try:
                 # If the score cannot be understood
-                score = float(fields[4])
+                score = float(fields[BED_SCORE_FIELD_INDEX])
             except:
                 # Raise an error
                 raise ValueError("Could not understand filter score from BED "
@@ -53,16 +60,19 @@ def get_bed_filter_region(filter_file_handle, filter_function):
         # If the score passes the filter or there is no filter or score
         if valid_line:
             # Return the result
-            yield fields[0], int(fields[1]), int(fields[2].rstrip())
+            yield (fields[BED_CHROM_NAME_FIELD_INDEX],
+                   int(fields[BED_START_FIELD_INDEX]),
+                   int(fields[BED_END_FIELD_INDEX].rstrip()))
 
 
 def get_wig_filter_region(filter_file_handle, filter_function):
     # See http://genome.ucsc.edu/goldenPath/help/wiggle.html as reference
+    current_span = WIG_DEFAULT_SPAN_VALUE
+    # XXX: These initial settings should be irrelevant
     current_wig_definition = WIG_VARIABLE_STEP_DEFINITION
     current_start = 0
-    current_span = 1
     current_step = 1
-    current_chromosome = "chr1"  # This default should not matter
+    current_chromosome = "chr1"
 
     # variableStep chrom=chrN [span=windowSize]
     variable_definition_regex = re.compile(WIG_VARIABLE_STEP_DEFINITION +
@@ -85,8 +95,8 @@ def get_wig_filter_region(filter_file_handle, filter_function):
             if current_wig_definition == WIG_VARIABLE_STEP_DEFINITION:
                 # Get start coordinate and value
                 line_items = line.split()
-                current_start = int(line_items[0])
-                value = float(line_items[1])
+                current_start = int(line_items[WIG_VARIABLE_START_INDEX])
+                value = float(line_items[WIG_VARIABLE_VALUE_INDEX])
 
                 # If a filter exists and the value passes the filter
                 if passes_filter(filter_function, value):
@@ -123,7 +133,7 @@ def get_wig_filter_region(filter_file_handle, filter_function):
                 new_span = re_match.group("span")
                 # If a span was defined
                 # Update the current span
-                # Otherwise set the default (1)
+                # Otherwise set the default
                 current_span = get_wiggle_span(new_span)
 
             # If the current definition line is fixed step

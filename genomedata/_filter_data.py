@@ -2,6 +2,7 @@ from __future__ import print_function
 import argparse
 from functools import partial
 import operator
+from os.path import splitext
 from re import match
 import sys
 
@@ -84,18 +85,19 @@ def filter_data(gd_filename, filter_filename, track_names=None,
 
 
 def get_filter_filetype(filter_filename):
-    filename = filter_filename
+    filename = filter_filename.lower()
     filter_filetype = None
 
-    if filter_filename.endswith("." + EXT_GZ):
+    root_filename, file_extension = splitext(filename)
+    if file_extension == "." + EXT_GZ:
         # Find the extension before gzip extension
-        filename = filter_filename[:-3]  # Remove ".gz"
+        root_filename, file_extension = splitext(root_filename)
 
-    if filename.endswith("bed"):
+    if file_extension == ".bed":
         filter_filetype = BED_FILETYPE
-    elif (filename.endswith("wg") or
-          filename.endswith("wig") or
-          filename.endswith("wigVar")):
+    elif (file_extension == ".wg" or
+          file_extension == ".wig" or
+          file_extension == ".wigVar"):
         filter_filetype = WIGGLE_FILETYPE
 
     # If no known filetype detected
