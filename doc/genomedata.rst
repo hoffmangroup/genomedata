@@ -39,6 +39,9 @@ CentOS/RHEL/Fedora::
 OpenSUSE::
 
     sudo zypper in hdf5 hdf5-devel libhdf5
+    
+If HDF5 has been installed from source, set the HDF5_DIR environment variable to the
+directory where it was installed.
 
 Installing Numpy
 -------------------
@@ -266,6 +269,9 @@ or the following pipeline::
 
 .. note:: chr1.fa and chrY.fa.gz could also be combined into a single
           sequence file with two sequences.
+.. note:: If using a glob syntax for your sequence files, remember to put the
+          glob filename in quotes to avoid having your shell expand the glob
+          before it genomedata-load uses it (e.g. -s "chr*.agp.gz")
 
 .. warning::
    It is important that the sequence names (`chrY`, `chr1`) in the signal files
@@ -768,7 +774,8 @@ Support
 To stay informed of **new releases**, subscribe to the moderated
 ``genomedata-announce`` mailing list (mail volume very low):
 
-  https://mailman2.u.washington.edu/mailman/listinfo/genomedata-announce
+  https://listserv.utoronto.ca/cgi-bin/wa?A0=genomedata-announce-l
+  
 
 For **discussion and questions** about the use of the Genomedata system,
 there is a ``genomedata-users`` mailing list:

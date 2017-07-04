@@ -27,7 +27,7 @@ from subprocess import CalledProcessError, check_call
 # XXX: Find a way to implement a central version number without importing the
 # genomedata module
 #from genomedata import __version__
-__version__ = "1.3.6"
+__version__ = "1.4.0"
 
 if sys.version_info[0] != 2 or sys.version_info[1] < 7:
     print("Genomedata requires Python version 2.7+")
@@ -64,7 +64,11 @@ genomedata-report = genomedata._report:main
 genomedata-erase-data = genomedata._erase_data:main
 """
 
-install_requires = ["numpy", "forked-path", "tables>=3.0", "textinput"]
+# Exclude PyTables 3.4.1 - incorrect binary distribution causes core dumps
+# See:
+# https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
+install_requires = ["numpy", "forked-path", "tables>=3.0,!=3.4.1",
+                    "textinput"]
 
 arch = "_".join([system(), processor()])
 

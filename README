@@ -3,17 +3,9 @@
 ============
 by Michael Hoffman <michael.hoffman at utoronto dot ca>
 
-.. image:: https://drone.io/bitbucket.org/hoffmanlab/genomedata/status.png
-    :target: https://drone.io/bitbucket.org/hoffmanlab/genomedata/latest
-    :alt: Build Status
-
-.. image:: https://pypip.in/version/genomedata/badge.png
+.. image:: https://img.shields.io/pypi/v/genomedata.png
     :target: https://pypi.python.org/pypi/genomedata/
     :alt: Latest Version
-
-.. image:: https://pypip.in/download/genomedata/badge.png
-    :target: https://pypi.python.org/pypi/genomedata/
-    :alt: Downloads
 
 Description
 ===========

@@ -16,7 +16,7 @@ Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 """
 
-__version__ = "1.3.6"
+__version__ = "1.3.7"
 
 
 import sys
@@ -25,6 +25,7 @@ import tables
 from functools import partial
 from numpy import (add, amin, amax, append, array, empty, float32, inf,
                    nan, ndarray, square, uint8)
+from operator import attrgetter
 from os import extsep
 from path import path
 from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
@@ -623,6 +624,72 @@ since being closed with genomedata-close-data.""")
         for start, supercontig in supercontigs:
             yield supercontig
 
+    def _check_region_inside_supercontigs(self, supercontigs, start, end):
+        """
+        Checks if the given region given by start and end overlap with
+        regions not covered by the given supercontigs
+        """
+
+        num_supercontigs = len(supercontigs)
+        # If there are no supercontigs
+        if num_supercontigs == 0:
+            raise ValueError("{} {} {} sequence does not overlap any "
+                             "supercontig (nothing written)".format(
+                                 self._name, start, end))
+
+        # If there is at least 1 supercontig
+        elif num_supercontigs > 0:
+            # If there is more than 1 supercontig
+            if num_supercontigs > 1:
+                # If there is a gap between any given supercontig
+                sorted_contigs = sorted(supercontigs, key=attrgetter("start"))
+                if any(((sorted_contigs[i].start - sorted_contigs[i-1].end) > 0
+                        for i in range(1, num_supercontigs))):
+                    # Do not support writing between gaps in supercontigs
+                    raise ValueError("{} {} {} sequence overlaps gaps in"
+                                     "supercontigs (nothing written)".format(
+                                         self._name,
+                                         start,
+                                         end))
+
+            # If the specified chromosomal base start index is before the
+            # first supercontig coordinate
+            first_supercontig = min(supercontigs, key=attrgetter("start"))
+            if start < first_supercontig.start:
+                # Do not support writing before the first supercontig
+                raise ValueError("{} {} {} sequence overlaps before beginning "
+                                 " of earliest supercontig (nothing "
+                                 "written)".format(
+                                     self._name,
+                                     start,
+                                     end))
+
+            # If the specified chromosomal end index is after the furthest
+            # supercontig coordinate
+            last_supercontig = max(supercontigs, key=attrgetter("end"))
+            if end > last_supercontig.end:
+                # Do not support writing after the last supercontig
+                raise ValueError("{} {} {} sequence overlaps after end of "
+                                 "furthest supercontig (nothing "
+                                 "written)".format(
+                                     self._name,
+                                     start,
+                                     end))
+
+    def _get_base_and_track_key(self, key):
+        """
+        Takes a given key indexed into a chromsome and splits the key into
+        a base and track key if necessary
+        """
+        # Sanitize the input
+        if isinstance(key, tuple):
+            base_key, track_key = key
+        else:
+            base_key = key
+            track_key = slice(None)  # All tracks
+
+        return base_key, track_key
+
     def __getitem__(self, key):
         """Return the continuous data corresponding to this bp slice
 
@@ -660,12 +727,8 @@ since being closed with genomedata-close-data.""")
         # XXX: I think this should no longer be a problem now that
         # self.end is the full length of the chromsome? need to check this -MMH
 
-        # Sanitize the input
-        if isinstance(key, tuple):
-            base_key, track_key = key
-        else:
-            base_key = key
-            track_key = slice(None)  # All tracks
+        # Get the chromosomal base key and track key
+        base_key, track_key = self._get_base_and_track_key(key)
 
         # just like NumPy, direct indexing results in output shape
         # change (at end of method)
@@ -747,6 +810,52 @@ since being closed with genomedata-close-data.""")
         if base_direct_index:
             data = data[0]
         return data
+
+    def __setitem__(self, key, value):
+        if (not self.isopen or
+           self.h5file.mode != "r+"):  # r+ is the only open mode for writing
+            raise IOError("Genomedata archive not opened for writing")
+
+        # Split the given key to its chromosomal and track key
+        base_key, track_key = self._get_base_and_track_key(key)
+
+        # Convert base key to slice for indexing
+        base_key = slice(*_key_to_tuple(base_key))
+
+        # Convert track key to numbered list if necessary
+        if isinstance(track_key, (list, ndarray)):
+            track_key = array([self._index_continuous(item)
+                               for item in track_key])
+
+        # Get a list of supercontigs from our base key
+        supercontigs = self.supercontigs[base_key]
+
+        # Check if the given region overlaps with any gap in the assembly
+        self._check_region_inside_supercontigs(supercontigs,
+                                                 base_key.start,
+                                                 base_key.stop)
+
+        # For each supercontig
+        for supercontig in supercontigs:
+
+            # Ensure the chromosomal base indicies overlap with the
+            # supercontig region
+            # XXX: This is the same as in read and this should be
+            # guaranteed at this point
+            assert (base_key.start < supercontig.end and
+                    base_key.stop > supercontig.start)
+
+            # Cap the chromosomal coordinates to the supercontig start and
+            # end if necessary
+            chr_start = max(base_key.start, supercontig.start)
+            chr_end = min(base_key.stop, supercontig.end)
+
+            # Get the indexes for the underlying continuous data
+            supercontig_slice = slice(supercontig.project(chr_start),
+                                      supercontig.project(chr_end))
+
+            # Write values to supercontig
+            supercontig.continuous[supercontig_slice, track_key] = value
 
     def __str__(self):
         return str(self.name)
@@ -885,9 +994,9 @@ since being closed with genomedata-close-data.""")
             except NoSuchNodeError:
                 # Define an extendible array in the second dimension (0)
                 supercontig_shape = (supercontig_length, 0)
-                self.h5file.createEArray(supercontig.h5group, "continuous",
-                                         CONTINUOUS_ATOM, supercontig_shape,
-                                         chunkshape=CONTINUOUS_CHUNK_SHAPE)
+                self.h5file.create_earray(supercontig.h5group, "continuous",
+                                          CONTINUOUS_ATOM, supercontig_shape,
+                                          chunkshape=CONTINUOUS_CHUNK_SHAPE)
                 continuous = supercontig.continuous
 
             # Add column to supercontig continuous array
@@ -1093,7 +1202,7 @@ class Supercontig(object):
         return str(self.name)
 
     def project(self, pos, bound=False):
-        """Project chromsomal coordinates to supercontig coordinates.
+        """Project chromosomal coordinates to supercontig coordinates.
 
         :param pos: chromosome coordinate
         :param bound: bound result to valid supercontig coordinates

@@ -103,12 +103,14 @@ class TestParseBedGraphDOS(test_genomedata.GenomedataTester):
 class TestGivenDataV0(test_genomedata.GenomedataGivenDataTester):
     def init(self):
         self.mode = "file"
+        self.write = False
         self.set_gdfilepath("data/v0.genomedata")
 
 
 class TestGivenDataV1(test_genomedata.GenomedataGivenDataTester):
     def init(self):
         self.mode = "file"
+        self.write = False
         self.set_gdfilepath("data/v1.genomedata")
 
 
