@@ -15,7 +15,6 @@ import sys
 from argparse import ArgumentParser
 
 from . import Genome, __version__
-from tabdelim import ListWriter
 
 def report(gdarchive):
     writer = csv.writer(sys.stdout, delimiter='\t')
