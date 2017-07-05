@@ -9,6 +9,7 @@ already has save_metadata() run
 
 # Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
+import csv
 import sys
 
 from argparse import ArgumentParser
@@ -17,7 +18,7 @@ from . import Genome, __version__
 from tabdelim import ListWriter
 
 def report(gdarchive):
-    writer = ListWriter()
+    writer = csv.writer(sys.stdout, delimiter='\t')
 
     with Genome(gdarchive) as genome:
         writer.writerow(["measurement"] + genome.tracknames_continuous)

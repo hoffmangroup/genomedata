@@ -9,6 +9,7 @@ load_seq: DESCRIPTION
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 from re import compile, VERBOSE
+import csv
 import sys
 import warnings
 
@@ -17,7 +18,6 @@ from collections import defaultdict
 
 from numpy import frombuffer, uint32
 from path import path
-from tabdelim import DictReader
 
 from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, 
               FORMAT_VERSION, Genome, __version__)
@@ -50,7 +50,8 @@ def read_agp(iterable):
     """
     converts coordinates from 1-based to 0-based
     """
-    reader = DictReader(ignore_comments(iterable), AGP_FIELDNAMES)
+    agp_iter = iter(ignore_comments(iterable))
+    reader = csv.DictReader(agp_iter, AGP_FIELDNAMES, delimiter='\t')
     for row in reader:
         row["object_beg"] = int(row["object_beg"]) - 1
         row["object_end"] = int(row["object_end"])
