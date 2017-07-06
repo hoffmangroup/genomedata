@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
+from builtins import object
 from contextlib import closing
 from gzip import open as _gzip_open
 from os import extsep
@@ -29,11 +30,13 @@ class LightIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         lines = []
         defline_old = self._defline
 
         for line in self._handle:
+            if not isinstance(line, str):
+                line = str(line, "utf-8")
             if not line:
                 if not defline_old and not lines:
                     raise StopIteration
