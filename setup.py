@@ -29,9 +29,9 @@ from subprocess import CalledProcessError, check_call
 #from genomedata import __version__
 __version__ = "1.4.0"
 
-#if sys.version_info[0] != 2 or sys.version_info[1] < 7:
-#    print("Genomedata requires Python version 2.7+")
-#    sys.exit(1)
+if sys.version_info[0] != 2 or sys.version_info[1] < 7:
+    print("Genomedata requires Python version 2.7+")
+    sys.exit(1)
 
 doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")

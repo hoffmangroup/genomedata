@@ -80,7 +80,7 @@ def create_supercontig(chromosome, index, seq=None, start=None, end=None):
     supercontig = h5file.create_group(where, name)
 
     if seq is not None:
-        seq_array = frombuffer(str.encode(seq), SEQ_DTYPE)
+        seq_array = frombuffer(seq, SEQ_DTYPE)
         h5file.create_carray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
 
         # XXXopt: does this result in compression?
@@ -245,7 +245,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     warnings.simplefilter("ignore")
     with Genome(gdpath, mode="w", filters=FILTERS_GZIP) as genome:
         if seqfile_type == "sizes":
-            for name, size in list(sizes.items()):
+            for name, size in sizes.items():
                 chromosome = create_chromosome(genome, name, mode)
                 size_chromosome(chromosome, size)
         else:
