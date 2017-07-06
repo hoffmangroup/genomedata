@@ -76,7 +76,14 @@ def filter_data(gd_filename, filter_filename, track_names=None,
             # Mask out filter region with NaNs
             chromosome = genome[chromosome_name]
             if not dry_run:
-                chromosome[filter_start:filter_end, track_names] = nan_mask
+                # If specified track names
+                if track_names:
+                    # Filter based on given tracks
+                    chromosome[filter_start:filter_end, track_names] = nan_mask
+                # Otherwise
+                else:
+                    # Filter out all tracks
+                    chromosome[filter_start:filter_end] = nan_mask
 
         # If the archive should be closed
         if not keep_archive_open:
