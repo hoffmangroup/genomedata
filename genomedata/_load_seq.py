@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, division, print_function
+
 
 """
 load_seq: DESCRIPTION
@@ -243,7 +243,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     # is this because we are going to close chromosomes when they are
     # set dirty?
     warnings.simplefilter("ignore")
-    with Genome(gdpath, mode="w", filters=FILTERS_GZIP) as genome:
+    with Genome(gdpath, mode="wb", filters=FILTERS_GZIP) as genome:
         if seqfile_type == "sizes":
             for name, size in list(sizes.items()):
                 chromosome = create_chromosome(genome, name, mode)

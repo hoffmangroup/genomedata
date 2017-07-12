@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, division, print_function
+
 
 """
 _load_data.py: A python interface for genome_load_data.c
@@ -60,7 +60,9 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
 
     # Pipe read command into load command
     try:
-        reader = Popen(read_cmd, stdout=PIPE)
+        #read_cmd = [x.encode('utf-8') for x in read_cmd]
+        reader = Popen(read_cmd, stdout=PIPE, bufsize=0)
+
     except OSError as os_exception:
         # If it was a big wig file and the converting program was not found on
         # the path
@@ -76,7 +78,8 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
             # Re-raise the exception
             raise os_exception
 
-    loader = Popen(load_cmd, stdin=reader.stdout)
+    #load_cmd = [x.encode() for x in load_cmd]
+    loader = Popen(load_cmd, stdin=reader.stdout, bufsize=0)
     loader.communicate()
     retcode = loader.poll()
     if retcode != 0:

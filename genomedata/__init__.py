@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, division, print_function
+
 
 from builtins import str
 from builtins import next
@@ -34,6 +34,7 @@ from os import extsep
 from path import path
 from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
+import six
 
 FORMAT_VERSION = 1
 SEQ_DTYPE = uint8
@@ -273,7 +274,7 @@ class Genome(object):
         # Whether a single file or a directory, close all the chromosomes
         # so they know they shouldn't be read. Do this before closing
         # Genome.h5file in case the chromosomes need access to it in closing.
-        for name, chromosome in self.open_chromosomes.items():
+        for name, chromosome in list(self.open_chromosomes.items()):
             # Only close those not closed manually by the user
             if chromosome.isopen:
                 chromosome.close()
@@ -359,7 +360,8 @@ for archives created with Genomedata version 1.2.0 or later.""")
         if self._isfile:
             # Tracknames are stored at the root of each file, so we can
             # access them directly in this case
-            return self._file_attrs.tracknames.tolist()
+            tracknames = self._file_attrs.tracknames.tolist()
+            return [trackname.decode('utf-8') for trackname in tracknames]
         else:
             # check that all chromosomes have the same tracknames_continuous
             res = None
@@ -551,7 +553,7 @@ class Chromosome(object):
         # opened chromosome group. This can be improved by tracking what
         # the user changes.
         attrs = h5group._v_attrs
-        if h5file.mode in set(["w", "r+", "a"]):
+        if h5file.mode in set(["wb", "r+", "ab"]):
             # Make sure there is a genomedata_format_version
             file_attrs = h5file.root._v_attrs
             if "genomedata_format_version" not in file_attrs:
@@ -765,7 +767,7 @@ since being closed with genomedata-close-data.""")
                             track_key)
 
         nrows = base_key.stop - base_key.start
-        ncols = len(range(track_key.start, track_key.stop, track_key.step))
+        ncols = len(list(range(track_key.start, track_key.stop, track_key.step)))
         dtype = self._continuous_dtype
 
         # Handle degenerate case
@@ -1049,7 +1051,8 @@ since being closed with genomedata-close-data.""")
     def tracknames_continuous(self):
         """Return a list of the data track names in this Chromosome."""
         assert self.isopen
-        return self._file_attrs.tracknames.tolist()
+        tracknames = self._file_attrs.tracknames.tolist()
+        return [trackname.decode('utf-8') for trackname in tracknames]
 
     @property
     def num_tracks_continuous(self):

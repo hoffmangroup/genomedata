@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, division, print_function
+
 
 """
 Open one or more tracks in the specified Genomedata archive.
@@ -20,7 +20,7 @@ from . import Genome, __version__
 
 def open_data(gdarchive, tracknames, verbose):
     warnings.simplefilter("ignore")
-    with Genome(gdarchive, "r+") as genome:
+    with Genome(gdarchive, "rb+") as genome:
         # XXXopt: it would be more efficient to add them all at once
         for trackname in tracknames:
             genome.add_track_continuous(trackname)

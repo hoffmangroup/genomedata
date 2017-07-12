@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, division, print_function
+
 
 """
 _erase_data.py: wipe the data for a specified track in such a way

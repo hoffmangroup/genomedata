@@ -91,11 +91,11 @@ class GenomedataTesterBase(unittest.TestCase):
 
             # Test sequence inside of data range
             self.assertEqual(seq2str(chromosome.seq[0:20]),
-                             "taaccctaaccctaacccta")
+                             b"taaccctaaccctaacccta")
 
             # Test sequence outside of data range
             warnings.simplefilter("ignore")
-            self.assertEqual(seq2str(chromosome.seq[30000]), "n")
+            self.assertEqual(seq2str(chromosome.seq[30000]), b"n")
             warnings.resetwarnings()
 
             # Track ordering should be: placental, primate, vertebrate

@@ -226,12 +226,12 @@ class BuildScriptWrapper(build_scripts):
 
         print("##################################################")
 
-        build_scripts.run(self)  # Call actual script
+        #build_scripts.run(self)  # Call actual script
 
         # If success, remove script build dir
-        if os.path.isdir(output_dir):
-            print("Removing script build dir: %s" % output_dir)
-            rmtree(output_dir)
+#        if os.path.isdir(output_dir):
+#            print("Removing script build dir: %s" % output_dir)
+#            rmtree(output_dir)
 
 
 def make_gnulib():
