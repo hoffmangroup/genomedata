@@ -20,7 +20,7 @@ from . import Genome, __version__
 
 def open_data(gdarchive, tracknames, verbose):
     warnings.simplefilter("ignore")
-    with Genome(gdarchive, "rb+") as genome:
+    with Genome(gdarchive, "r+") as genome:
         # XXXopt: it would be more efficient to add them all at once
         for trackname in tracknames:
             genome.add_track_continuous(trackname)
