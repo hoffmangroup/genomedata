@@ -553,7 +553,7 @@ class Chromosome(object):
         # opened chromosome group. This can be improved by tracking what
         # the user changes.
         attrs = h5group._v_attrs
-        if h5file.mode in set(["wb", "r+", "ab"]):
+        if h5file.mode in set(["w", "r+", "a"]):
             # Make sure there is a genomedata_format_version
             file_attrs = h5file.root._v_attrs
             if "genomedata_format_version" not in file_attrs:
