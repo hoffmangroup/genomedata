@@ -24,7 +24,6 @@ MSG_LOAD_ERROR = "Error loading data from track file %%s. %s returned %%s." % LO
 
 
 def load_data(gdfilename, trackname, datafile, verbose=False):
-
     """Loads data from datafile into specific track of Genomedata archive
 
     gdfilename: genomedata archive path
@@ -61,7 +60,6 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
 
     # Pipe read command into load command
     try:
-        #read_cmd = [x.encode('utf-8') for x in read_cmd]
         reader = Popen(read_cmd, stdout=PIPE, bufsize=0)
 
     except OSError as os_exception:
@@ -78,8 +76,6 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
         else:
             # Re-raise the exception
             raise os_exception
-
-    #load_cmd = [x.encode() for x in load_cmd]
 
     loader = Popen(load_cmd, stdin=reader.stdout, bufsize=0)
     loader.communicate()

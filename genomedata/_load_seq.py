@@ -242,6 +242,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     #
     # is this because we are going to close chromosomes when they are
     # set dirty?
+    warnings.simplefilter("ignore")
     with Genome(gdpath, mode="w", filters=FILTERS_GZIP) as genome:
         if seqfile_type == "sizes":
             for name, size in list(sizes.items()):

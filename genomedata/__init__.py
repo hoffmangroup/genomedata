@@ -34,7 +34,6 @@ from os import extsep
 from path import path
 from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
-import six
 
 FORMAT_VERSION = 1
 SEQ_DTYPE = uint8

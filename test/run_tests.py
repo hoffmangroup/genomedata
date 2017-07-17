@@ -44,7 +44,6 @@ class TestGenomedataDir(test_genomedata.GenomedataTester):
     def init(self):
         self.mode = "dir"
 
-"""
 class TestGenomedataFile(test_genomedata.GenomedataTester):
     def init(self):
         self.mode = "file"
@@ -122,8 +121,6 @@ class TestNoDataGenomedataDir(test_genomedata.GenomedataNoDataTester):
 class TestNoDataGenomedataFile(test_genomedata.GenomedataNoDataTester):
     def init(self):
         self.mode = "file"
-
-"""
 
 def main():
     dirpath = path(__file__).dirname()

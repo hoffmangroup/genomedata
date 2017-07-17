@@ -39,7 +39,7 @@ class GenomedataTesterBase(unittest.TestCase):
     def setUp(self):
         # Defaults
         # XXX: adding verbosity when unittest is run with verbosity would be useful
-        self.verbose = True
+        self.verbose = False
         self.write = True
         self.mode = "dir"
         self.tracks = {"vertebrate":
@@ -391,7 +391,7 @@ class GenomedataGivenDataTester(GenomedataTesterBase):
 class GenomedataNoDataTester(unittest.TestCase):
     def setUp(self):
         # Defaults
-        self.verbose = True
+        self.verbose = False
         self.mode = "dir"
         # Track to be added by test_add_track
         self.new_track = ("primate", "chr1.phyloP44way.primate.short.wigFix")
