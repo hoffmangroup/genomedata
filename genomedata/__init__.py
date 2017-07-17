@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-
-
-from builtins import str
-from builtins import next
-from builtins import range
-from builtins import object
 """
 Genomedata is a module to store and access large-scale functional
 genomics data in a format which is both space-efficient and allows

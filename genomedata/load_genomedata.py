@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-
-
-from builtins import str
 """
 load_genomedata: DESCRIPTION
 """
