@@ -325,6 +325,7 @@ class Genome(object):
         genomedata-close-data
 
         """
+        trackname = trackname.encode("latin-1")
         assert self.isopen
         if self.format_version < 1:
             raise NotImplementedError("""Adding tracks is only supported \
@@ -974,6 +975,8 @@ since being closed with genomedata-close-data.""")
         genomedata-close-data
 
         """
+        if not isinstance(trackname, bytes):
+            trackname = trackname.encode("latin-1")
         assert self.isopen
         if self._isfile:
             # Update tracknames attribute with new trackname

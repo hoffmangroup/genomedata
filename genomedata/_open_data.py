@@ -23,7 +23,7 @@ def open_data(gdarchive, tracknames, verbose):
     with Genome(gdarchive, "r+") as genome:
         # XXXopt: it would be more efficient to add them all at once
         for trackname in tracknames:
-            genome.add_track_continuous(trackname.encode('latin-1'))
+            genome.add_track_continuous(trackname)
 
     warnings.resetwarnings()
 
