@@ -27,6 +27,7 @@ from genomedata._erase_data import erase_data
 
 test_filename = lambda filename: os.path.join("data", filename)
 
+
 def seq2str(seq):
     return seq.tostring().lower()
 
