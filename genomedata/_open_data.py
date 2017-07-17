@@ -23,7 +23,7 @@ def open_data(gdarchive, tracknames, verbose):
     with Genome(gdarchive, "r+") as genome:
         # XXXopt: it would be more efficient to add them all at once
         for trackname in tracknames:
-            genome.add_track_continuous(trackname)
+            genome.add_track_continuous(trackname.encode('latin-1'))
 
     warnings.resetwarnings()
 
@@ -39,8 +39,7 @@ def parse_options(args):
 
     parser = ArgumentParser(description=description,
                             usage=usage,
-                            prog='genomedata-open-data',
-                            version=__version__)
+                            prog='genomedata-open-data')
 
     parser.add_argument('gdarchive', help='genomedata archive')
 

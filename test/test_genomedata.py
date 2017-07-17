@@ -27,7 +27,6 @@ from genomedata._erase_data import erase_data
 
 test_filename = lambda filename: os.path.join("data", filename)
 
-
 def seq2str(seq):
     return seq.tostring().lower()
 
@@ -40,7 +39,7 @@ class GenomedataTesterBase(unittest.TestCase):
     def setUp(self):
         # Defaults
         # XXX: adding verbosity when unittest is run with verbosity would be useful
-        self.verbose = False
+        self.verbose = True
         self.write = True
         self.mode = "dir"
         self.tracks = {"vertebrate":
@@ -223,7 +222,7 @@ class GenomedataTesterBase(unittest.TestCase):
         self.assertFalse(chr2.isopen)
         genome.close()
         self.assertFalse(chr1.isopen)
-        self.assertRaises(Exception, iter(chr1).next)
+        self.assertRaises(Exception, iter(chr1).__next__)
 
     def test_open_chromosomes(self):
         genome = Genome(self.gdfilepath)
@@ -392,7 +391,7 @@ class GenomedataGivenDataTester(GenomedataTesterBase):
 class GenomedataNoDataTester(unittest.TestCase):
     def setUp(self):
         # Defaults
-        self.verbose = False
+        self.verbose = True
         self.mode = "dir"
         # Track to be added by test_add_track
         self.new_track = ("primate", "chr1.phyloP44way.primate.short.wigFix")
@@ -480,17 +479,15 @@ class GenomedataNoDataTester(unittest.TestCase):
                                     0.37200001, 0.37099999])
 
 
-def test_genomedata(*args):
+def test_genomedata(args):
     pass
 
 
 def parse_options(args):
 
     from argparse import ArgumentParser
-    from . import __version__
 
-    parser = ArgumentParser(prog='test_genomedata',
-                            version=__version__)
+    parser = ArgumentParser(prog='test_genomedata')
 
     args = parser.parse_args(args)
 
@@ -500,7 +497,7 @@ def parse_options(args):
 def main(args=sys.argv[1:]):
     args = parse_options(args)
 
-    return test_genomedata(*args)
+    return test_genomedata(args)
 
 if __name__ == "__main__":
     sys.exit(main())
