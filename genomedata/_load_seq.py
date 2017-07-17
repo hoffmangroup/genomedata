@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-
-
 """
 load_seq: DESCRIPTION
 """

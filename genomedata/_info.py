@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-
-
 """
 _info: report specific information about a genomedata archive.
 """

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-
-
 """
 Open one or more tracks in the specified Genomedata archive.
 These tracks can then be loaded with data using genomedata-load-data.

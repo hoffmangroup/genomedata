@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-
-
 """
 _load_data.py: A python interface for genome_load_data.c
 """

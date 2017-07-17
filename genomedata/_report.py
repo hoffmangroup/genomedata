@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-
-
 """
 report: report some summary statistics on a genomedata archive that
 already has save_metadata() run

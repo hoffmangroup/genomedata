@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-
-
 """
 _erase_data.py: wipe the data for a specified track in such a way
 that the data can be reloaded (essentially replacing the track data)
