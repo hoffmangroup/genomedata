@@ -69,10 +69,13 @@ def parse_options(args):
                    " archive")
 
     parser = ArgumentParser(description=description,
-                            prog='genomedata-histogram',
-                            version=__version__)
+                            prog='genomedata-histogram')
+
+    version = "%(prog)s {}".format(__version__)
+    parser.add_argument("--version", action="version", version=version)
 
     parser.add_argument('gdarchive', help='genomedata archive')
+
     parser.add_argument('trackname', help='track name')
 
     parser.add_argument("--include-coords", metavar="FILE",

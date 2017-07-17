@@ -297,6 +297,9 @@ def parse_options(args):
     parser = ArgumentParser(description=description,
                             prog='genomedata-load-seq')
 
+    version = "%(prog)s {}".format(__version__)
+    parser.add_argument("--version", action="version", version=version)
+
     parser.add_argument('gdarchive', help='genomedata archive')
 
     parser.add_argument('seqfiles', nargs='+',

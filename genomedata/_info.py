@@ -48,8 +48,10 @@ def parse_options(args):
     parser = ArgumentParser(description=description,
                             prog='genomedata-info')
 
-    choices = ["tracknames", "tracknames_continuous", "contigs", "sizes"]
+    version = "%(prog)s {}".format(__version__)
+    parser.add_argument("--version", action="version", version=version)
 
+    choices = ["tracknames", "tracknames_continuous", "contigs", "sizes"]
     parser.add_argument("command", choices=choices,
                         help='available commands')
 

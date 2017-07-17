@@ -489,6 +489,8 @@ def parse_options(args):
     from argparse import ArgumentParser
 
     parser = ArgumentParser(prog='test_genomedata')
+    version = "%(prog)s {}".format(__version__)
+    parser.add_argument("--version", action="version", version=version)
 
     args = parser.parse_args(args)
 

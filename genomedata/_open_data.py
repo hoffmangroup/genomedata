@@ -32,12 +32,15 @@ def parse_options(args):
     description = ("Open one or more tracks in"
                    " the specified Genomedata archive.")
 
-    usage = "%(prog)s [-h] [-v] [--verbose] gdarchive --tracknames TRACKNAMES "
+    usage = "%(prog)s [-h] [--version] [--verbose] gdarchive --tracknames TRACKNAMES "
     "[TRACKNAMES ...]"
 
     parser = ArgumentParser(description=description,
                             usage=usage,
                             prog='genomedata-open-data')
+
+    version = "%(prog)s {}".format(__version__)
+    parser.add_argument("--version", action="version", version=version)
 
     parser.add_argument('gdarchive', help='genomedata archive')
 

@@ -24,8 +24,10 @@ def report(gdarchive):
 
 def parse_options(args):
 
-    parser = ArgumentParser(prog='genomedata-report',
-                            version=__version__)
+    parser = ArgumentParser(prog='genomedata-report')
+
+    version = "%(prog)s {}".format(__version__)
+    parser.add_argument("--version", action="version", version=version)
 
     parser.add_argument('gdarchive', help='genomedata archive')
 
