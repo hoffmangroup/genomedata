@@ -78,7 +78,7 @@ def create_supercontig(chromosome, index, seq=None, start=None, end=None):
     supercontig = h5file.create_group(where, name)
 
     if seq is not None:
-        seq_array = frombuffer(str.encode(seq), SEQ_DTYPE)
+        seq_array = frombuffer(seq.encode('latin-1'), SEQ_DTYPE)
         h5file.create_carray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
 
         # XXXopt: does this result in compression?
