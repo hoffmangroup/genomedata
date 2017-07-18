@@ -59,7 +59,6 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
     # Pipe read command into load command
     try:
         reader = Popen(read_cmd, stdout=PIPE, bufsize=0)
-
     except OSError as os_exception:
         # If it was a big wig file and the converting program was not found on
         # the path
