@@ -223,7 +223,10 @@ class GenomedataTesterBase(unittest.TestCase):
         self.assertFalse(chr2.isopen)
         genome.close()
         self.assertFalse(chr1.isopen)
-        self.assertRaises(Exception, iter(chr1).__next__)
+        try:
+            self.assertRaises(Exception, iter(chr1).__next__)
+        except AttributeError:
+            self.assertRaises(Exception, iter(chr1).next)
 
     def test_open_chromosomes(self):
         genome = Genome(self.gdfilepath)

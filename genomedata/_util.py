@@ -29,6 +29,7 @@ class LightIterator(object):
     def __iter__(self):
         return self
 
+    # for python 3
     def __next__(self):
         lines = []
         defline_old = self._defline
@@ -58,6 +59,9 @@ class LightIterator(object):
             raise ValueError("no definition line found at next position in %r" % self._handle)
 
         return defline_old, ''.join(lines)
+
+    # for python 2
+    next = __next__
 
 # XXX: suggest as default
 def fill_array(scalar, shape, dtype=None, *args, **kwargs):
