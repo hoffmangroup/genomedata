@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import, division, print_function
+
 """
 _load_data.py: A python interface for genome_load_data.c
 """

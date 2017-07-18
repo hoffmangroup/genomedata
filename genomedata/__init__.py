@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import, division, print_function
+
 """
 Genomedata is a module to store and access large-scale functional
 genomics data in a format which is both space-efficient and allows

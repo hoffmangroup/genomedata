@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import, division, print_function
+
 """
 Open one or more tracks in the specified Genomedata archive.
 These tracks can then be loaded with data using genomedata-load-data.

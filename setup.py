@@ -23,6 +23,7 @@ from platform import system, processor
 from setuptools import find_packages, setup
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call
+import tokenize
 
 # XXX: Find a way to implement a central version number without importing the
 # genomedata module
@@ -76,6 +77,10 @@ include_gnulib = (system() != "Linux")
 GNULIB_BUILD_DIR = "src/build-deps"
 GNULIB_LIB_DIR = "%s/gllib" % GNULIB_BUILD_DIR
 
+def detect_encoding(readline):
+    return 'latin-1', []
+
+tokenize.detect_encoding = detect_encoding
 
 class DirList(list):
     """Maintain a unique list of valid directories.
@@ -226,12 +231,12 @@ class BuildScriptWrapper(build_scripts):
 
         print("##################################################")
 
-        #build_scripts.run(self)  # Call actual script
+        build_scripts.run(self)  # Call actual script
 
-        # If success, remove script build dir
-#        if os.path.isdir(output_dir):
-#            print("Removing script build dir: %s" % output_dir)
-#            rmtree(output_dir)
+        #If success, remove script build dir
+        if os.path.isdir(output_dir):
+            print("Removing script build dir: %s" % output_dir)
+            rmtree(output_dir)
 
 
 def make_gnulib():
