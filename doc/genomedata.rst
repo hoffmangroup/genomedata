@@ -22,7 +22,7 @@ Please cite this paper if you use Genomedata.
 Installation
 ============
 
-Python (2.6 or 2.7) and the HDF5 libraries are required before you can install Genomedata.
+Python (2.7+) and the HDF5 libraries are required before you can install Genomedata.
 
 
 Installing HDF5
@@ -46,7 +46,7 @@ directory where it was installed.
 Installing Numpy
 -------------------
 
-With Python 2.6 or 2.7 installed::
+With Python 2.7+ installed::
 
     pip install numpy
 
@@ -77,6 +77,11 @@ With Python 2.6 or 2.7 installed::
       We would love to add support for other systems in the future and
       will gladly accept any contributions toward this end.
   - Zlib
+
+.. note::
+    Installing genomedata through
+        python setup.py install
+    is not supported.
 
 .. note:: For questions, comments, or troubleshooting, please refer to
           the support_ section.
