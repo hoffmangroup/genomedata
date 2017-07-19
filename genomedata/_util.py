@@ -35,6 +35,8 @@ class LightIterator(object):
         defline_old = self._defline
 
         for line in self._handle:
+            # This will always be 'str' type in Python 2, but in Python 3, we
+            # need to check if it's 'str' or 'bytes' and convert if necessary
             if not isinstance(line, str):
                 line = line.decode('utf-8')
             if not line:
