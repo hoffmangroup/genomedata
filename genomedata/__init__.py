@@ -27,7 +27,7 @@ from numpy import (add, amin, amax, append, array, empty, float32, inf,
                    nan, ndarray, square, uint8)
 from operator import attrgetter
 from os import extsep
-from path import Path
+from path import path
 from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
 
@@ -117,7 +117,7 @@ class Genome(object):
 
         # Process path for internal use, following symbolic links
         # until we get to the eventual file or directory
-        filepath = Path(filename).expand()
+        filepath = path(filename).expand()
         while filepath.islink():
             filepath = filepath.readlinkabs()
 
@@ -587,7 +587,7 @@ since being closed with genomedata-close-data.""")
         :param \*\*kwargs: keyword args passed on to open_file
 
         """
-        filepath = Path(filename).expand()
+        filepath = path(filename).expand()
         try:
             h5file = _open_file(filepath, mode=mode, *args, **kwargs)
         except IOError:
