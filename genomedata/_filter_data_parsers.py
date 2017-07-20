@@ -34,8 +34,50 @@ def get_wiggle_span(span):
         return WIG_DEFAULT_SPAN_VALUE
 
 
-# All region generators return a tuple of chromosome, start, end
+def merged_filter_region_generator(filter_region_generator, filter_file,
+                                   filter_function):
+    """ Generates merged regions from a given generator that produces
+    chromosome regions """
 
+    is_initialized = False
+    # NB: These defaults are irrelevant
+    current_chromosome = "chr1"
+    current_start = 1
+    current_end = 1
+
+    # For every filter region
+    for chromosome_name, filter_start, filter_end in \
+            filter_region_generator(filter_file, filter_function):
+
+        # If we have an initial region
+        if is_initialized:
+            # If the next chromsome matches
+            # And the start of it overlaps with the current end
+            if (chromosome_name == current_chromosome and
+               current_end >= filter_start):
+                # Merge them into a single region
+                current_end = filter_end
+            # Otherwise the regions do not overlap
+            else:
+                # Return the current region
+                yield current_chromosome, current_start, current_end
+                # Create a new current region with the next region
+                current_chromosome = chromosome_name
+                current_start = filter_start
+                current_end = filter_end
+        # Otherwise initialize our initial region
+        else:
+            current_chromosome = chromosome_name
+            current_start = filter_start
+            current_end = filter_end
+            is_initialized = True
+
+    # Return remaining filter region if there were any
+    if is_initialized:
+        yield current_chromosome, current_start, current_end
+
+
+# All region generators return a tuple of chromosome, start, end
 
 def get_bed_filter_region(filter_file_handle, filter_function):
     for line in ignore_comments(filter_file_handle):
@@ -102,9 +144,9 @@ def get_wig_filter_region(filter_file_handle, filter_function):
                 if passes_filter(filter_function, value):
                     # NB: Span is the number of elements to include
                     # The end coordinate is exclusive when indexing into
-                    # genomedata so it is necessary to add by 1
+                    # genomedata so it is not necessary to subtract 1
                     # Get the end coordinate based on span
-                    end = current_start + current_span + 1
+                    end = current_start + current_span
 
                     # Return chromosome and coordinates
                     yield current_chromosome, int(current_start), int(end)
@@ -116,7 +158,7 @@ def get_wig_filter_region(filter_file_handle, filter_function):
                 # If a filter exists and the value passes the filter
                 if passes_filter(filter_function, value):
                     # NB: See comment on span above
-                    end = current_start + current_span + 1
+                    end = current_start + current_span
                     # Return chromosome and coordinates
                     yield current_chromosome, int(current_start), int(end)
                 # Update the start coordinate based on fixed step

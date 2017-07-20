@@ -9,8 +9,8 @@ import sys
 from . import __version__
 from _close_data import write_genome_metadata
 from _util import EXT_GZ, maybe_gzip_open
-from _filter_data_parsers import get_bed_filter_region, get_wig_filter_region
-
+from _filter_data_parsers import (get_bed_filter_region, get_wig_filter_region,
+                                  merged_filter_region_generator)
 from genomedata import Genome
 import numpy as np
 
@@ -65,10 +65,13 @@ def filter_data(gd_filename, filter_filename, track_names=None,
 
         nan_mask = np.full(num_filter_tracks, np.nan)
 
-        # For every chromosome and filter region
-        for chromosome_name, filter_start, filter_end in \
-                get_next_genomic_filter_region(filter_file, filter_function):
+        merged_filter_regions = merged_filter_region_generator(
+                                    get_next_genomic_filter_region,
+                                    filter_file,
+                                    filter_function)
 
+        # For every chromosome and filter region
+        for chromosome_name, filter_start, filter_end in merged_filter_regions:
             if verbose:
                 print("Filtering out region: ", chromosome_name, filter_start,
                       filter_end)
