@@ -16,7 +16,7 @@ from argparse import ArgumentParser
 from collections import defaultdict
 
 from numpy import frombuffer, uint32
-from path import path
+from path import Path
 from tabdelim import DictReader
 
 from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, 
@@ -199,7 +199,7 @@ def create_chromosome(genome, name, mode):
     return res
 
 def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fasta"):
-    gdpath = path(gdfilename)
+    gdpath = Path(gdfilename)
 
     ## load sizes if necessary to figure out number of chromosomes
     if seqfile_type == "sizes":

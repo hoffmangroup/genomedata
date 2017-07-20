@@ -6,7 +6,7 @@ from os import chdir
 import subprocess
 import unittest
 
-from path import path
+from path import Path
 
 import test_genomedata
 
@@ -125,7 +125,7 @@ class TestNoDataGenomedataFile(test_genomedata.GenomedataNoDataTester):
 
 
 def main():
-    dirpath = path(__file__).dirname()
+    dirpath = Path(__file__).dirname()
     if dirpath:
         chdir(dirpath)
 

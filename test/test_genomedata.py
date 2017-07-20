@@ -17,7 +17,7 @@ import unittest
 import warnings
 
 from numpy import array, isnan, logical_and, logical_not, nan
-from path import path
+from path import Path
 
 from genomedata import Genome
 from genomedata.load_genomedata import load_genomedata
@@ -240,7 +240,7 @@ class GenomedataTesterBase(unittest.TestCase):
         self.assertEqual(genome.open_chromosomes, {})
 
     def set_gdfilepath(self, filename):
-        self.gdfilepath = path(filename).expand()
+        self.gdfilepath = Path(filename).expand()
 
 
 class GenomedataTester(GenomedataTesterBase):
@@ -263,7 +263,7 @@ class GenomedataTester(GenomedataTesterBase):
         self.set_gdfilepath(gdfilename)
         self.tracknames = sorted(self.tracks.keys())
 
-        # Get resource paths instead of filenames
+        # Get resource Paths instead of filenames
         seqfiles = [test_filename(file) for file in seqs]
         trackfiles = [test_filename(self.tracks[trackname])
                       for trackname in self.tracknames]
@@ -416,9 +416,9 @@ class GenomedataNoDataTester(unittest.TestCase):
         else:
             self.fail("Unrecognized mode: %s" % self.mode)
 
-        self.gdfilepath = path(gdfilename).expand()
+        self.gdfilepath = Path(gdfilename).expand()
 
-        # Get resource paths instead of filenames
+        # Get resource Paths instead of filenames
         seqfiles = [test_filename(file) for file in seqs]
         self.seqfiles = seqfiles
 
