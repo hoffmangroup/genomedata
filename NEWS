@@ -7,7 +7,6 @@
 * genomedata-load: fix agp files not being recognized from this entry point
 * docs: clarified that agp files cannot be combined
 * docs: warned users that globs must be quoted to be parsed by genomedata-load
-* genomedata-load-seq and genomedata-report: remove dependency on textinput
 
 1.3.6:
 * genomedata-load-data now support bigWig files if the bigWigToBedGraph
