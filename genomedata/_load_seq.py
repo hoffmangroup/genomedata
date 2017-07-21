@@ -8,8 +8,8 @@ load_seq: DESCRIPTION
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
-from re import compile, VERBOSE
 import csv
+from re import compile, VERBOSE
 import sys
 import warnings
 
