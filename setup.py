@@ -81,7 +81,6 @@ GNULIB_LIB_DIR = "%s/gllib" % GNULIB_BUILD_DIR
 # compatibility; does not affect python 2
 # From:
 # https://github.com/habnabit/passacre/commit/2ea05ba94eab2d26951ae7b4b51abf53132b20f0
-
 try:
     _detect_encoding = tokenize.detect_encoding
 except AttributeError:
