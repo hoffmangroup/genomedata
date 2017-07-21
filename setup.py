@@ -77,10 +77,24 @@ include_gnulib = (system() != "Linux")
 GNULIB_BUILD_DIR = "src/build-deps"
 GNULIB_LIB_DIR = "%s/gllib" % GNULIB_BUILD_DIR
 
-def detect_encoding(readline):
-    return 'latin-1', []
+# Override tokenize's encoding detection for python 3
+# compatibility; does not affect python 2
+# From:
+# https://github.com/habnabit/passacre/commit/2ea05ba94eab2d26951ae7b4b51abf53132b20f0
 
-tokenize.detect_encoding = detect_encoding
+try:
+    _detect_encoding = tokenize.detect_encoding
+except AttributeError:
+    pass
+else:
+    def detect_encoding(readline):
+        try:
+            return _detect_encoding(readline)
+        except SyntaxError:
+            return 'latin-1', []
+
+    tokenize.detect_encoding = detect_encoding
+
 
 class DirList(list):
     """Maintain a unique list of valid directories.
