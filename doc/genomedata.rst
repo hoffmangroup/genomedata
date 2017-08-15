@@ -210,7 +210,7 @@ pipeline:
 
 1. :ref:`genomedata-open-data`
 #. :ref:`genomedata-load-data`
-#. :ref:`genomedata-filter-data`
+#. :ref:`genomedata-hard-mask`
 
 .. versionadded:: 1.4
    The ability to filter data tracks.
@@ -533,25 +533,28 @@ allowing data for those tracks to be loaded with :ref:`genomedata-load-data`.
       --verbose             Print status updates and diagnostic messages
 
 
-.. _genomedata-filter-data:
+.. _genomedata-hard-mask:
 
-genomedata-filter-data
+genomedata-hard-mask
 --------------------
 
-This command filters out regions from tracks in the Genomedata archive.
+This command permanently masks out regions from tracks in the Genomedata
+archive. It is not recommended for masking of large genome-wide datasets. In
+the case of very large datasets, it is recommended you mask or filter your data
+first, then load the masked data with genomedata-load-data.
 
 ::
 
-    usage: genomedata-filter-data [-h] [-v] [-t TRACKNAME [TRACKNAME ...]]
-                                  [--filter FILTER] [--no-close] [--dry-run]
-                                  [--verbose]
-                                  filterfile gdarchive
+    usage: genomedata-hard-mask [-h] [-v] [-t TRACKNAME [TRACKNAME ...]]
+                                [--hardmask OPERATOR] [--no-close] [--dry-run]
+                                [--verbose]
+                                maskfile gdarchive
 
-    Filter TRACKNAME(s) from a genomedata archive with FILTERFILE using an
+    Permanently mask TRACKNAME(s) from a genomedata archive with MASKFILE using an
     optional filter operator.
 
     positional arguments:
-      filterfile            filter file
+      maskfile              input mask file
       gdarchive             genomedata archive
 
     optional arguments:
@@ -559,12 +562,13 @@ This command filters out regions from tracks in the Genomedata archive.
       -v, --version         show program's version number and exit
       -t TRACKNAME [TRACKNAME ...], --trackname TRACKNAME [TRACKNAME ...]
                             Track(s) to be filtered (default: all)
-      --filter FILTER       Specify a comparison operation on a value to filter
-                            out (e.g. "<0.5" will remove all values less than 0.5)
-                            (default: all values filtered)
-      --no-close            Do not close the genomedata archive after filtering.
-      --dry-run             Do not perform any filtering. Useful with verbosity
-                            set to see what regions would be filtered
+      --hardmask OPERATOR   Specify a comparison operation on a value to mask out
+                            (e.g. "lt0.5" will mask all values less than 0.5). See
+                            the bash comparison operators for the two letter
+                            operations (default: all values masked)
+      --no-close            Do not close the genomedata archive after masking
+      --dry-run             Do not perform any masking. Useful with verbosity set
+                            to see what regions would be filtered
       --verbose             Print status and diagnostic messages
 
 
