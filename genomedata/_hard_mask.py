@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+
+"""
+_hard_mask.py: A python interface to mask out track data from a genomedata
+archive
+"""
+
 from __future__ import print_function
 import argparse
 from functools import partial
@@ -12,10 +19,13 @@ from _util import EXT_GZ, maybe_gzip_open
 from _filter_data_parsers import (get_bed_filter_region, get_wig_filter_region,
                                   merged_filter_region_generator)
 from genomedata import Genome
-import numpy as np
+from numpy import full, nan
 
 BED_FILETYPE = "bed"
+BED_SUFFIXES = frozenset({".bed"})
+
 WIGGLE_FILETYPE = "wig"
+WIGGLE_SUFFIXES = frozenset({".wg", ".wig", ".wigVar", ".wigFix"})
 
 # Find which filter generator to call based on filetype
 FILTER_REGION_GENERATORS = {
@@ -62,7 +72,7 @@ def hard_mask_data(gd_filename, hard_mask_filename, track_names=None,
                 print("All tracks selected for masking: ",
                       genome.tracknames_continuous)
 
-        nan_mask = np.full(num_mask_tracks, np.nan)
+        nan_mask = full(num_mask_tracks, nan)
 
         merged_filter_regions = merged_filter_region_generator(
                                     get_next_genomic_mask_region,
@@ -102,15 +112,12 @@ def get_hard_mask_filetype(hard_mask_filename):
         # Find the extension before gzip extension
         root_filename, file_extension = splitext(root_filename)
 
-    if file_extension == ".bed":
+    if file_extension in BED_SUFFIXES:
         hard_mask_filetype = BED_FILETYPE
-    elif (file_extension == ".wg" or
-          file_extension == ".wig" or
-          file_extension == ".wigVar"):
+    elif file_extension in WIGGLE_SUFFIXES:
         hard_mask_filetype = WIGGLE_FILETYPE
-
     # If no known filetype detected
-    if not hard_mask_filetype:
+    else:
         # Report an error
         raise ValueError("Mask {} file type not "
                          "supported.".format(hard_mask_filename))
@@ -148,11 +155,6 @@ def parse_hard_mask_option(mask_option):
     except KeyError:
         raise ValueError("The operator {} is not understood or "
                          "supported".format(mask_operator))
-    # Otherwise display an error about the filter value
-    except ValueError:
-        # XXX: May not be necessary since the regex captures digits only
-        raise ValueError("Could not convert filter value {} to a "
-                         "number".format(mask_value))
 
     return hard_mask_function
 

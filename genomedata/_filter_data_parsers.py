@@ -1,15 +1,23 @@
+"""
+_filter_data_parsers.py: helper generators that produce chromosome regions
+based on input files and a given filter function
+"""
+
+from string import digits
 import re
 
 # NB: None of the file formats officially support comments but there is some
 # expectation that it may happen anyway
 from ._util import ignore_comments
 
+# See http://genome.ucsc.edu/goldenPath/help/wiggle.html for reference
 WIG_VARIABLE_STEP_DEFINITION = "variableStep"
 WIG_FIXED_STEP_DEFINITION = "fixedStep"
 WIG_DEFAULT_SPAN_VALUE = 1
 WIG_VARIABLE_START_INDEX = 0
 WIG_VARIABLE_VALUE_INDEX = 1
 
+NUM_BED3_FIELDS = 3
 BED_CHROM_NAME_FIELD_INDEX = 0
 BED_START_FIELD_INDEX = 1
 BED_END_FIELD_INDEX = 2
@@ -20,9 +28,8 @@ def passes_filter(filter_function, value):
     """Returns true if the filter doesn't exist or the filter does exist and
     the value evaluates to true on the filter
     """
-    return (not filter_function or (
-            filter_function and
-            filter_function(value)))
+    return (not filter_function or
+            filter_function(value))
 
 
 def get_wiggle_span(span):
@@ -77,7 +84,7 @@ def merged_filter_region_generator(filter_region_generator, filter_file,
         yield current_chromosome, current_start, current_end
 
 
-# All region generators return a tuple of chromosome, start, end
+# All region generators return a tuple (chromosome, start, end)
 
 def get_bed_filter_region(filter_file_handle, filter_function):
     for line in ignore_comments(filter_file_handle):
@@ -86,13 +93,13 @@ def get_bed_filter_region(filter_file_handle, filter_function):
 
         # If there is a filter function and the line has more than 3 fields
         # e.g. chr1    0       100     A	0.1
-        if (len(fields) > 3 and
+        if (len(fields) > NUM_BED3_FIELDS and
            filter_function):
             # Read a score from the BED line
             try:
-                # If the score cannot be understood
                 score = float(fields[BED_SCORE_FIELD_INDEX])
-            except:
+            # If the score cannot be understood
+            except ValueError:
                 # Raise an error
                 raise ValueError("Could not understand filter score from BED "
                                  "line: {}".format(line))
@@ -128,7 +135,6 @@ def get_wig_filter_region(filter_file_handle, filter_function):
                                         r"\s+step=(?P<step>\d+)"
                                         r"(\s+span=(?P<span>\d+))?")
 
-    digits = map(str, range(10))  # A list of digits from 0 to 9 as str
     for line in ignore_comments(filter_file_handle):
         # If the current line starts with a number
         if line[0] in digits:
@@ -190,5 +196,5 @@ def get_wig_filter_region(filter_file_handle, filter_function):
                 new_span = re_match.group("span")
                 # If a span was defined
                 # Update the current span
-                # Otherwise set the default (1)
+                # Otherwise set the default
                 current_span = get_wiggle_span(new_span)
