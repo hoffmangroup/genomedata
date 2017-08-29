@@ -18,17 +18,21 @@ from ._util import SUFFIX_GZ, die
 BIG_WIG_SIGNATURE = 0x888FFC26
 BIG_WIG_SIGNATURE_BYTE_SIZE = 4
 BIG_WIG_READ_CMD = "bigWigToBedGraph"
+BEDTOOLS_CMD = "bedtools"
+BEDTOOLS_INTERSECT_CMD = "intersect"
+BEDTOOLS_STDIN = "stdin"
 DEFAULT_CHUNK_SIZE = 10000
 LOAD_DATA_CMD = "genomedata-load-data"
 MSG_LOAD_ERROR = "Error loading data from track file %%s. %s returned %%s." % LOAD_DATA_CMD
 
 
-def load_data(gdfilename, trackname, datafile, verbose=False):
+def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
     """Loads data from datafile into specific track of Genomedata archive
 
     gdfilename: genomedata archive path
     trackname: name of track (as specified in open_data) to load data for
     datafile: file to read data from
+    maskfile: BED file to mask out regions from datafile
     """
     if verbose:
         print(">> Loading data for track: %s" % trackname)
@@ -48,6 +52,18 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
         # set bigWigToBedGraph to output to stdout
         read_cmd.append("/dev/stdout")
 
+    # If a mask file was specified
+    if maskfile:
+        # Construct the mask cmd (using bedtools)
+        # e.g. bigWigToBedGraph HISTONE.bigWig /dev/stdout | bedtools
+        # intersect -a Umap.bedGraph.gz -b stdin | genomedata-load-data
+        # -a and -b specify the file names to bedtools
+        mask_cmd = [BEDTOOLS_CMD, BEDTOOLS_INTERSECT_CMD,
+                    "-a", maskfile, "-b", BEDTOOLS_STDIN]
+    # Otherwise do not have a mask command
+    else:
+        mask_cmd = []
+
     load_cmd = [LOAD_DATA_CMD]
     if verbose:
         load_cmd.append("-v")
@@ -55,10 +71,11 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
 
     if verbose:
         read_cmdline = " ".join(read_cmd)
+        mask_cmdline = " ".join(mask_cmd)
         load_cmdline = " ".join(load_cmd)
-        print(read_cmdline, load_cmdline, sep=" | ",  file=sys.stderr)
+        print(read_cmdline, mask_cmdline, load_cmdline, sep=" | ",  file=sys.stderr)
 
-    # Pipe read command into load command
+    # Pipe read the command for futher processing
     try:
         reader = Popen(read_cmd, stdout=PIPE)
     except OSError as os_exception:
@@ -76,7 +93,22 @@ def load_data(gdfilename, trackname, datafile, verbose=False):
             # Re-raise the exception
             raise os_exception
 
-    loader = Popen(load_cmd, stdin=reader.stdout)
+    # If a maskfile was specified
+    if maskfile:
+        # Pipe the read command into the mask command
+        try:
+            masker = Popen(mask_cmd, stdin=reader.stdout, stdout=PIPE)
+            loader_input_process = masker
+        except OSError:
+            # If we could not find the bedtools command
+            raise OSError("The bedtools command is necessary for masking out "
+                          "the data file and could not be found. Please "
+                          "install bedtools and ensure it is on your PATH.")
+    # Otherwise have the read command pipe straight to the load command
+    else:
+        loader_input_process = reader
+
+    loader = Popen(load_cmd, stdin=loader_input_process.stdout)
     loader.communicate()
     retcode = loader.poll()
     if retcode != 0:
@@ -114,6 +146,10 @@ def parse_args(args):
     parser.add_argument('trackname', help='track name')
     parser.add_argument('datafile', help='data file')
 
+    parser.add_argument("-m", "--maskfile",
+                        help='A BED file containing regions to mask out from'
+                        'the data file')
+
     parser.add_argument("-c", "--chunk-size",
                         metavar="NROWS", type=int,
                         default=DEFAULT_CHUNK_SIZE,
@@ -133,7 +169,7 @@ def parse_args(args):
 def main(argv=sys.argv[1:]):
     args = parse_args(argv)
     load_data(args.gdarchive, args.trackname, args.datafile,
-              verbose=args.verbose, chunk_size=args.chunk_size)
+              args.maskfile, verbose=args.verbose, chunk_size=args.chunk_size)
 
 if __name__ == "__main__":
     sys.exit(main())
