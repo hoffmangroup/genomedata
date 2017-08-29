@@ -23,7 +23,7 @@ from genomedata.load_genomedata import load_genomedata
 from genomedata._load_data import load_data
 from genomedata._close_data import close_data
 from genomedata._erase_data import erase_data
-from genomedata._hard_mask import hard_mask_data
+from genomedata._hardmask import hardmask_data
 from genomedata._open_data import open_data
 
 test_filename = lambda filename: os.path.join("data", filename)
@@ -340,10 +340,10 @@ class GenomedataTester(GenomedataTesterBase):
         close_data(self.gdfilepath, verbose=self.verbose)
 
         # Perform filtering on data
-        hard_mask_data(self.gdfilepath, test_filename(self.filter),
-                       [UNFILTERED_TRACKNAME],
-                       lambda x: x < self.filter_threshold,
-                       verbose=self.verbose)
+        hardmask_data(self.gdfilepath, test_filename(self.filter),
+                      [UNFILTERED_TRACKNAME],
+                      lambda x: x < self.filter_threshold,
+                      verbose=self.verbose)
 
         # Make sure filtering was successful
         genome = Genome(self.gdfilepath)

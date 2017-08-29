@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-_hard_mask.py: A python interface to mask out track data from a genomedata
+_hardmask.py: A python interface to mask out track data from a genomedata
 archive
 """
 
@@ -16,7 +16,7 @@ import sys
 from . import __version__
 from _close_data import write_genome_metadata
 from _util import EXT_GZ, maybe_gzip_open
-from _filter_data_parsers import (get_bed_filter_region, get_wig_filter_region,
+from _hardmask_parsers import (get_bed_filter_region, get_wig_filter_region,
                                   merged_filter_region_generator)
 from genomedata import Genome
 from numpy import full, nan
@@ -38,7 +38,7 @@ FILTER_REGION_GENERATORS = {
 # against
 # E.g. filter out all values <0.5, where the value being considered is "b"
 # Return a function where b<0.5 is true or 0.5>b is true
-HARD_MASK_OPERATORS = {
+HARDMASK_OPERATORS = {
     "ge": operator.le,
     "gt": operator.lt,
     "le": operator.ge,
@@ -48,18 +48,18 @@ HARD_MASK_OPERATORS = {
 }
 
 
-def hard_mask_data(gd_filename, hard_mask_filename, track_names=None,
-                   hard_mask_function=None, verbose=False,
+def hardmask_data(gd_filename, hardmask_filename, track_names=None,
+                   hardmask_function=None, verbose=False,
                    keep_archive_open=False, dry_run=False):
 
     # Get the genomic file type of the mask
-    hard_mask_filetype = get_hard_mask_filetype(hard_mask_filename)
+    hardmask_filetype = get_hardmask_filetype(hardmask_filename)
     get_next_genomic_mask_region = \
-        FILTER_REGION_GENERATORS[hard_mask_filetype]
+        FILTER_REGION_GENERATORS[hardmask_filetype]
 
     # Open the archive for reading and writing
     with Genome(gd_filename, mode="r+") as genome, \
-            maybe_gzip_open(hard_mask_filename) as hard_mask_file:
+            maybe_gzip_open(hardmask_filename) as hardmask_file:
 
         # Create NaN mask based on number of tracks to mask
         if track_names:
@@ -76,8 +76,8 @@ def hard_mask_data(gd_filename, hard_mask_filename, track_names=None,
 
         merged_filter_regions = merged_filter_region_generator(
                                     get_next_genomic_mask_region,
-                                    hard_mask_file,
-                                    hard_mask_function)
+                                    hardmask_file,
+                                    hardmask_function)
 
         # For every chromosome and filter region
         for chromosome_name, mask_start, mask_end in merged_filter_regions:
@@ -103,9 +103,9 @@ def hard_mask_data(gd_filename, hard_mask_filename, track_names=None,
             write_genome_metadata(genome, verbose)
 
 
-def get_hard_mask_filetype(hard_mask_filename):
-    filename = hard_mask_filename.lower()
-    hard_mask_filetype = None
+def get_hardmask_filetype(hardmask_filename):
+    filename = hardmask_filename.lower()
+    hardmask_filetype = None
 
     root_filename, file_extension = splitext(filename)
     if file_extension == "." + EXT_GZ:
@@ -113,20 +113,20 @@ def get_hard_mask_filetype(hard_mask_filename):
         root_filename, file_extension = splitext(root_filename)
 
     if file_extension in BED_SUFFIXES:
-        hard_mask_filetype = BED_FILETYPE
+        hardmask_filetype = BED_FILETYPE
     elif file_extension in WIGGLE_SUFFIXES:
-        hard_mask_filetype = WIGGLE_FILETYPE
+        hardmask_filetype = WIGGLE_FILETYPE
     # If no known filetype detected
     else:
         # Report an error
         raise ValueError("Mask {} file type not "
-                         "supported.".format(hard_mask_filename))
+                         "supported.".format(hardmask_filename))
 
     # Otherwise return the filetype
-    return hard_mask_filetype
+    return hardmask_filetype
 
 
-def parse_hard_mask_option(mask_option):
+def parse_hardmask_option(mask_option):
     """Gets a operator/value combination as a string and returns a function
     that performs the specified operation (e.g. '>=0.3')
     """
@@ -149,14 +149,14 @@ def parse_hard_mask_option(mask_option):
         # Attempt to convert the filter value into a number
         mask_value = float(mask_value)
         # Get the function associated with this operator and given value
-        hard_mask_function = partial(HARD_MASK_OPERATORS[mask_operator],
+        hard_mask_function = partial(HARDMASK_OPERATORS[mask_operator],
                                      mask_value)
     # Otherwise display an error about the operator
     except KeyError:
         raise ValueError("The operator {} is not understood or "
                          "supported".format(mask_operator))
 
-    return hard_mask_function
+    return hardmask_function
 
 
 def main():
@@ -197,13 +197,13 @@ def main():
     # If a filter was specified
     if args.hardmask:
         # Parse the given string to get a hard mask function
-        hard_mask_function = parse_hard_mask_option(args.hardmask)
+        hardmask_function = parse_hardmask_option(args.hardmask)
     else:
         # Otherwise use no hard mask function
-        hard_mask_function = None
+        hardmask_function = None
 
-    hard_mask_data(gd_filename, mask_filename, track_names,
-                   hard_mask_function, is_verbose, keep_archive_open,
+    hardmask_data(gd_filename, mask_filename, track_names,
+                   hardmask_function, is_verbose, keep_archive_open,
                    is_dry_run)
 
 
