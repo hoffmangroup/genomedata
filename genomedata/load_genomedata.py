@@ -39,7 +39,7 @@ def repack(infilename, outfilename, verbose=False):
 
 def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                     seqfile_type="fasta", chunk_size=DEFAULT_CHUNK_SIZE,
-                    verbose=False):
+                    maskfilename=None, verbose=False):
     """Loads Genomedata collection with given data
 
     gdfilename: name of Genomedata archive to create
@@ -216,6 +216,9 @@ def parse_cmdline(cmdline):
                             metavar="NAME=FILE", required=True,
                             help="Add data from FILE as the track NAME,"
                             " such as: -t signal=signal.wig")
+    input_data.add_argument("-m", "--maskfile",
+                            help='A BED file containing regions to mask out from'
+                            'tracks before loading')
 
     input_data_ex = input_data.add_mutually_exclusive_group()
     input_data_ex.add_argument("--assembly", action="store_const",
@@ -287,7 +290,7 @@ def main(cmdline=sys.argv[1:]):
 
     load_genomedata(args.gdarchive, tracks, seqfilenames,
                     seqfile_type=seqfile_type, verbose=args.verbose,
-                    mode=args.mode)
+                    maskfilename=args.maskfile, mode=args.mode)
 
 if __name__ == "__main__":
     sys.exit(main())
