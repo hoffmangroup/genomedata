@@ -46,18 +46,17 @@ def merged_filter_region_generator(filter_region_generator, filter_file,
     """ Generates merged regions from a given generator that produces
     chromosome regions """
 
-    is_initialized = False
     # NB: These defaults are irrelevant
-    current_chromosome = "chr1"
-    current_start = 1
-    current_end = 1
+    current_chromosome = None
+    current_start = None
+    current_end = None
 
     # For every filter region
     for chromosome_name, filter_start, filter_end in \
             filter_region_generator(filter_file, filter_function):
 
         # If we have an initial region
-        if is_initialized:
+        if current_chromosome:
             # If the next chromsome matches
             # And the start of it overlaps with the current end
             if (chromosome_name == current_chromosome and
@@ -77,10 +76,9 @@ def merged_filter_region_generator(filter_region_generator, filter_file,
             current_chromosome = chromosome_name
             current_start = filter_start
             current_end = filter_end
-            is_initialized = True
 
     # Return remaining filter region if there were any
-    if is_initialized:
+    if current_chromosome:
         yield current_chromosome, current_start, current_end
 
 

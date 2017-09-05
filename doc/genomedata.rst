@@ -202,18 +202,17 @@ without any tracks, however, using the following pipeline:
 .. versionadded:: 1.2
    The ability to create an archive without any data tracks.
 
-Additionally, any tracks loaded may be have portions of their data removed from
-the archive by filtering the specified data tracks. This can be done anytime
-after loading in data and unless specified otherwise will automatically close
-the archive as well. A track can be loaded and filtered with the following
-pipeline:
+Additionally, you may remove portions of data from tracks by hardmasking the
+specified data tracks. This can be done anytime after loading in data and
+unless specified otherwise will automatically close the archive as well. A
+track can be loaded and filtered with the following pipeline:
 
 1. :ref:`genomedata-open-data`
 #. :ref:`genomedata-load-data`
-#. :ref:`genomedata-hard-mask`
+#. :ref:`genomedata-hardmask`
 
 .. versionadded:: 1.4
-   The ability to filter data tracks.
+   The ability to hardmask tracks.
 
 .. note:: A call to :program:`h5repack` after
           :ref:`genomedata-close-data` may be used to
@@ -533,19 +532,20 @@ allowing data for those tracks to be loaded with :ref:`genomedata-load-data`.
       --verbose             Print status updates and diagnostic messages
 
 
-.. _genomedata-hard-mask:
+.. _genomedata-hardmask:
 
-genomedata-hard-mask
+genomedata-hardmask
 --------------------
 
-This command permanently masks out regions from tracks in the Genomedata
-archive. It is not recommended for masking of large genome-wide datasets. In
-the case of very large datasets, it is recommended you mask or filter your data
-first, then load the masked data with genomedata-load-data.
+This command permanently and irreversibly masks out regions from tracks in the
+Genomedata archive. Due to slow performance, it is not recommended for masking
+large genome-wide datasets. In the case of very large datasets, it is
+recommended you mask or filter your data first, then load the masked data with
+genomedata-load-data.
 
 ::
 
-    usage: genomedata-hard-mask [-h] [-v] [-t TRACKNAME [TRACKNAME ...]]
+    usage: genomedata-hardmask [-h] [-v] [-t TRACKNAME [TRACKNAME ...]]
                                 [--hardmask OPERATOR] [--no-close] [--dry-run]
                                 [--verbose]
                                 maskfile gdarchive

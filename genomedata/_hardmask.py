@@ -13,19 +13,21 @@ from os.path import splitext
 from re import match
 import sys
 
-from . import __version__
 from _close_data import write_genome_metadata
 from _util import EXT_GZ, maybe_gzip_open
 from _hardmask_parsers import (get_bed_filter_region, get_wig_filter_region,
                                   merged_filter_region_generator)
-from genomedata import Genome
 from numpy import full, nan
+
+from . import Genome, __version__
 
 BED_FILETYPE = "bed"
 BED_SUFFIXES = frozenset({".bed"})
 
 WIGGLE_FILETYPE = "wig"
 WIGGLE_SUFFIXES = frozenset({".wg", ".wig", ".wigVar", ".wigFix"})
+
+SUFFIX_GZ = "." + EXT_GZ
 
 # Find which filter generator to call based on filetype
 FILTER_REGION_GENERATORS = {
@@ -49,8 +51,8 @@ HARDMASK_OPERATORS = {
 
 
 def hardmask_data(gd_filename, hardmask_filename, track_names=None,
-                   hardmask_function=None, verbose=False,
-                   keep_archive_open=False, dry_run=False):
+                  hardmask_function=None, verbose=False,
+                  keep_archive_open=False, dry_run=False):
 
     # Get the genomic file type of the mask
     hardmask_filetype = get_hardmask_filetype(hardmask_filename)
@@ -65,12 +67,12 @@ def hardmask_data(gd_filename, hardmask_filename, track_names=None,
         if track_names:
             num_mask_tracks = len(track_names)
             if verbose:
-                print("Tracks for masking: ", track_names)
+                print("Tracks for masking: ", track_names, file=sys.stderr)
         else:
             num_mask_tracks = genome.num_tracks_continuous
             if verbose:
                 print("All tracks selected for masking: ",
-                      genome.tracknames_continuous)
+                      genome.tracknames_continuous, file=sys.stderr)
 
         nan_mask = full(num_mask_tracks, nan)
 
@@ -108,7 +110,7 @@ def get_hardmask_filetype(hardmask_filename):
     hardmask_filetype = None
 
     root_filename, file_extension = splitext(filename)
-    if file_extension == "." + EXT_GZ:
+    if file_extension == SUFFIX_GZ:
         # Find the extension before gzip extension
         root_filename, file_extension = splitext(root_filename)
 
@@ -128,7 +130,7 @@ def get_hardmask_filetype(hardmask_filename):
 
 def parse_hardmask_option(mask_option):
     """Gets a operator/value combination as a string and returns a function
-    that performs the specified operation (e.g. '>=0.3')
+    that performs the specified operation (e.g. 'ge0.3')
     """
     # Get the value and the operator from the filter string given from options
     # "operator" group matches on exactly two lowercase letters
@@ -137,7 +139,7 @@ def parse_hardmask_option(mask_option):
     re_match = match(r"^(?P<operator>[a-z]{2})\s*(?P<value>\d+(.\d+)?)$",
                      mask_option)
     if not re_match:
-        raise ValueError("Could not understand the hard mask option of "
+        raise ValueError("Could not understand the hardmask option of "
                          "'{}'".format(mask_option))
 
     mask_operator = re_match.group("operator")
@@ -196,10 +198,10 @@ def main():
 
     # If a filter was specified
     if args.hardmask:
-        # Parse the given string to get a hard mask function
+        # Parse the given string to get a hardmask function
         hardmask_function = parse_hardmask_option(args.hardmask)
     else:
-        # Otherwise use no hard mask function
+        # Otherwise use no hardmask function
         hardmask_function = None
 
     hardmask_data(gd_filename, mask_filename, track_names,
