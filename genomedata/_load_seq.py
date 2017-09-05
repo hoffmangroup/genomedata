@@ -19,9 +19,10 @@ from numpy import frombuffer, uint32
 from path import path
 from tabdelim import DictReader
 
-from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS, 
-              FORMAT_VERSION, Genome, __version__)
-from ._util import FILTERS_GZIP, LightIterator, maybe_gzip_open
+from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS,
+               FORMAT_VERSION, Genome, __version__)
+from ._util import (FILTERS_GZIP, LightIterator, maybe_gzip_open,
+                    ignore_comments)
 
 MIN_GAP_LEN = 100000
 assert not MIN_GAP_LEN % 2 # must be even for division
@@ -42,9 +43,6 @@ GAP_COMPONENT_TYPES = frozenset("NU")
 
 GenomicPosition = uint32
 GENOMIC_POSITION_0 = GenomicPosition(0)
-
-def ignore_comments(iterable):
-    return (item for item in iterable if not item.startswith("#"))
 
 def read_agp(iterable):
     """
