@@ -202,6 +202,18 @@ without any tracks, however, using the following pipeline:
 .. versionadded:: 1.2
    The ability to create an archive without any data tracks.
 
+Additionally, you may remove portions of data from tracks by hardmasking the
+specified data tracks. This can be done anytime after loading in data and
+unless specified otherwise will automatically close the archive as well. A
+track can be loaded and filtered with the following pipeline:
+
+1. :ref:`genomedata-open-data`
+#. :ref:`genomedata-load-data`
+#. :ref:`genomedata-hardmask`
+
+.. versionadded:: 1.4
+   The ability to hardmask tracks.
+
 .. note:: A call to :program:`h5repack` after
           :ref:`genomedata-close-data` may be used to
           transparently compress the data.
@@ -518,6 +530,46 @@ allowing data for those tracks to be loaded with :ref:`genomedata-load-data`.
       --trackname TRACKNAME [TRACKNAME ...]
                             tracknames to open
       --verbose             Print status updates and diagnostic messages
+
+
+.. _genomedata-hardmask:
+
+genomedata-hardmask
+--------------------
+
+This command permanently and irreversibly masks out regions from tracks in the
+Genomedata archive. Due to slow performance, it is not recommended for masking
+large genome-wide datasets. In the case of very large datasets, it is
+recommended you mask or filter your data first, then load the masked data with
+genomedata-load-data.
+
+::
+
+    usage: genomedata-hardmask [-h] [-v] [-t TRACKNAME [TRACKNAME ...]]
+                                [--hardmask OPERATOR] [--no-close] [--dry-run]
+                                [--verbose]
+                                maskfile gdarchive
+
+    Permanently mask TRACKNAME(s) from a genomedata archive with MASKFILE using an
+    optional filter operator.
+
+    positional arguments:
+      maskfile              input mask file
+      gdarchive             genomedata archive
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
+      -t TRACKNAME [TRACKNAME ...], --trackname TRACKNAME [TRACKNAME ...]
+                            Track(s) to be filtered (default: all)
+      --hardmask OPERATOR   Specify a comparison operation on a value to mask out
+                            (e.g. "lt0.5" will mask all values less than 0.5). See
+                            the bash comparison operators for the two letter
+                            operations (default: all values masked)
+      --no-close            Do not close the genomedata archive after masking
+      --dry-run             Do not perform any masking. Useful with verbosity set
+                            to see what regions would be filtered
+      --verbose             Print status and diagnostic messages
 
 
 .. _genomedata-load-data:

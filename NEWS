@@ -1,4 +1,6 @@
 1.4.0:
+* genomedata-hardmask: new command added to filter out track regions
+* hardmask_data: new python interface to filter out track regions
 * Genome: add ability to open archives for writing
 * genomedata-load-seq: AGP are now correctly loaded regardless of filename and
   may be concatenated together

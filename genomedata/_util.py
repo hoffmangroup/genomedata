@@ -88,6 +88,11 @@ def new_extrema(func, data, extrema):
 
     return func([extrema, curr_extrema], 0)
 
+
+def ignore_comments(iterable):
+    return (item for item in iterable if not item.startswith("#"))
+
+
 def main(args=sys.argv[1:]):
     pass
 

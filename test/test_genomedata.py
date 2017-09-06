@@ -9,7 +9,6 @@ test_genomedata: DESCRIPTION
 __version__ = "$Revision$"
 
 # Copyright 2010-2013 Michael M. Hoffman <mmh1@uw.edu>
-
 import os
 import sys
 from tempfile import mkdtemp, mkstemp
@@ -24,9 +23,14 @@ from genomedata.load_genomedata import load_genomedata
 from genomedata._load_data import load_data
 from genomedata._close_data import close_data
 from genomedata._erase_data import erase_data
+from genomedata._hardmask import hardmask_data
+from genomedata._open_data import open_data
 
 test_filename = lambda filename: os.path.join("data", filename)
 
+DEFAULT_TRACK_FILTER_THRESHOLD = 0.5
+UNFILTERED_TRACKNAME = "zunfiltered"
+UNFILTERED_TRACK_FILENAME = "unfiltered.bed"
 
 def seq2str(seq):
     return seq.tostring().lower()
@@ -47,9 +51,13 @@ class GenomedataTesterBase(unittest.TestCase):
                        "chr1.phyloP44way.vertebrate.short.wigFix",
                        "placental": "chr1.phyloP44way.placental.short.wigFix",
                        "primate": "chr1.phyloP44way.primate.short.wigFix"}
+        # UNFILTERED_TRACKNAME: "unfiltered.bed"} # Set as last track
         # Track to be added by test_add_track
         self.new_track = ("dnase", "chr1.wgEncodeDukeDNaseSeqBase"
                           "OverlapSignalK562V2.wig")
+        # File to be used to filter out the added track (default none)
+        self.filter = "filter.bed"
+        self.filter_threshold = DEFAULT_TRACK_FILTER_THRESHOLD
 
         # Potentially override defaults
         self.init()  # Call to sub-classed method
@@ -321,6 +329,34 @@ class GenomedataTester(GenomedataTesterBase):
             # Given track ordering, check single track data retrieval
             self.assertArraysEqual(genome["chr1"][155:168, new_track_name],
                                    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0])
+
+    def test_filter_track(self):
+        # Add filter track
+        open_data(self.gdfilepath, [UNFILTERED_TRACKNAME],
+                  verbose=self.verbose)
+        load_data(self.gdfilepath, UNFILTERED_TRACKNAME,
+                  test_filename(UNFILTERED_TRACK_FILENAME),
+                  verbose=self.verbose)
+        close_data(self.gdfilepath, verbose=self.verbose)
+
+        # Perform filtering on data
+        hardmask_data(self.gdfilepath, test_filename(self.filter),
+                      [UNFILTERED_TRACKNAME],
+                      lambda x: x < self.filter_threshold,
+                      verbose=self.verbose)
+
+        # Make sure filtering was successful
+        genome = Genome(self.gdfilepath)
+        with genome:
+            self.assertArraysEqual(genome["chr1"][0:4, UNFILTERED_TRACKNAME],
+                                   [nan, nan, nan, nan])
+            self.assertArraysEqual(genome["chr1"][128:132, UNFILTERED_TRACKNAME],
+                                   [nan, nan, 0.5, 0.5])
+            self.assertArraysEqual(genome["chr1"][168:172, UNFILTERED_TRACKNAME],
+                                   [0.9, 0.9, nan, nan])
+            self.assertArraysEqual(genome["chr1"][206:210, UNFILTERED_TRACKNAME],
+                                   [nan, nan, nan, nan])
+
 
     def test_delete_tracks(self):
         # Test ability to delete a track
