@@ -122,7 +122,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
 
             for track_name, track_filename in tracks:
                 load_data(tempdatapath, track_name, track_filename,
-                          verbose=verbose)
+                          maskfilename, verbose=verbose)
 
         # Close genomedata
         try:

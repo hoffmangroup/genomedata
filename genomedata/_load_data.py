@@ -58,8 +58,11 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
         # e.g. bigWigToBedGraph HISTONE.bigWig /dev/stdout | bedtools
         # intersect -a Umap.bedGraph.gz -b stdin | genomedata-load-data
         # -a and -b specify the file names to bedtools
+
+        # TODO: make masking only applicable on bedGraph files
+        # and ensure the mask file is also a bed
         mask_cmd = [BEDTOOLS_CMD, BEDTOOLS_INTERSECT_CMD,
-                    "-a", maskfile, "-b", BEDTOOLS_STDIN]
+                    "-a", BEDTOOLS_STDIN, "-b", maskfile]
     # Otherwise do not have a mask command
     else:
         mask_cmd = []
