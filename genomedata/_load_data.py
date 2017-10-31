@@ -76,9 +76,10 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
         read_cmdline = " ".join(read_cmd)
         mask_cmdline = " ".join(mask_cmd)
         load_cmdline = " ".join(load_cmd)
-        print(read_cmdline, mask_cmdline, load_cmdline, sep=" | ",  file=sys.stderr)
+        print(read_cmdline, mask_cmdline, load_cmdline, sep=" | ",
+              file=sys.stderr)
 
-    # Pipe read the command for futher processing
+    # Open the read command
     try:
         reader = Popen(read_cmd, stdout=PIPE)
     except OSError as os_exception:
