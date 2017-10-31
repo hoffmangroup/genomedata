@@ -405,7 +405,7 @@ Command-line usage information::
      Example: genomedata-load -t high=signal.high.wig -t low=signal.low.bed.gz -s chrX.fa -s chrY.fa.gz gdarchive
 
     positional arguments:
-      gdarchive             genomedata archive
+      GENOMEDATAFILE        genomedata archive
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -421,6 +421,9 @@ Command-line usage information::
       -t NAME=FILE, --track NAME=FILE
                             Add data from FILE as the track NAME, such as: -t
                             signal=signal.wig
+      -m MASKFILE, --maskfile MASKFILE
+                            A BED file containing regions to mask out from tracks
+                            before loading
       --assembly            sequence files contain assembly (AGP) files instead of
                             sequence
       --sizes               sequence files contain list of sizes instead of
@@ -439,6 +442,7 @@ Command-line usage information::
                             small number of Chromosomes. The default behavior is
                             to use a directory if there are fewer than 100
                             Chromosomes being added.
+
 
 Alternately, as described in :ref:`genomedata-overview`, the underlying
 Python and C load scripts are also accessible for more finely-grained control.
