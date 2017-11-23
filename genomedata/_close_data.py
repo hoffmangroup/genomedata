@@ -12,7 +12,7 @@ import sys
 
 from argparse import ArgumentParser
 
-from numpy import (amin, amax, array, diff, hstack, isfinite,
+from numpy import (amin, amax, argmax, array, diff, hstack, isfinite,
                    NINF, PINF, square)
 from tables import NoSuchNodeError
 
@@ -56,6 +56,10 @@ def find_chunks(mask_rows_any_present):
             # to exclusive (half-open) coordinates, as Python needs
             ends = ends_inclusive + 1
 
+        # If the first start is is >= MIN_GAP_LEN compared to the end of the
+        # presences of data from the previous supercontig
+            # Truncate the start coordinate
+
     return starts, ends
 
 def write_metadata(chromosome, verbose=False):
@@ -76,7 +80,10 @@ def write_metadata(chromosome, verbose=False):
     sums_squares = fill_array(0.0, row_shape)
     num_datapoints = fill_array(0, row_shape)
 
-    for supercontig in chromosome:
+    num_supercontigs = \
+        len(chromosome.supercontigs[chromosome.start:chromosome.end])
+
+    for index, supercontig in enumerate(chromosome):
         if verbose:
             print(" scanning %s" % supercontig, file=sys.stderr)
 
@@ -84,6 +91,10 @@ def write_metadata(chromosome, verbose=False):
             continuous = supercontig.continuous
         except NoSuchNodeError:
             raise NoSuchNodeError("Supercontig found missing continuous")
+
+        # Track first and last supercontigs for this chromosome
+        is_first_supercontig = (index == 0)
+        is_last_supercontig = (index == num_supercontigs-1)
 
         # only runs when assertions checked
         if __debug__:
@@ -120,6 +131,21 @@ def write_metadata(chromosome, verbose=False):
         supercontig_attrs = supercontig.attrs
 
         starts, ends = find_chunks(mask_rows_any_present)
+
+        # If this is the first supercontig
+        if is_first_supercontig:
+            # Truncate the start chunk of the supercontig to start where data
+            # is defined
+            # NB: argmax will select the first element on matching winners
+            starts[0] = argmax(mask_rows_any_present)
+            is_first_supercontig = False
+        # If this is the last supercontig
+        elif is_last_supercontig:
+            # Truncate the last end chunk of the supercontig to end where data
+            # is last defined
+            ends[-1] = (len(mask_rows_any_present) -
+                argmax(mask_rows_any_present[::-1]))
+
         supercontig_attrs.chunk_starts = starts
         supercontig_attrs.chunk_ends = ends
 
