@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
-
 """
 _close_data: DESCRIPTION
 """
@@ -12,18 +11,20 @@ import sys
 
 from argparse import ArgumentParser
 
-from numpy import (amin, amax, argmax, array, diff, hstack, isfinite,
-                   NINF, PINF, square)
+from numpy import (amin, amax, argmax, array, diff, hstack, isfinite, NINF,
+                   PINF, square)
 from tables import NoSuchNodeError
 
 from . import Genome, __version__
 from ._load_seq import MIN_GAP_LEN
 from ._util import fill_array, init_num_obs, new_extrema
 
+
 def update_extrema(func, extrema, data, col_index):
     extrema[col_index] = new_extrema(func, data, extrema[col_index])
 
-def find_chunks(mask_rows_any_present):
+
+def find_chunk_gaps_in_supercontig(mask_rows_any_present):
     """
     find chunks that have less than MIN_GAP_LEN missing data
     gaps in a row
@@ -46,7 +47,7 @@ def find_chunks(mask_rows_any_present):
 
         if len(indices_signif):
             # start with the indices immediately after a big gap
-            starts = indices_present[hstack([0, indices_signif+1])]
+            starts = indices_present[hstack([0, indices_signif + 1])]
 
             # end with indices immediately before a big gap
             ends_inclusive = indices_present[hstack([indices_signif, -1])]
@@ -58,9 +59,10 @@ def find_chunks(mask_rows_any_present):
 
         # If the first start is is >= MIN_GAP_LEN compared to the end of the
         # presences of data from the previous supercontig
-            # Truncate the start coordinate
+        # Truncate the start coordinate
 
     return starts, ends
+
 
 def write_metadata(chromosome, verbose=False):
     if verbose:
@@ -73,17 +75,17 @@ def write_metadata(chromosome, verbose=False):
     tracknames = chromosome.tracknames_continuous
 
     num_obs = len(tracknames)
-    row_shape = (num_obs,)
+    row_shape = (num_obs, )
     mins = fill_array(PINF, row_shape)
     maxs = fill_array(NINF, row_shape)
     sums = fill_array(0.0, row_shape)
     sums_squares = fill_array(0.0, row_shape)
     num_datapoints = fill_array(0, row_shape)
 
-    num_supercontigs = \
-        len(chromosome.supercontigs[chromosome.start:chromosome.end])
+    all_supercontigs = chromosome.supercontigs[chromosome.start:chromosome.end]
+    num_supercontigs = len(all_supercontigs)
 
-    for index, supercontig in enumerate(chromosome):
+    for index, supercontig in enumerate(all_supercontigs):
         if verbose:
             print(" scanning %s" % supercontig, file=sys.stderr)
 
@@ -92,13 +94,19 @@ def write_metadata(chromosome, verbose=False):
         except NoSuchNodeError:
             raise NoSuchNodeError("Supercontig found missing continuous")
 
-        # Track first and last supercontigs for this chromosome
-        is_first_supercontig = (index == 0)
-        is_last_supercontig = (index == num_supercontigs-1)
+        # Get next and previous supercontigs if possible
+        prev_supercontig = None
+        next_supercontig = None
+        if index > 0:
+            prev_supercontig = all_supercontigs[index - 1]
+        if index < (num_supercontigs - 1):
+            next_supercontig = all_supercontigs[index + 1]
+
+        is_last_supercontig = (index == num_supercontigs - 1)
 
         # only runs when assertions checked
         if __debug__:
-            init_num_obs(num_obs, continuous) # for the assertion
+            init_num_obs(num_obs, continuous)  # for the assertion
 
         mask_rows_any_present = fill_array(False, continuous.shape[0])
 
@@ -130,21 +138,36 @@ def write_metadata(chromosome, verbose=False):
 
         supercontig_attrs = supercontig.attrs
 
-        starts, ends = find_chunks(mask_rows_any_present)
+        starts, ends = find_chunk_gaps_in_supercontig(mask_rows_any_present)
 
-        # If this is the first supercontig
-        if is_first_supercontig:
+        # Find the coordinate where data is first defined in this supercontig
+        # NB: argmax will select the first element on matching winners
+        first_defined_value_index = argmax(mask_rows_any_present)
+
+        # If a previous supercontig exists
+        if prev_supercontig:
+            # Get previous end chunk chromosomal coordinate
+            prev_end_chunk_coord = prev_supercontig.start + \
+                prev_supercontig.attrs.chunk_ends[-1]
+            first_defined_value_coord = supercontig.start + \
+                first_defined_value_index
+            # If the distance between coords is greater than MIN_GAP_LEN
+            if first_defined_value_coord - prev_end_chunk_coord > MIN_GAP_LEN:
+                # Truncate the start chunk of the supercontig to start where
+                # data is defined
+                starts[0] = first_defined_value_index
+        # Else this is the first supercontig
+        else:
             # Truncate the start chunk of the supercontig to start where data
             # is defined
-            # NB: argmax will select the first element on matching winners
-            starts[0] = argmax(mask_rows_any_present)
-            is_first_supercontig = False
+            starts[0] = first_defined_value_index
+
         # If this is the last supercontig
-        elif is_last_supercontig:
+        if not next_supercontig:
             # Truncate the last end chunk of the supercontig to end where data
             # is last defined
             ends[-1] = (len(mask_rows_any_present) -
-                argmax(mask_rows_any_present[::-1]))
+                        argmax(mask_rows_any_present[::-1]))
 
         supercontig_attrs.chunk_starts = starts
         supercontig_attrs.chunk_ends = ends
@@ -173,14 +196,18 @@ def parse_options(args):
     description = ("Compute summary statistics for data in Genomedata archive"
                    " and ready for accessing.")
 
-    parser = ArgumentParser(description=description,
-                            prog='genomedata-close-data',
-                            version=__version__)
+    parser = ArgumentParser(
+        description=description,
+        prog='genomedata-close-data',
+        version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive')
 
-    parser.add_argument("--verbose", default=False, action="store_true",
-                        help="Print status updates and diagnostic messages")
+    parser.add_argument(
+        "--verbose",
+        default=False,
+        action="store_true",
+        help="Print status updates and diagnostic messages")
 
     args = parser.parse_args(args)
 
@@ -191,6 +218,7 @@ def main(argv=sys.argv[1:]):
     args = parse_options(argv)
     gdarchive = args.gdarchive
     return close_data(gdarchive, verbose=args.verbose)
+
 
 if __name__ == "__main__":
     sys.exit(main())
