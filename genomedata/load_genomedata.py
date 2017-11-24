@@ -128,7 +128,8 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
         try:
             close_data(tempdatapath, verbose=verbose)
         except:
-            die("Error saving metadata.")
+            raise
+            # die("Error saving metadata.")
 
         # Make output directory
         if verbose:

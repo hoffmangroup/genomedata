@@ -168,22 +168,22 @@ class TestChunks(unittest.TestCase):
                 # NB: There should only be one chunk listed per supercontig for
                 # this test
                 supercontig_chunks.append(
-                    (supercontig_attrs.chunk_starts.tolist()[0],
-                     supercontig_attrs.chunk_ends.tolist()[0])
+                    (supercontig_attrs.chunk_starts.tolist(),
+                     supercontig_attrs.chunk_ends.tolist())
                 )
 
         expected_chunks = [
             # Test first chunk extends from 25 to end of first supercontig
-            (50, 100),
+            ([50], [100]),
             # Test second chunk extends from 125 to 150
-            (125, 150),
+            ([125], [150]),
             # Test third supercontig contains no chunks
-            (),
+            ([], []),
             # Test fourth supercontig contains a chunk spanning entire
             # supercontig
-            (0, 100),
+            ([0], [100]),
             # Test last chunk start at fifth supercontig and ends early
-            (0, 25),
+            ([0], [25]),
         ]
         self.assertEqual(expected_chunks, supercontig_chunks)
 
