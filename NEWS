@@ -1,6 +1,7 @@
 1.4.0:
 * genomedata-close-data: chunk metadata now truncates telomeres and trims large
   gaps between supercontigs
+* genomedata-load-data: new option for masking data with --maskfile
 * genomedata-hardmask: new command added to filter out track regions
 * hardmask_data: new python interface to filter out track regions
 * Genome: add ability to open archives for writing
