@@ -149,7 +149,7 @@ class TestChunks(unittest.TestCase):
         self.sequence_type = "agp"
         self.sequences = [self.data_path("test_chunks.agp")]
         self.mode = "file"
-        self.verbose = True
+        self.verbose = False
 
         load_genomedata(self.genomedata_name, self.track_tuples,
                         self.sequences, self.mode, self.sequence_type,
