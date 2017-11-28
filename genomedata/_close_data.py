@@ -70,13 +70,15 @@ def get_next_defined_coordinate(chromosome, start_coordinate):
     supercontig onwards
     """
     res = None
-    # For each supercontig between our starting supercontig to end of chromsome
+    # For each supercontig between our starting supercontig to end of
+    # chromosome
     supercontigs = \
         chromosome.supercontigs[start_coordinate:chromosome.end]
     for supercontig in supercontigs:
-        # For each track in supercontig
         continuous = supercontig.continuous
         tracknames = chromosome.tracknames_continuous
+
+        # For each track in supercontig
         for col_index, trackname in enumerate(tracknames):
             col = continuous[:, col_index]
             mask_present = isfinite(col)
@@ -208,8 +210,12 @@ def write_metadata(chromosome, verbose=False):
                 last_defined_chrom_coord = (supercontig.start +
                                             last_defined_index)
                 # If the next defined value is greater than MIN_GAP_LEN away
-                if next_start_chrom_coord - last_defined_chrom_coord:
-                    # Truncate the chunk end to where data is last defined
+                # or there is no next possible defined value
+                if (not next_start_chrom_coord or
+                   next_start_chrom_coord - last_defined_chrom_coord >
+                   MIN_GAP_LEN):
+                    # Truncate the chunk end to where data is last defined in
+                    # this supercontig
                     ends[-1] = last_defined_index
 
             # Else this is the last supercontig
