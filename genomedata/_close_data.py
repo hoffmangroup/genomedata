@@ -57,43 +57,122 @@ def find_chunk_gaps_in_supercontig(mask_rows_any_present):
             # to exclusive (half-open) coordinates, as Python needs
             ends = ends_inclusive + 1
 
-        # If the first start is is >= MIN_GAP_LEN compared to the end of the
-        # presences of data from the previous supercontig
-        # Truncate the start coordinate
-
     return starts, ends
 
 
-def get_next_defined_coordinate(chromosome, start_coordinate):
+def find_next_present_coord(chromosome, start_supercontig):
     """
-    get next chromosomal coordinate where data is defined from starting
-    supercontig onwards
+    get next chromosomal coordinate where data is present from starting
+    supercontig onwards. Returns None if no data is found or the starting
+    supercontig does not exist
     """
     res = None
-    # For each supercontig between our starting supercontig to end of
-    # chromosome
-    supercontigs = \
-        chromosome.supercontigs[start_coordinate:chromosome.end]
-    for supercontig in supercontigs:
-        continuous = supercontig.continuous
-        tracknames = chromosome.tracknames_continuous
 
-        # For each track in supercontig
-        for col_index, trackname in enumerate(tracknames):
-            col = continuous[:, col_index]
-            mask_present = isfinite(col)
-            # If defined values exist
-            if any(mask_present):
-                # Get the earliest coordinate
-                first_present_coord = supercontig.start + argmax(mask_present)
-                if not res:
-                    res = first_present_coord
-                else:
-                    res = min(res, first_present_coord)
-        # If we found a defined value
-        if res:
-            # Stop searching
-            break
+    # If our starting supercontig exists
+    if start_supercontig:
+        start_coordinate = chromosome.start + start_supercontig.start
+
+        # For each supercontig between our starting supercontig to end of
+        # chromosome
+        supercontigs = chromosome.supercontigs[start_coordinate:chromosome.end]
+        for supercontig in supercontigs:
+            continuous = supercontig.continuous
+            tracknames = chromosome.tracknames_continuous
+
+            # For each track in supercontig
+            for col_index, trackname in enumerate(tracknames):
+                col = continuous[:, col_index]
+                mask_present = isfinite(col)
+                # If there is any value present
+                if any(mask_present):  # mask_present is boolean "present" array
+                    # Get the earliest coordinate
+                    # NB: argmax gives the index of the maximum value. In the case
+                    # of ties (which there will be) argmax returns the first index
+                    # with the maximum value. I believe this is the recommended
+                    # (and fastest?) way of finding the first occurrence of a value
+                    first_present_coord = supercontig.start + argmax(mask_present)
+                    if not res:
+                        res = first_present_coord
+                    else:
+                        res = min(res, first_present_coord)
+
+            # If a present value was found
+            if res:
+                # Stop searching
+                break
+
+    return res
+
+
+def trim_chunks_start(prev_supercontig, prev_end_coord,
+                      supercontig, presence_mask,
+                      chunk_start_index):
+    """Determine the first start index for chunks in this supercontig"""
+
+    # NB: this is unchanged if the distance between the previous
+    # end coordinates and the new start coordinate is less than
+    # MIN_GAP_LEN
+    res = chunk_start_index
+
+    # Find the coordinate where data is first present in this
+    # supercontig
+    # NB: argmax will give the index of the first element on matching
+    # winners of the boolean array. The winners are "present" values
+    first_present_value_index = argmax(presence_mask)
+    # If a previous supercontig exists
+    if prev_supercontig:
+        # Get previous end chunk chromosomal coordinate
+        first_present_value_coord = supercontig.start + \
+            first_present_value_index
+        # If the distance between previous and current present data
+        # chromsomal positions is greater than MIN_GAP_LEN
+        if (first_present_value_coord - prev_end_coord >
+        MIN_GAP_LEN):
+            # Truncate the start chunk of the supercontig to start
+            # where data is present
+            res = first_present_value_index
+    # Else this is the first supercontig
+    else:
+        # Truncate the start chunk of the supercontig to start where
+        # data is present
+        res = first_present_value_index
+
+    return res
+
+
+def trim_chunks_end(next_supercontig, next_start_coord,
+                    supercontig, presence_mask,
+                    chunk_end_index):
+    """Determine the first start index for chunks in this supercontig"""
+
+    # NB: this is unchanged if the distance between the last
+    # present coordinate and the next present coordinate is less
+    # than MIN_GAP_LEN 
+    res = chunk_end_index
+
+    # NB: argmax will give the index of the first element on matching
+    # winners of the boolean array. The winners are "present" values
+    last_present_index = (len(presence_mask) -
+                            argmax(presence_mask[::-1]))
+
+    # If this is not the last supercontig
+    if next_supercontig:
+        last_present_chrom_coord = (supercontig.start +
+                                    last_present_index)
+        # If the next present value is greater than MIN_GAP_LEN away
+        # or there is no next possible present value
+        if (not next_start_coord or
+            next_start_coord - last_present_chrom_coord >
+            MIN_GAP_LEN):
+            # Truncate the chunk end to where data is last present in
+            # this supercontig
+            res = last_present_index
+
+    # Else this is the last supercontig
+    else:
+        # Truncate the last end chunk of the supercontig to end where
+        # data is last present
+        res = last_present_index
 
     return res
 
@@ -109,18 +188,24 @@ def write_metadata(chromosome, verbose=False):
     tracknames = chromosome.tracknames_continuous
 
     num_obs = len(tracknames)
-    row_shape = (num_obs, )
+    row_shape = (num_obs,)
     mins = fill_array(PINF, row_shape)
     maxs = fill_array(NINF, row_shape)
     sums = fill_array(0.0, row_shape)
     sums_squares = fill_array(0.0, row_shape)
     num_datapoints = fill_array(0, row_shape)
 
-    all_supercontigs = chromosome.supercontigs[chromosome.start:chromosome.end]
-    num_supercontigs = len(all_supercontigs)
-    prev_end_chrom_coord = 0  # keeps track of where data was last defined
+    supercontigs = chromosome.supercontigs[chromosome.start:chromosome.end]
+    num_supercontigs = len(supercontigs)
+    prev_chrom_end = 0  # keeps track of where data was last present
 
-    for index, supercontig in enumerate(all_supercontigs):
+    prev_supercontigs = [None] + supercontigs[:-1]
+    next_supercontigs = supercontigs[1:] + [None]
+
+    zipper = zip(prev_supercontigs, supercontigs, next_supercontigs)
+
+    for prev_supercontig, supercontig, next_supercontig in zipper:
+
         if verbose:
             print(" scanning %s" % supercontig, file=sys.stderr)
 
@@ -129,18 +214,11 @@ def write_metadata(chromosome, verbose=False):
         except NoSuchNodeError:
             raise NoSuchNodeError("Supercontig found missing continuous")
 
-        # Get next and previous supercontigs if possible
-        prev_supercontig = None
-        next_supercontig = None
-        if index > 0:
-            prev_supercontig = all_supercontigs[index - 1]
-        if index < (num_supercontigs - 1):
-            next_supercontig = all_supercontigs[index + 1]
-
         # only runs when assertions checked
         if __debug__:
             init_num_obs(num_obs, continuous)  # for the assertion
 
+        # An array containing True when any data is present across all tracks
         mask_rows_any_present = fill_array(False, continuous.shape[0])
 
         # doing this column by column greatly reduces the memory
@@ -171,62 +249,29 @@ def write_metadata(chromosome, verbose=False):
 
         supercontig_attrs = supercontig.attrs
 
-        # If there exists data in this supercontig
+        next_chrom_start = find_next_present_coord(chromosome,
+                                                    next_supercontig)
+
+        # If any data is present in this supercontig
         if any(mask_rows_any_present):
-            # Find all gaps between defined data
+            # Find all gaps between present data
             starts, ends = find_chunk_gaps_in_supercontig(
                                mask_rows_any_present
                            )
-            # Find the coordinate where data is first defined in this
-            # supercontig
-            # NB: argmax will select the first element on matching winners
-            first_defined_value_index = argmax(mask_rows_any_present)
-            last_defined_index = (len(mask_rows_any_present) -
-                                  argmax(mask_rows_any_present[::-1]))
 
-            # If a previous supercontig exists
-            if prev_supercontig:
-                # Get previous end chunk chromosomal coordinate
-                first_defined_value_coord = supercontig.start + \
-                    first_defined_value_index
-                # If the distance between previous and current defined data
-                # chromsomal positions is greater than MIN_GAP_LEN
-                if (first_defined_value_coord - prev_end_chrom_coord >
-                   MIN_GAP_LEN):
-                    # Truncate the start chunk of the supercontig to start
-                    # where data is defined
-                    starts[0] = first_defined_value_index
-            # Else this is the first supercontig
-            else:
-                # Truncate the start chunk of the supercontig to start where
-                # data is defined
-                starts[0] = first_defined_value_index
+            # Trim the starting chunk index for this supercontig
+            starts[0] = trim_chunks_start(prev_supercontig, prev_chrom_end,
+                                          supercontig, mask_rows_any_present,
+                                          starts[0])
 
-            # If this is not the last supercontig
-            if next_supercontig:
-                next_start_chrom_coord = get_next_defined_coordinate(
-                    chromosome, chromosome.start + next_supercontig.start)
+            # Trim the end chunk index for this supercontig
+            ends[-1] = trim_chunks_end(next_supercontig, next_chrom_start,
+                                       supercontig, mask_rows_any_present,
+                                       ends[-1])
 
-                last_defined_chrom_coord = (supercontig.start +
-                                            last_defined_index)
-                # If the next defined value is greater than MIN_GAP_LEN away
-                # or there is no next possible defined value
-                if (not next_start_chrom_coord or
-                   next_start_chrom_coord - last_defined_chrom_coord >
-                   MIN_GAP_LEN):
-                    # Truncate the chunk end to where data is last defined in
-                    # this supercontig
-                    ends[-1] = last_defined_index
-
-            # Else this is the last supercontig
-            else:
-                # Truncate the last end chunk of the supercontig to end where
-                # data is last defined
-                ends[-1] = last_defined_index
-
-            # Update our new previously defined coordinate for next iteration
-            prev_end_chrom_coord = supercontig.start + ends[-1]
-        # Otherwise there isn't any data defined for this contig
+            # Update our new previously present coordinate for next iteration
+            prev_chrom_end = supercontig.start + ends[-1]
+        # Otherwise there isn't any data present for this contig
         else:
             # If this is the last supercontig
             if not next_supercontig:
@@ -235,15 +280,10 @@ def write_metadata(chromosome, verbose=False):
                 ends = array([])
             # Otherwise there are supercontigs to lookahead at
             else:
-                next_start_chrom_coord = get_next_defined_coordinate(
-                                             chromosome,
-                                             chromosome.start +
-                                             next_supercontig.start
-                                         )
-                # If the distance between the previously last defined value
-                # And next possible defined value is less than MIN_GAP_LEN
-                if (next_start_chrom_coord and
-                   next_start_chrom_coord - prev_end_chrom_coord <
+                # If the distance between the previously last present value
+                # And next possible present value is less than MIN_GAP_LEN
+                if (next_chrom_start and
+                   next_chrom_start - prev_chrom_end <
                    MIN_GAP_LEN):
                     # Include the entire region
                     starts = array([0])
