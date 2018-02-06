@@ -127,7 +127,7 @@ def trim_chunks_start(prev_supercontig, prev_end_coord,
         # If the distance between previous and current present data
         # chromsomal positions is greater than MIN_GAP_LEN
         if (first_present_value_coord - prev_end_coord >
-        MIN_GAP_LEN):
+            MIN_GAP_LEN):
             # Truncate the start chunk of the supercontig to start
             # where data is present
             res = first_present_value_index
@@ -153,7 +153,7 @@ def trim_chunks_end(next_supercontig, next_start_coord,
     # NB: argmax will give the index of the first element on matching
     # winners of the boolean array. The winners are "present" values
     last_present_index = (len(presence_mask) -
-                            argmax(presence_mask[::-1]))
+                          argmax(presence_mask[::-1]))
 
     # If this is not the last supercontig
     if next_supercontig:
