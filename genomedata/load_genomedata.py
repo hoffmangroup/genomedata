@@ -17,6 +17,7 @@ from path import path
 from subprocess import call
 import sys
 from tempfile import mkdtemp, mkstemp
+import traceback
 
 from . import EXT, FILE_MODE_CHROMS, SUFFIX, __version__
 from ._load_seq import load_seq
@@ -128,7 +129,12 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
         try:
             close_data(tempdatapath, verbose=verbose)
         except:
-            die("Error saving metadata.")
+            error_msg = "Error saving metadata."
+
+            if verbose:
+                error_msg += "\n" + traceback.print_exc()
+
+            die(error_msg)
 
         # Make output directory
         if verbose:
