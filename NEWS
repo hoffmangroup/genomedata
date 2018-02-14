@@ -1,3 +1,5 @@
+1.4.1:
+
 1.4.0:
 * genomedata-close-data: chunk metadata now truncates telomeres and trims large
   gaps between supercontigs
