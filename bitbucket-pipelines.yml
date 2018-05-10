@@ -24,7 +24,7 @@ pipelines:
             name: Python2
             script:
               - python --version
-              - cd test && ./test_all.sh
+              - cd test && ./test_all.py
         - step:
             caches:
               - segway
@@ -32,7 +32,7 @@ pipelines:
             script:
               - alias python="python3"
               - python --version
-              - cd test && ./test_all.sh
+              - cd test && ./test_all.py
 definitions:
     caches:
         segway: /segway
