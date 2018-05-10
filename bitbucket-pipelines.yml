@@ -15,21 +15,27 @@ pipelines:
           - pip install .
           - pip list
           - gmtkPrint -version
+          - python --version
+          - cd test && ./run_tests.py
+          - alias python="python3"
+          - python --version
+          - ./run_tests.py
 #        artifacts:
 #          - 
-    - parallel:
-        - step:
-            caches:
-              - pip
-            name: Python2
-            script:
-              - python --version
-              - cd test && ./run_tests.py
-        - step:
-            caches:
-              - pip
-            name: Python3
-            script:
-              - alias python="python3"
-              - python --version
-              - cd test && ./run_tests.py
+#    - parallel:
+#        - step:
+#            caches:
+#              - pip
+#            name: Python2
+#            script:
+#              - python --version
+#              - cd test && ./run_tests.py
+#        - step:
+#            caches:
+#              - pip
+#            name: Python3
+#            script:
+#              - alias python="python3"
+#              - python --version
+#             - cd test && ./run_tests.py
+#
