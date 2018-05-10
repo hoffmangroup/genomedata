@@ -1,0 +1,38 @@
+# This is a sample build configuration for Python.
+# Check our guides at https://confluence.atlassian.com/x/VYk8Lw for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: mjmm13/segway-test-build:latest
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - segway
+        name: Build
+        script: # Modify the commands below to build your repository.
+          - pip install .
+          - pip list
+          - gmtkPrint -version
+#        artifacts:
+#          - 
+    - parallel:
+        - step:
+            caches:
+              - segway
+            name: Python2
+            script:
+              - python --version
+              - cd test && ./test_all.sh
+        - step:
+            caches:
+              - segway
+            name: Python3
+            script:
+              - alias python="python3"
+              - python --version
+              - cd test && ./test_all.sh
+definitions:
+    caches:
+        segway: /segway
