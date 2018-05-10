@@ -9,7 +9,7 @@ pipelines:
   default:
     - step:
         caches:
-          - segway
+          - pip
         name: Build
         script: # Modify the commands below to build your repository.
           - pip install .
@@ -20,19 +20,16 @@ pipelines:
     - parallel:
         - step:
             caches:
-              - segway
+              - pip
             name: Python2
             script:
               - python --version
               - cd test && ./run_tests.py
         - step:
             caches:
-              - segway
+              - pip
             name: Python3
             script:
               - alias python="python3"
               - python --version
               - cd test && ./run_tests.py
-definitions:
-    caches:
-        segway: /segway
