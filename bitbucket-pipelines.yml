@@ -17,24 +17,26 @@ pipelines:
           - pip list
           - pip show genomedata
           - gmtkPrint -version
-    - parallel:
-        - step:
-            caches:
-              - pip
-              - pipinstalls
-            name: Python2
-            script:
-              - python --version
-              - cd test && ./run_tests.py
-        - step:
-            caches:
-              - pip
-              - pipinstalls
-            name: Python3
-            script:
-              - alias python="python3"
-              - python --version
-              - cd test && ./run_tests.py
+          - python --version
+          - cd test && ./run_tests.py
+#    - parallel:
+#        - step:
+#            caches:
+#              - pip
+#              - pipinstalls
+#            name: Python2
+#            script:
+#              - python --version
+#              - cd test && ./run_tests.py
+#        - step:
+#            caches:
+#              - pip
+#              - pipinstalls
+#            name: Python3
+#            script:
+#              - alias python="python3"
+#              - python --version
+#              - cd test && ./run_tests.py
 definitions:
     caches:
         pipinstalls: /usr/local/lib/python2.7/
