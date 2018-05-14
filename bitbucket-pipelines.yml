@@ -14,6 +14,7 @@ pipelines:
         script: # Modify the commands below to build your repository.
           - pip install .
           - pip list
+          - pip show genomedata
           - gmtkPrint -version
         artifacts:
           - /usr/lib/python2.7/site-packages/**
