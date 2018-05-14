@@ -11,6 +11,7 @@ pipelines:
         caches:
           - pip
           - pipinstalls
+          - savebin
         name: Build
         script: # Modify the commands below to build your repository.
           - pip install .
@@ -19,15 +20,16 @@ pipelines:
           - gmtkPrint -version
           - python --version
           - cd test && ./run_tests.py
-#    - parallel:
-#        - step:
-#            caches:
-#              - pip
-#              - pipinstalls
-#            name: Python2
-#            script:
-#              - python --version
-#              - cd test && ./run_tests.py
+    - parallel:
+        - step:
+            caches:
+              - pip
+              - pipinstalls
+              - savebin
+            name: Python2
+            script:
+              - python --version
+              - cd test && ./run_tests.py
 #        - step:
 #            caches:
 #              - pip
@@ -40,3 +42,4 @@ pipelines:
 definitions:
     caches:
         pipinstalls: /usr/local/lib/python2.7/
+        savebin: /usr/local/bin/
