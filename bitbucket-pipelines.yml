@@ -17,7 +17,7 @@ pipelines:
           - pip show genomedata
           - gmtkPrint -version
         artifacts:
-          - /usr/lib/python2.7/dist-packages/**
+          - /usr/local/lib/python2.7/dist-packages/**
     - parallel:
         - step:
             caches:
