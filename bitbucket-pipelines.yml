@@ -8,27 +8,28 @@ image: mjmm13/segway-test-build:latest
 pipelines:
   default:
     - step:
-#        caches:
-#          - pipinstalls
+        caches:
+          - pip
+          - pipinstalls
         name: Build
         script: # Modify the commands below to build your repository.
           - pip install .
           - pip list
           - pip show genomedata
           - gmtkPrint -version
-        artifacts:
-          - /usr/local/lib/python2.7**
     - parallel:
         - step:
-#            caches:
-#              - pipinstalls
+            caches:
+              - pip
+              - pipinstalls
             name: Python2
             script:
               - python --version
               - cd test && ./run_tests.py
         - step:
-#            caches:
-#              - pipinstalls
+            caches:
+              - pip
+              - pipinstalls
             name: Python3
             script:
               - alias python="python3"
