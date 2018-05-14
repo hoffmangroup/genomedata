@@ -15,8 +15,8 @@ pipelines:
           - pip install .
           - pip list
           - gmtkPrint -version
-#        artifacts:
-#          - 
+        artifacts:
+          - /usr/lib/python2.7/site-packages/**
     - parallel:
         - step:
             caches:
