@@ -27,15 +27,16 @@ pipelines:
             script:
               - python --version
               - cd test && ./run_tests.py
-#        - step:
-#            caches:
-#              - pip
-#              - pipinstalls
-#            name: Python3
-#            script:
-#              - alias python="python3"
-#              - python --version
-#              - cd test && ./run_tests.py
+        - step:
+            caches:
+              - pip
+              - pipinstalls
+              - savebin
+            name: Python3
+            script:
+              - alias python="python3"
+              - python --version
+              - cd test && ./run_tests.py
 definitions:
     caches:
         pipinstalls: /usr/local/lib/python2.7/
