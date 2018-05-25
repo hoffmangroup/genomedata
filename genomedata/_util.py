@@ -49,9 +49,6 @@ class LightIterator(object):
                     defline_old = self._defline
             else:
                 lines.append(line.rstrip())
-    
-    def next(self):
-        return __next__(self)
 
         if not lines:
             raise StopIteration
@@ -60,6 +57,8 @@ class LightIterator(object):
             raise ValueError("no definition line found at next position in %r" % self._handle)
 
         return defline_old, ''.join(lines)
+    def next(self):
+        return self.__next__()
 
 # XXX: suggest as default
 def fill_array(scalar, shape, dtype=None, *args, **kwargs):
