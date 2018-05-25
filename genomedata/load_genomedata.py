@@ -13,7 +13,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from datetime import datetime
 from glob import glob
 from os import close, extsep
-from path import path
+from path import Path
 from subprocess import call
 import sys
 from tempfile import mkdtemp, mkstemp
@@ -50,7 +50,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
     mode: "dir", "file", or None (decide based upon number of sequences)
     """
 
-    gdpath = path(gdfilename).expand()
+    gdpath = Path(gdfilename).expand()
     try:
         if mode is None:
             if (seqfilenames is not None and
@@ -62,11 +62,11 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
         if mode == "dir":
             # Generate hdf5 data in temporary directory and copy out when done
             tempdatadir = mkdtemp(prefix=(EXT + extsep))
-            tempdatapath = path(tempdatadir)
+            tempdatapath = Path(tempdatadir)
             isdir = True
         elif mode == "file":
             tempdatafile, tempdatafilename = mkstemp(suffix=SUFFIX)
-            tempdatapath = path(tempdatafilename)
+            tempdatapath = Path(tempdatafilename)
             # Close the file _descriptor_ (not a file object)
             close(tempdatafile)
             # Delete the file to allow load_seq to create it
@@ -88,7 +88,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             else:
                 seqfile_desc = "assembly"
 
-            if not path(seqfilename).isfile():
+            if not Path(seqfilename).isfile():
                 die("Could not find %s file: %s" % (seqfile_desc, seqfilename))
 
         if verbose:
@@ -103,7 +103,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             try:
                 track_names = []
                 for track_name, track_filename in tracks:
-                    if path(track_filename).isfile():
+                    if Path(track_filename).isfile():
                         if track_name not in track_names:  # No duplicates
                             track_names.append(track_name)
                     else:

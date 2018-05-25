@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
+import six
+from six.moves import range
 
 """
 Genomedata is a module to store and access large-scale functional
@@ -27,9 +29,10 @@ from numpy import (add, amin, amax, append, array, empty, float32, inf,
                    nan, ndarray, square, uint8)
 from operator import attrgetter
 from os import extsep
-from path import path
+from path import Path
 from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
+import traceback
 
 FORMAT_VERSION = 1
 SEQ_DTYPE = uint8
@@ -117,7 +120,7 @@ class Genome(object):
 
         # Process path for internal use, following symbolic links
         # until we get to the eventual file or directory
-        filepath = path(filename).expand()
+        filepath = Path(filename).expand()
         while filepath.islink():
             filepath = filepath.readlinkabs()
 
@@ -172,7 +175,7 @@ class Genome(object):
             # sorted so that the order is always the same
             for filepath in sorted(self._path.files("*" + SUFFIX)):
                 # pass through __getitem__() to allow memoization
-                yield self[filepath.namebase]
+                yield self[filepath.stem]
 
     def __getitem__(self, name):
         """Return a reference to a chromosome of the given name.
@@ -269,7 +272,7 @@ class Genome(object):
         # Whether a single file or a directory, close all the chromosomes
         # so they know they shouldn't be read. Do this before closing
         # Genome.h5file in case the chromosomes need access to it in closing.
-        for name, chromosome in self.open_chromosomes.iteritems():
+        for name, chromosome in six.iteritems(self.open_chromosomes):
             # Only close those not closed manually by the user
             if chromosome.isopen:
                 chromosome.close()
@@ -337,7 +340,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
             else:
                 tracknames = array([])
 
-            attrs.tracknames = append(tracknames, trackname)
+            attrs.tracknames = append(tracknames, trackname.encode("latin-1"))
 
         # Let the chromosomes handle the rest
         for chromosome in self:
@@ -355,7 +358,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
         if self._isfile:
             # Tracknames are stored at the root of each file, so we can
             # access them directly in this case
-            return self._file_attrs.tracknames.tolist()
+            return [x.decode() for x in self._file_attrs.tracknames.tolist()]
         else:
             # check that all chromosomes have the same tracknames_continuous
             res = None
@@ -585,7 +588,7 @@ since being closed with genomedata-close-data.""")
         :param \*\*kwargs: keyword args passed on to open_file
 
         """
-        filepath = path(filename).expand()
+        filepath = Path(filename).expand()
         try:
             h5file = _open_file(filepath, mode=mode, *args, **kwargs)
         except IOError:
@@ -761,7 +764,7 @@ since being closed with genomedata-close-data.""")
                             track_key)
 
         nrows = base_key.stop - base_key.start
-        ncols = len(xrange(track_key.start, track_key.stop, track_key.step))
+        ncols = len(range(track_key.start, track_key.stop, track_key.step))
         dtype = self._continuous_dtype
 
         # Handle degenerate case
@@ -938,6 +941,7 @@ since being closed with genomedata-close-data.""")
                  " be recalculated by calling genomedata-close-data on the"
                  " Genomedata archive before re-accessing it")
 
+
         if self._isfile:
             self.h5file.close()
 
@@ -981,7 +985,8 @@ since being closed with genomedata-close-data.""")
             else:
                 tracknames = array([])
 
-            file_attrs.tracknames = append(tracknames, trackname)
+            file_attrs.tracknames = append(tracknames,
+                                           trackname.encode("latin-1"))
         # else: hope the Genome object updated its own tracknames
 
         self.attrs.dirty = True  # dirty specific to chromosome
@@ -1045,7 +1050,7 @@ since being closed with genomedata-close-data.""")
     def tracknames_continuous(self):
         """Return a list of the data track names in this Chromosome."""
         assert self.isopen
-        return self._file_attrs.tracknames.tolist()
+        return [x.decode() for x in self._file_attrs.tracknames.tolist()]
 
     @property
     def num_tracks_continuous(self):

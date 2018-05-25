@@ -16,7 +16,7 @@ from argparse import ArgumentParser
 from collections import defaultdict
 
 from numpy import frombuffer, uint32
-from path import path
+from path import Path
 from tabdelim import DictReader
 
 from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS,
@@ -78,7 +78,7 @@ def create_supercontig(chromosome, index, seq=None, start=None, end=None):
     supercontig = h5file.create_group(where, name)
 
     if seq is not None:
-        seq_array = frombuffer(seq, SEQ_DTYPE)
+        seq_array = frombuffer(seq.encode("latin-1"), SEQ_DTYPE)
         h5file.create_carray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
 
         # XXXopt: does this result in compression?
@@ -175,6 +175,7 @@ def get_num_seq(filenames):
     """
     res = 0
 
+
     for filename in filenames:
         with maybe_gzip_open(filename) as infile:
             for line in infile:
@@ -197,7 +198,7 @@ def create_chromosome(genome, name, mode):
     return res
 
 def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fasta"):
-    gdpath = path(gdfilename)
+    gdpath = Path(gdfilename)
 
     ## load sizes if necessary to figure out number of chromosomes
     if seqfile_type == "sizes":

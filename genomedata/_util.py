@@ -12,6 +12,7 @@ import sys
 from numpy import array, empty
 from tables import Filters
 
+
 FILTERS_GZIP = Filters(complevel=1)
 
 EXT_GZ = "gz"
@@ -29,7 +30,7 @@ class LightIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         lines = []
         defline_old = self._defline
 
@@ -40,7 +41,7 @@ class LightIterator(object):
                 if defline_old:
                     self._defline = None
                     break
-            elif line.startswith(">"):
+            elif line.startswith('>'):
                 self._defline = line[1:].rstrip()
                 if defline_old or lines:
                     break
@@ -73,7 +74,7 @@ def gzip_open(*args, **kwargs):
 
 def maybe_gzip_open(filename, *args, **kwargs):
     if filename.endswith(SUFFIX_GZ):
-        return gzip_open(filename, *args, **kwargs)
+        return gzip_open(filename, mode="rt", *args, **kwargs)
     else:
         return open(filename, *args, **kwargs)
 

@@ -7,12 +7,13 @@ from os import chdir, remove
 import subprocess
 import unittest
 
-from path import path
+from path import Path
 
 from genomedata.load_genomedata import load_genomedata
 from genomedata import Genome
 
 import test_genomedata
+from six.moves import range
 
 """
 DESCRIPTION
@@ -192,7 +193,7 @@ class TestChunks(unittest.TestCase):
 
 
 def main():
-    dirpath = path(__file__).dirname()
+    dirpath = Path(__file__).dirname()
     if dirpath:
         chdir(dirpath)
 

@@ -27,7 +27,7 @@ MSG_LOAD_ERROR = "Error loading data from track file %%s. %s returned %%s." % LO
 
 
 def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
-    """Loads data from datafile into specific track of Genomedata archive
+    """Loads data frload_dataom datafile into specific track of Genomedata archive
 
     gdfilename: genomedata archive path
     trackname: name of track (as specified in open_data) to load data for
@@ -38,7 +38,6 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
         print(">> Loading data for track: %s" % trackname)
 
     file_is_big_wig = is_big_wig(datafile)
-
     if file_is_big_wig:
         read_cmd = [BIG_WIG_READ_CMD]
     elif datafile.endswith(SUFFIX_GZ):
@@ -76,9 +75,9 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
         read_cmdline = " ".join(read_cmd)
         mask_cmdline = " ".join(mask_cmd)
         load_cmdline = " ".join(load_cmd)
-        print(" | ".join(filter(None, [read_cmdline,
+        print(" | ".join([_f for _f in [read_cmdline,
                                        mask_cmdline,
-                                       load_cmdline])),
+                                       load_cmdline] if _f]),
               file=sys.stderr)
 
     # Open the read command
@@ -116,9 +115,12 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
 
     loader = Popen(load_cmd, stdin=loader_input_process.stdout)
     loader.communicate()
-    retcode = loader.poll()
-    if retcode != 0:
+    loader_input_process.communicate()
+    retcode = [loader_input_process.poll()]
+    retcode.append(loader.poll())
+    if sum(retcode) != 0:
         die(MSG_LOAD_ERROR % (datafile, retcode))
+
 
 
 def is_big_wig(filename):

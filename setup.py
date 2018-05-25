@@ -15,6 +15,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
+import tokenize
 
 from distutils.command.clean import clean
 from distutils.command.build_scripts import build_scripts
@@ -29,9 +30,9 @@ from subprocess import CalledProcessError, check_call
 #from genomedata import __version__
 __version__ = "1.4.1"
 
-if sys.version_info[0] != 2 or sys.version_info[1] < 7:
-    print("Genomedata requires Python version 2.7+")
-    sys.exit(1)
+#if sys.version_info[0] != 2 or sys.version_info[1] < 7:
+#    print("Genomedata requires Python version 2.7+")
+#    sys.exit(1)
 
 doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")
@@ -69,7 +70,7 @@ genomedata-erase-data = genomedata._erase_data:main
 # See:
 # https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
 install_requires = ["numpy", "forked-path", "tables>=3.0,!=3.4.1",
-                    "textinput"]
+                    "textinput", "path.py>=11"]
 
 arch = "_".join([system(), processor()])
 
@@ -120,6 +121,21 @@ include_dirnames.add_env("C_INCLUDE_PATH")
 ## fix types, since distutils does type-sniffing:
 library_dirnames = list(library_dirnames)
 include_dirnames = list(include_dirnames)
+
+
+## This overrides the detect_encoding function from the tokenize package to return latin-1, since default utf8 is not correct.
+try:
+    _detect_encoding = tokenize.detect_encoding
+except AttributeError:
+    pass
+else:
+    def detect_encoding(readline):
+        try:
+            return _detect_encoding(readline)
+        except SyntaxError:
+            return 'latin-1', []
+    tokenize.detect_encoding = detect_encoding
+
 
 
 class InstallationError(Exception):

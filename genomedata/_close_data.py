@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
+from six.moves import zip
 """
 _close_data: DESCRIPTION
 """
@@ -202,7 +203,7 @@ def write_metadata(chromosome, verbose=False):
     prev_supercontigs = [None] + supercontigs[:-1]
     next_supercontigs = supercontigs[1:] + [None]
 
-    zipper = zip(prev_supercontigs, supercontigs, next_supercontigs)
+    zipper = list(zip(prev_supercontigs, supercontigs, next_supercontigs))
 
     for prev_supercontig, supercontig, next_supercontig in zipper:
 

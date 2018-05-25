@@ -6,6 +6,7 @@ archive
 """
 
 from __future__ import print_function
+from __future__ import absolute_import
 import argparse
 from functools import partial
 import operator
@@ -13,9 +14,9 @@ from os.path import splitext
 from re import match
 import sys
 
-from _close_data import write_genome_metadata
-from _util import EXT_GZ, maybe_gzip_open
-from _hardmask_parsers import (get_bed_filter_region, get_wig_filter_region,
+from ._close_data import write_genome_metadata
+from ._util import EXT_GZ, maybe_gzip_open
+from ._hardmask_parsers import (get_bed_filter_region, get_wig_filter_region,
                                   merged_filter_region_generator)
 from numpy import full, nan
 

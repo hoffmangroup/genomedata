@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
+from six.moves import zip
 
 """
 test_genomedata: DESCRIPTION
@@ -16,7 +17,7 @@ import unittest
 import warnings
 
 from numpy import array, isnan, logical_and, logical_not, nan
-from path import path
+from path import Path
 
 from genomedata import Genome
 from genomedata.load_genomedata import load_genomedata
@@ -33,7 +34,7 @@ UNFILTERED_TRACKNAME = "zunfiltered"
 UNFILTERED_TRACK_FILENAME = "unfiltered.bed"
 
 def seq2str(seq):
-    return seq.tostring().lower()
+    return seq.tostring().decode().lower()
 
 
 def make_temp_dir():
@@ -231,7 +232,7 @@ class GenomedataTesterBase(unittest.TestCase):
         self.assertFalse(chr2.isopen)
         genome.close()
         self.assertFalse(chr1.isopen)
-        self.assertRaises(Exception, iter(chr1).next)
+        self.assertRaises(Exception, next, iter(chr1))
 
     def test_open_chromosomes(self):
         genome = Genome(self.gdfilepath)
@@ -245,7 +246,7 @@ class GenomedataTesterBase(unittest.TestCase):
         self.assertEqual(genome.open_chromosomes, {})
 
     def set_gdfilepath(self, filename):
-        self.gdfilepath = path(filename).expand()
+        self.gdfilepath = Path(filename).expand()
 
 
 class GenomedataTester(GenomedataTesterBase):
@@ -259,7 +260,7 @@ class GenomedataTester(GenomedataTesterBase):
             gdfilename = make_temp_dir()
 
         elif self.mode == "file":
-            tempfile, gdfilename = mkstemp(prefix="genomedata")
+            tempfile, gdfilename = mkstemp(prefix="genomedata", text=True)
             os.close(tempfile)
             os.remove(gdfilename)  # Allow load_genomedata to create it
         else:
@@ -449,7 +450,7 @@ class GenomedataNoDataTester(unittest.TestCase):
         else:
             self.fail("Unrecognized mode: %s" % self.mode)
 
-        self.gdfilepath = path(gdfilename).expand()
+        self.gdfilepath = Path(gdfilename).expand()
 
         # Get resource paths instead of filenames
         seqfiles = [test_filename(file) for file in seqs]
