@@ -19,7 +19,6 @@ pipelines:
             caches:
               - pip
             name: Python2
-            image: python:2-alpine
             script:
               - pip install .
               - python --version
@@ -28,9 +27,9 @@ pipelines:
             caches:
               - pip
             name: Python3
-            image: python:3-alpine
             script:
-              - pip install .
+              - alias python="python3"
+              - pip3 install .
               - python --version
               - cd test && ./run_tests.py
 
