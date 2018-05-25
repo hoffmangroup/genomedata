@@ -49,6 +49,9 @@ class LightIterator(object):
                     defline_old = self._defline
             else:
                 lines.append(line.rstrip())
+    
+    def next(self):
+        return __next__(self)
 
         if not lines:
             raise StopIteration
