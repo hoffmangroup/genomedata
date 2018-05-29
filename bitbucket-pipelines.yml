@@ -7,13 +7,6 @@ image: mjmm13/segway-test-build:latest
 
 pipelines:
   default:
-    - step:
-        caches:
-          - pip
-        name: Build
-        script: # Modify the commands below to build your repository.
-          - pip list
-          - gmtkPrint -version
     - parallel:
         - step:
             caches:
