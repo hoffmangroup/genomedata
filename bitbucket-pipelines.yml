@@ -8,14 +8,14 @@ image: mjmm13/segway-test-build:latest
 pipelines:
   default:
     - parallel:
-        - step:
-            caches:
-              - pip
-            name: Python2
-            script:
-              - pip install .
-              - python --version
-              - cd test && ./run_tests.py
+#        - step:
+#            caches:
+#              - pip
+#            name: Python2
+#            script:
+#              - pip install .
+#              - python --version
+#              - cd test && ./run_tests.py
         - step:
             caches:
               - pip
@@ -24,5 +24,6 @@ pipelines:
               - alias python="python3"
               - pip3 install .
               - python --version
+              - pip3 list
               - cd test && ./run_tests.py
 
