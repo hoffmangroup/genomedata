@@ -107,7 +107,8 @@ class GenomedataTesterBase(unittest.TestCase):
                 self.assertEqual(seq2str(chromosome.seq[30000]), "n")
 
                 # Track ordering should be: placental, primate, vertebrate
-                self.assertEqual(chromosome.tracknames_continuous, self.tracknames)
+                self.assertEqual(chromosome.tracknames_continuous,
+                                 self.tracknames)
 
                 # Given track ordering, check multi-track data retrieval
                 self.assertArraysEqual(chromosome[290, 0:3],
