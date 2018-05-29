@@ -77,102 +77,101 @@ class GenomedataTesterBase(unittest.TestCase):
             mode = "r+"
         else:
             mode = "r"
-
-        with Genome(self.gdfilepath, mode=mode) as genome:
-            original_num_datapoints = genome.num_datapoints
-
-            self.assertTrue("chr1" in genome)
-            self.assertFalse("chrZ" in genome)
-
-            chromosome = genome["chr1"]
-
-            # Test tracknames are as expected
-            self.assertEqual(sorted(chromosome.tracknames_continuous),
-                             sorted(self.tracknames))
-
-            # Test tracknames are consistent
-            self.assertEqual(sorted(genome.tracknames_continuous),
-                             sorted(chromosome.tracknames_continuous))
-
-            # Test chromosome attributes
-            self.assertEqual(chromosome.start, 0)
-            self.assertEqual(chromosome.end, 24950)
-
-            # Test sequence inside of data range
-            self.assertEqual(seq2str(chromosome.seq[0:20]),
-                             "taaccctaaccctaacccta")
-
-            # Test sequence outside of data range
+        with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self.assertEqual(seq2str(chromosome.seq[30000]), "n")
-            warnings.resetwarnings()
+            with Genome(self.gdfilepath, mode=mode) as genome:
+                original_num_datapoints = genome.num_datapoints
 
-            # Track ordering should be: placental, primate, vertebrate
-            self.assertEqual(chromosome.tracknames_continuous, self.tracknames)
+                self.assertTrue("chr1" in genome)
+                self.assertFalse("chrZ" in genome)
 
-            # Given track ordering, check multi-track data retrieval
-            self.assertArraysEqual(chromosome[290, 0:3],
-                                   [-2.297, -2.327, -2.320])
-
-            # test multi-track data retrieval by list
-            self.assertArraysEqual(chromosome[290, ["placental", "primate",
-                                                    "vertebrate"]],
-                                   chromosome[290, 0:3])
-            self.assertArraysEqual(chromosome[290, ["placental",
-                                                    "vertebrate"]],
-                                   [-2.297, -2.320])
-            self.assertArraysEqual(chromosome[290, [0, 2]],
-                                   [-2.297, -2.320])
-            self.assertArraysEqual(chromosome[290, [2, 0]],
-                                   [-2.320, -2.297])
-
-            self.assertArraysEqual(chromosome[290, array([1, 0])],
-                                   [-2.327, -2.297])
-
-
-            # Test filling of unassigned continuous segments
-            chromosome = genome["chrY"]
-            # Get first supercontig
-            for supercontig in chromosome:
-                break
-            self.assertArraysEqual(supercontig.continuous[0, 2], nan)
-
-            # If we are testing writing to archives
-            if self.write:
-                # Test writing scalars to various indexing methods
                 chromosome = genome["chr1"]
-                # Test writing scalar to multiple tracks
-                chromosome[290] = 100.0
-                # Test writing scalar to tracks by named list
-                chromosome[291, ["placental", "primate", "vertebrate"]] = 101.0
-                # Test writing scalar to select tracks by named list
-                chromosome[292, ["placental", "vertebrate"]] = 102.0
-                # Test writing scalar to tracks by index
-                chromosome[293, [0, 2]] = 103.0
-                chromosome[294, [2, 0]] = 104.0
 
-                # Test writing arrays to various indexing methods
-                # Test writing an array to a single index
-                chromosome[295] = [105.0, 106.0, 107.0]
-                # Test writing a subarray to a index subset
-                chromosome[296, ["placental", "vertebrate"]] = [108.0, 109.0]
+                # Test tracknames are as expected
+                self.assertEqual(sorted(chromosome.tracknames_continuous),
+                                 sorted(self.tracknames))
 
-                # Test removing datapoints by writing NaN
-                chromosome[297, ["primate"]] = nan
+                # Test tracknames are consistent
+                self.assertEqual(sorted(genome.tracknames_continuous),
+                                 sorted(chromosome.tracknames_continuous))
 
-                # Test writing around supercontig boundaries
-                # <Supercontig 'supercontig_0', [0:24950]>
-                # Test writing outside a supercontig
-                try:
-                    chromosome[300000] = 110.0
-                except ValueError:
-                    pass  # we expect a value error here
+                # Test chromosome attributes
+                self.assertEqual(chromosome.start, 0)
+                self.assertEqual(chromosome.end, 24950)
 
-                # Test writing overlap across supercontig to no supercontig
-                try:
-                    chromosome[24900:30000] = 111.0
-                except ValueError:
-                    pass  # we expect a value error here
+                # Test sequence inside of data range
+                self.assertEqual(seq2str(chromosome.seq[0:20]),
+                                 "taaccctaaccctaacccta")
+
+                # Test sequence outside of data range
+                self.assertEqual(seq2str(chromosome.seq[30000]), "n")
+
+                # Track ordering should be: placental, primate, vertebrate
+                self.assertEqual(chromosome.tracknames_continuous, self.tracknames)
+
+                # Given track ordering, check multi-track data retrieval
+                self.assertArraysEqual(chromosome[290, 0:3],
+                                       [-2.297, -2.327, -2.320])
+
+                # test multi-track data retrieval by list
+                self.assertArraysEqual(chromosome[290, ["placental", "primate",
+                                                        "vertebrate"]],
+                                       chromosome[290, 0:3])
+                self.assertArraysEqual(chromosome[290, ["placental",
+                                                        "vertebrate"]],
+                                       [-2.297, -2.320])
+                self.assertArraysEqual(chromosome[290, [0, 2]],
+                                       [-2.297, -2.320])
+                self.assertArraysEqual(chromosome[290, [2, 0]],
+                                       [-2.320, -2.297])
+
+                self.assertArraysEqual(chromosome[290, array([1, 0])],
+                                       [-2.327, -2.297])
+
+
+                # Test filling of unassigned continuous segments
+                chromosome = genome["chrY"]
+                # Get first supercontig
+                for supercontig in chromosome:
+                    break
+                self.assertArraysEqual(supercontig.continuous[0, 2], nan)
+
+                # If we are testing writing to archives
+                if self.write:
+                    # Test writing scalars to various indexing methods
+                    chromosome = genome["chr1"]
+                    # Test writing scalar to multiple tracks
+                    chromosome[290] = 100.0
+                    # Test writing scalar to tracks by named list
+                    chromosome[291, ["placental", "primate", "vertebrate"]] = 101.0
+                    # Test writing scalar to select tracks by named list
+                    chromosome[292, ["placental", "vertebrate"]] = 102.0
+                    # Test writing scalar to tracks by index
+                    chromosome[293, [0, 2]] = 103.0
+                    chromosome[294, [2, 0]] = 104.0
+
+                    # Test writing arrays to various indexing methods
+                    # Test writing an array to a single index
+                    chromosome[295] = [105.0, 106.0, 107.0]
+                    # Test writing a subarray to a index subset
+                    chromosome[296, ["placental", "vertebrate"]] = [108.0, 109.0]
+
+                    # Test removing datapoints by writing NaN
+                    chromosome[297, ["primate"]] = nan
+
+                    # Test writing around supercontig boundaries
+                    # <Supercontig 'supercontig_0', [0:24950]>
+                    # Test writing outside a supercontig
+                    try:
+                        chromosome[300000] = 110.0
+                    except ValueError:
+                        pass  # we expect a value error here
+
+                    # Test writing overlap across supercontig to no supercontig
+                    try:
+                        chromosome[24900:30000] = 111.0
+                    except ValueError:
+                        pass  # we expect a value error here
 
         # Check write output after closing if testing writes
         if self.write:
@@ -310,8 +309,10 @@ class GenomedataTester(GenomedataTesterBase):
 
         # Open new track
         genome = Genome(self.gdfilepath, mode="r+")
-        with genome:
-            genome.add_track_continuous(new_track_name)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with genome:
+                genome.add_track_continuous(new_track_name)
 
         # Load data for new track
         load_data(self.gdfilepath, new_track_name,
@@ -391,13 +392,15 @@ class GenomedataTester(GenomedataTesterBase):
         new_entry = (290, -2.297)
 
         # Test value before deleting track
-        with Genome(self.gdfilepath) as genome:
-            chromosome = genome["chr1"]
-            self.assertArraysEqual(chromosome[old_entry[0], old_trackname],
-                                   old_entry[1])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with Genome(self.gdfilepath) as genome:
+                chromosome = genome["chr1"]
+                self.assertArraysEqual(chromosome[old_entry[0], old_trackname],
+                                       old_entry[1])
 
-        # Remove track
-        erase_data(self.gdfilepath, old_trackname, verbose=self.verbose)
+            # Remove track
+            erase_data(self.gdfilepath, old_trackname, verbose=self.verbose)
 
         # Now replace it with the data from a different track
         track_index = self.tracknames.index(new_trackname)
@@ -494,9 +497,11 @@ class GenomedataNoDataTester(unittest.TestCase):
 
         # Open new track
         genome = Genome(self.gdfilepath, mode="r+")
-        with genome:
-            self.assertEqual(genome.num_tracks_continuous, 0)
-            genome.add_track_continuous(new_track_name)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with genome:
+                self.assertEqual(genome.num_tracks_continuous, 0)
+                genome.add_track_continuous(new_track_name)
 
         # Load data for new track
         load_data(self.gdfilepath, new_track_name,
