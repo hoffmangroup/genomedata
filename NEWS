@@ -1,4 +1,5 @@
 1.4.1:
+* genomedata-load-data: fix hdf5 group leak
 
 1.4.0:
 * genomedata-close-data: chunk metadata now truncates telomeres and trims large

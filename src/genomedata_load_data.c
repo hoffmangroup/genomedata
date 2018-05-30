@@ -540,6 +540,7 @@ void get_cols(chromosome_type *chromosome, char *trackname, hsize_t *num_cols,
   }
 
   assert(H5Aclose(attr) >= 0);
+  close_group(root);
 }
 
 hid_t open_supercontig_dataset(supercontig_type *supercontig, char *trackname) {
