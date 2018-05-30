@@ -32,7 +32,6 @@ from os import extsep
 from path import Path
 from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
-import traceback
 
 FORMAT_VERSION = 1
 SEQ_DTYPE = uint8
@@ -41,6 +40,8 @@ SEQ_ATOM = UInt8Atom()
 CONTINUOUS_DTYPE = float32
 CONTINUOUS_ATOM = Float32Atom(dflt=nan)
 CONTINUOUS_CHUNK_SHAPE = (10000, 1)
+#Use latin-1 to encode unicode as bytes, this is the 8-bit extension of ASCII
+GENOMEDATA_ENCODING="latin-1"
 
 EXT = "genomedata"
 SUFFIX = extsep + EXT
@@ -340,7 +341,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
             else:
                 tracknames = array([])
 
-            attrs.tracknames = append(tracknames, trackname.encode("latin-1"))
+            attrs.tracknames = append(tracknames, trackname.encode(GENOMEDATA_ENCODING))
 
         # Let the chromosomes handle the rest
         for chromosome in self:
@@ -986,7 +987,7 @@ since being closed with genomedata-close-data.""")
                 tracknames = array([])
 
             file_attrs.tracknames = append(tracknames,
-                                           trackname.encode("latin-1"))
+                                           trackname.encode(GENOMEDATA_ENCODING))
         # else: hope the Genome object updated its own tracknames
 
         self.attrs.dirty = True  # dirty specific to chromosome
