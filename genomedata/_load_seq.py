@@ -32,6 +32,7 @@ assert not MIN_GAP_LEN % 2 # must be even for division
 REGEX_SEGMENT_LEN = MIN_GAP_LEN // 2 # max == MAXREPEAT
 
 DNA_LETTERS_UNAMBIG = "ACGTacgt"
+GENOMEDATA_ENCODING = "latin-1"
 
 SUPERCONTIG_NAME_FMT = "supercontig_%s"
 
@@ -78,7 +79,7 @@ def create_supercontig(chromosome, index, seq=None, start=None, end=None):
     supercontig = h5file.create_group(where, name)
 
     if seq is not None:
-        seq_array = frombuffer(seq.encode("latin-1"), SEQ_DTYPE)
+        seq_array = frombuffer(seq.encode(GENOMEDATA_ENCODING), SEQ_DTYPE)
         h5file.create_carray(supercontig, "seq", SEQ_ATOM, seq_array.shape)
 
         # XXXopt: does this result in compression?
