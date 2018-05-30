@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
-# Install Ubuntu 16.04.01 LTS (Xenial Xerus)
-# Install python 2.7.12 and pip
+# Install Ubuntu 18.04.01 LTS (Bionic Beaver)
+# Install python 2.7.12 and 3.6.5 and pip 2 and 3
 # Install HDF5
 # Install curl (for retrieving GMTK)
 RUN apt-get update && apt-get install -y \
@@ -36,13 +36,7 @@ RUN curl -SL http://melodi.ee.washington.edu/downloads/gmtk/gmtk-1.4.4.tar.gz \
 
 # Update pip
 # Install mercurial for hgtools (needed to install for testing)
-# Install PyFlakes for testing
 RUN pip install --upgrade \ 
     pip \
     setuptools \
     mercurial \
-    pyflakes
-
-# Install segway
-# RUN pip install segway
-
