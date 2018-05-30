@@ -30,9 +30,6 @@ from subprocess import CalledProcessError, check_call
 #from genomedata import __version__
 __version__ = "1.4.1"
 
-#if sys.version_info[0] != 2 or sys.version_info[1] < 7:
-#    print("Genomedata requires Python version 2.7+")
-#    sys.exit(1)
 
 doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")
@@ -69,7 +66,8 @@ genomedata-erase-data = genomedata._erase_data:main
 # Exclude PyTables 3.4.1 - incorrect binary distribution causes core dumps
 # See:
 # https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
-install_requires = ["numpy", "forked-path", "tables>=3.0,!=3.4.1",
+#path.py replaces forked-path, must be >11 due to path class being renamed to Path
+install_requires = ["numpy", "tables>=3.0,!=3.4.1",
                     "textinput", "path.py>=11"]
 
 arch = "_".join([system(), processor()])
@@ -124,6 +122,7 @@ include_dirnames = list(include_dirnames)
 
 
 ## This overrides the detect_encoding function from the tokenize package to return latin-1, since default utf8 is not correct.
+#Tokenize is used by distutils during setup not locally here
 try:
     _detect_encoding = tokenize.detect_encoding
 except AttributeError:
