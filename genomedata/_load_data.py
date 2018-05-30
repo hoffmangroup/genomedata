@@ -27,7 +27,7 @@ MSG_LOAD_ERROR = "Error loading data from track file %%s. %s returned %%s." % LO
 
 
 def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
-    """Loads data frload_dataom datafile into specific track of Genomedata archive
+    """Loads data from datafile into specific track of Genomedata archive
 
     gdfilename: genomedata archive path
     trackname: name of track (as specified in open_data) to load data for
@@ -75,9 +75,9 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
         read_cmdline = " ".join(read_cmd)
         mask_cmdline = " ".join(mask_cmd)
         load_cmdline = " ".join(load_cmd)
-        print(" | ".join([_f for _f in [read_cmdline,
-                                       mask_cmdline,
-                                       load_cmdline] if _f]),
+        print(" | ".join([cmd for cmd in [read_cmdline,
+                                          mask_cmdline,
+                                          load_cmdline] if cmd]),
               file=sys.stderr)
 
     # Open the read command
@@ -118,7 +118,7 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
     loader_input_process.communicate()
     retcode = [loader_input_process.poll()]
     retcode.append(loader.poll())
-    if sum(retcode) != 0:
+    if any(retcode) != 0:
         die(MSG_LOAD_ERROR % (datafile, retcode))
 
 
