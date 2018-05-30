@@ -41,7 +41,7 @@ class LightIterator(object):
                 if defline_old:
                     self._defline = None
                     break
-            elif line.startswith('>'):
+            elif line.startswith(">"):
                 self._defline = line[1:].rstrip()
                 if defline_old or lines:
                     break
@@ -76,6 +76,8 @@ def gzip_open(*args, **kwargs):
 
 def maybe_gzip_open(filename, *args, **kwargs):
     if filename.endswith(SUFFIX_GZ):
+        #Mode "rt" open gzip in read-only unicode format, as opposed to default rb 
+        #Which opens it as binary.
         return gzip_open(filename, mode="rt", *args, **kwargs)
     else:
         return open(filename, *args, **kwargs)
