@@ -78,6 +78,7 @@ def maybe_gzip_open(filename, *args, **kwargs):
     if filename.endswith(SUFFIX_GZ):
         #Mode "rt" open gzip in read-only unicode format, as opposed to default rb 
         #Which opens it as binary.
+        
         return gzip_open(filename, mode="rt", *args, **kwargs)
     else:
         return open(filename, *args, **kwargs)
