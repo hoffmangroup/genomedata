@@ -18,6 +18,8 @@ FILTERS_GZIP = Filters(complevel=1)
 
 EXT_GZ = "gz"
 SUFFIX_GZ = extsep + EXT_GZ
+
+#latin-1 is the name of the bytes encoding used
 GENOMEDATA_ENCODING="latin-1"
 
 CONTINUOUS_ATOM = Float32Atom(dflt=nan)
