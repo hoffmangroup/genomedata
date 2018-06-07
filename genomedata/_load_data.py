@@ -77,7 +77,8 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
         load_cmdline = " ".join(load_cmd)
         print(" | ".join([cmd for cmd in [read_cmdline,
                                           mask_cmdline,
-                                          load_cmdline] if cmd]),
+                                          load_cmdline] \
+                                                if cmd]),
               file=sys.stderr)
 
     # Open the read command
@@ -118,9 +119,8 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
     loader_input_process.communicate()
     retcode = [loader_input_process.poll()]
     retcode.append(loader.poll())
-    if any(retcode) != 0:
+    if any(retcode):
         die(MSG_LOAD_ERROR % (datafile, retcode))
-
 
 
 def is_big_wig(filename):

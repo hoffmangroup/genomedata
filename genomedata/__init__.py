@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
-import six
+from six import viewitems
 from six.moves import range
 
 """
@@ -32,17 +32,17 @@ from os import extsep
 from path import Path
 from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
+from ._util import decode_tracknames, add_track
 
 FORMAT_VERSION = 1
 SEQ_DTYPE = uint8
 SEQ_ATOM = UInt8Atom()
 
 CONTINUOUS_DTYPE = float32
-CONTINUOUS_ATOM = Float32Atom(dflt=nan)
-CONTINUOUS_CHUNK_SHAPE = (10000, 1)
-#Use latin-1 to encode unicode as bytes, this is the 8-bit extension of ASCII
-GENOMEDATA_ENCODING="latin-1"
 
+#Use latin-1 to encode unicode as bytes, this is the 8-bit extension of ASCII
+
+GENOMEDATA_ENCODING="latin-1"
 EXT = "genomedata"
 SUFFIX = extsep + EXT
 
@@ -273,7 +273,7 @@ class Genome(object):
         # Whether a single file or a directory, close all the chromosomes
         # so they know they shouldn't be read. Do this before closing
         # Genome.h5file in case the chromosomes need access to it in closing.
-        for name, chromosome in six.iteritems(self.open_chromosomes):
+        for name, chromosome in viewitems(self.open_chromosomes):
             # Only close those not closed manually by the user
             if chromosome.isopen:
                 chromosome.close()
@@ -325,27 +325,16 @@ class Genome(object):
         genomedata-close-data
 
         """
-        assert self.isopen
         if self.format_version < 1:
             raise NotImplementedError("""Adding tracks is only supported \
 for archives created with Genomedata version 1.2.0 or later.""")
 
         if self._isfile:
-            # Update tracknames attribute on file
-            attrs = self._file_attrs
-            if "tracknames" in attrs:
-                tracknames = attrs.tracknames
-                if trackname in tracknames:
-                    raise ValueError("%s already has a track of name: %s"
-                                     % (self.filename, trackname))
-            else:
-                tracknames = array([])
-
-            attrs.tracknames = append(tracknames, trackname.encode(GENOMEDATA_ENCODING))
+            add_track(self, trackname)
 
         # Let the chromosomes handle the rest
         for chromosome in self:
-            chromosome._add_track_continuous(trackname)
+            add_track(chromosome, trackname, chromosome=True)
 
     @property
     def isopen(self):
@@ -359,15 +348,15 @@ for archives created with Genomedata version 1.2.0 or later.""")
         if self._isfile:
             # Tracknames are stored at the root of each file, so we can
             # access them directly in this case
-            return [x.decode() for x in self._file_attrs.tracknames.tolist()]
+            return decode_tracknames(self)
         else:
             # check that all chromosomes have the same tracknames_continuous
             res = None
             for chromosome in self:
                 if res is None:
-                    res = chromosome.tracknames_continuous
+                    res = decode_tracknames(chromosome)
                 else:
-                    assert res == chromosome.tracknames_continuous
+                    assert res == decode_tracknames(chromosome)
 
         return res
 
@@ -942,7 +931,6 @@ since being closed with genomedata-close-data.""")
                  " be recalculated by calling genomedata-close-data on the"
                  " Genomedata archive before re-accessing it")
 
-
         if self._isfile:
             self.h5file.close()
 
@@ -964,50 +952,6 @@ since being closed with genomedata-close-data.""")
         for supercontig, continuous in self.itercontinuous():
             continuous[:, col_index] = nan
 
-    def _add_track_continuous(self, trackname):
-        """Add a new track
-
-        The Genome object must have been created with
-        :param mode:="r+". Behavior is undefined if this is not the case.
-
-        Currently sets the dirty bit, which can only be erased with
-        genomedata-close-data
-
-        """
-        assert self.isopen
-        if self._isfile:
-            # Update tracknames attribute with new trackname
-            file_attrs = self._file_attrs
-            if "tracknames" in file_attrs:
-                tracknames = file_attrs.tracknames
-                if trackname in tracknames:
-                    raise ValueError("%s already has a track of name: %s"
-                                     % (self.filename, trackname))
-            else:
-                tracknames = array([])
-
-            file_attrs.tracknames = append(tracknames,
-                                           trackname.encode(GENOMEDATA_ENCODING))
-        # else: hope the Genome object updated its own tracknames
-
-        self.attrs.dirty = True  # dirty specific to chromosome
-
-        # Extend supercontigs by a column (or create them)
-        for supercontig in self:
-            supercontig_length = supercontig.end - supercontig.start
-            try:
-                continuous = supercontig.continuous
-            except NoSuchNodeError:
-                # Define an extendible array in the second dimension (0)
-                supercontig_shape = (supercontig_length, 0)
-                self.h5file.create_earray(supercontig.h5group, "continuous",
-                                          CONTINUOUS_ATOM, supercontig_shape,
-                                          chunkshape=CONTINUOUS_CHUNK_SHAPE)
-                continuous = supercontig.continuous
-
-            # Add column to supercontig continuous array
-            # "truncate" also extends with default values
-            continuous.truncate(continuous.nrows + 1)
 
     @property
     def isopen(self):
@@ -1051,7 +995,7 @@ since being closed with genomedata-close-data.""")
     def tracknames_continuous(self):
         """Return a list of the data track names in this Chromosome."""
         assert self.isopen
-        return [x.decode() for x in self._file_attrs.tracknames.tolist()]
+        return decode_tracknames(self)
 
     @property
     def num_tracks_continuous(self):

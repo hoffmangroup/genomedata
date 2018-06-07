@@ -9,14 +9,19 @@ from gzip import open as _gzip_open
 from os import extsep
 import sys
 
-from numpy import array, empty
-from tables import Filters
+from numpy import array, empty, append, nan
+from tables import Filters, NoSuchNodeError, Float32Atom
+
 
 
 FILTERS_GZIP = Filters(complevel=1)
 
 EXT_GZ = "gz"
 SUFFIX_GZ = extsep + EXT_GZ
+GENOMEDATA_ENCODING="latin-1"
+
+CONTINUOUS_ATOM = Float32Atom(dflt=nan)
+CONTINUOUS_CHUNK_SHAPE = (10000, 1)
 
 def die(msg="Unexpected error."):
     print(msg, file=sys.stderr)
@@ -57,6 +62,7 @@ class LightIterator(object):
             raise ValueError("no definition line found at next position in %r" % self._handle)
 
         return defline_old, ''.join(lines)
+
     def next(self):
         return self.__next__()
 
@@ -74,13 +80,11 @@ def fill_array(scalar, shape, dtype=None, *args, **kwargs):
 def gzip_open(*args, **kwargs):
     return closing(_gzip_open(*args, **kwargs))
 
-def maybe_gzip_open(filename, *args, **kwargs):
-    if filename.endswith(SUFFIX_GZ):
-        # Mode "rt" open gzip in read-only unicode format, as opposed to default rb 
-        # Which opens it as binary  
-        return gzip_open(filename, mode="rt", *args, **kwargs)
+def maybe_gzip_open(filename, mode="rt", *args, **kwargs):
+    if filename.endswith(SUFFIX_GZ): 
+        return gzip_open(filename, mode=mode, *args, **kwargs)
     else:
-        return open(filename, *args, **kwargs)
+        return open(filename, mode=mode, *args, **kwargs)
 
 def init_num_obs(num_obs, continuous):
     curr_num_obs = continuous.shape[1]
@@ -96,6 +100,45 @@ def new_extrema(func, data, extrema):
 
 def ignore_comments(iterable):
     return (item for item in iterable if not item.startswith("#"))
+
+def decode_tracknames(gdfile):
+    return [trackname.decode() for trackname in gdfile._file_attrs.tracknames]
+
+def add_track(gdfile, trackname, chromosome=False):
+    assert gdfile.isopen
+    if gdfile._isfile:
+        # Update tracknames attribute with new trackname
+        file_attrs = gdfile._file_attrs
+        if "tracknames" in file_attrs:
+            tracknames = file_attrs.tracknames
+            if trackname in tracknames:
+                raise ValueError("%s already has a track of name: %s"
+                                 % (gdfile.filename, trackname))
+        else:
+            tracknames = array([])
+
+        file_attrs.tracknames = append(tracknames,
+                                       trackname.encode(GENOMEDATA_ENCODING))
+
+    if chromosome:
+        gdfile.attrs.dirty = True  # dirty specific to chromosome
+
+        # Extend supercontigs by a column (or create them)
+        for supercontig in gdfile:
+            supercontig_length = supercontig.end - supercontig.start
+            try:
+                continuous = supercontig.continuous
+            except NoSuchNodeError:
+                # Define an extendible array in the second dimension (0)
+                supercontig_shape = (supercontig_length, 0)
+                gdfile.h5file.create_earray(supercontig.h5group, "continuous",
+                                          CONTINUOUS_ATOM, supercontig_shape,
+                                          chunkshape=CONTINUOUS_CHUNK_SHAPE)
+                continuous = supercontig.continuous
+
+            # Add column to supercontig continuous array
+            # "truncate" also extends with default values
+            continuous.truncate(continuous.nrows + 1)
 
 
 def main(args=sys.argv[1:]):

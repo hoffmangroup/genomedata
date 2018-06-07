@@ -175,7 +175,6 @@ def get_num_seq(filenames):
     """
     res = 0
 
-
     for filename in filenames:
         with maybe_gzip_open(filename) as infile:
             for line in infile:

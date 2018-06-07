@@ -4,9 +4,9 @@ FROM ubuntu:latest
 # Install python 2.7.12 and 3.6.5, and pip 2 and 3
 
 RUN apt-get update && apt-get install -y \
-    python \
+    python2 \
     python3 \
-    python-pip \
+    python2-pip \
     python3-pip \
     libhdf5-serial-dev \
     hdf5-tools 
@@ -20,8 +20,13 @@ ENV HDF5_DIR /usr/lib/x86_64-linux-gnu/hdf5/serial
 
 # Update pip
 # Install mercurial for hgtools (needed to install for testing)
-RUN pip install --upgrade \ 
+RUN python2 -m pip install --upgrade \ 
     pip \
+    setuptools \
+    mercurial \
+
+RUN python3 -m pip install --upgrade \
+    pip3 \
     setuptools \
     mercurial \
 

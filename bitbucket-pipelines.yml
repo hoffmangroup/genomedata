@@ -13,8 +13,9 @@ pipelines:
               - pip
             name: Python2
             script:
-              - pip install .
+              - python -m pip install .
               - python --version
+              - python -m pip list
               - cd test && ./run_tests.py
         - step:
             caches:
@@ -22,8 +23,8 @@ pipelines:
             name: Python3
             script:
               - alias python="python3"
-              - pip3 install .
+              - python -m pip install .
               - python --version
-              - pip3 list
+              - python -m pip list
               - cd test && python run_tests.py
 

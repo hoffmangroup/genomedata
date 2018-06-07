@@ -30,6 +30,11 @@ from subprocess import CalledProcessError, check_call
 #from genomedata import __version__
 __version__ = "1.4.1"
 
+if (sys.version_info[0] == 2 and sys.version_info[1] < 7) or \
+   (sys.version_info[0] == 3 and sys.version_info[1] < 6):
+    print("Genomedata requires Python version 2.7 or 3.6")
+    sys.exit(1)
+
 
 doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")
@@ -46,7 +51,8 @@ classifiers = ["Natural Language :: English",
                "Topic :: Scientific/Engineering :: Bio-Informatics",
                "Operating System :: Unix",
                "Programming Language :: Python",
-               "Programming Language :: Python :: 2.7"]
+               "Programming Language :: Python :: 2.7"
+               "Programming Language :: Python :: 3.6"]
 
 entry_points = """
 [console_scripts]
@@ -66,7 +72,7 @@ genomedata-erase-data = genomedata._erase_data:main
 # Exclude PyTables 3.4.1 - incorrect binary distribution causes core dumps
 # See:
 # https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
-# path.py replaces forked-path, must be >11 due to path class being renamed to Path
+# path.py replaces forked-path, path.py 11 renames path to Path
 install_requires = ["numpy", "tables>=3.0,!=3.4.1", "six",
                     "textinput", "path.py>=11"]
 
