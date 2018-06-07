@@ -85,7 +85,7 @@ def hardmask_data(gd_filename, hardmask_filename, track_names=None,
         for chromosome_name, mask_start, mask_end in merged_filter_regions:
             if verbose:
                 print("Masking out region: ", chromosome_name, mask_start,
-                      mask_end)
+                      mask_end, file=sys.stderr)
 
             # Mask out mask region with NaNs
             chromosome = genome[chromosome_name]

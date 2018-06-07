@@ -1,4 +1,5 @@
 1.4.1:
+* genomedata-hard-mask: fix verbosity line not outputting to stderr
 * genomedata-load-data: fix hdf5 group leak
 
 1.4.0:
