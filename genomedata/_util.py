@@ -20,7 +20,7 @@ EXT_GZ = "gz"
 SUFFIX_GZ = extsep + EXT_GZ
 
 #latin-1 is the name of the bytes encoding used
-GENOMEDATA_ENCODING="latin-1"
+GENOMEDATA_ENCODING="ascii"
 
 CONTINUOUS_ATOM = Float32Atom(dflt=nan)
 CONTINUOUS_CHUNK_SHAPE = (10000, 1)
@@ -104,7 +104,7 @@ def ignore_comments(iterable):
     return (item for item in iterable if not item.startswith("#"))
 
 def decode_tracknames(gdfile):
-    return [trackname.decode() for trackname in gdfile._file_attrs.tracknames]
+    return [trackname.decode(GENOMEDATA_ENCODING) for trackname in gdfile._file_attrs.tracknames]
 
 def add_track(gdfile, trackname, chromosome=False):
     assert gdfile.isopen
