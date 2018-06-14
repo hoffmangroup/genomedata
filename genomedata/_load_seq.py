@@ -20,9 +20,9 @@ from path import Path
 from tabdelim import DictReader
 
 from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS,
-               FORMAT_VERSION, Genome, __version__
+               FORMAT_VERSION, Genome, __version__)
 from ._util import (FILTERS_GZIP, LightIterator, maybe_gzip_open,
-                    ignore_comments, GENOMEDATA_ENCODING))
+                    ignore_comments, GENOMEDATA_ENCODING, GenomedataDirtyWarning)
 
 MIN_GAP_LEN = 100000
 assert not MIN_GAP_LEN % 2 # must be even for division
@@ -240,52 +240,51 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
     #
     # is this because we are going to close chromosomes when they are
     # set dirty?
-    warnings.simplefilter("ignore")
-    with Genome(gdpath, mode="w", filters=FILTERS_GZIP) as genome:
-        if seqfile_type == "sizes":
-            for name, size in sizes.items():
-                chromosome = create_chromosome(genome, name, mode)
-                size_chromosome(chromosome, size)
-        else:
-            assert seqfile_type in frozenset(["agp", "fasta"])
-            for filename in filenames:
-                if verbose:
-                    print(filename, file=sys.stderr)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", GenomedataDirtyWarning)
+        with Genome(gdpath, mode="w", filters=FILTERS_GZIP) as genome:
+            if seqfile_type == "sizes":
+                for name, size in sizes.items():
+                    chromosome = create_chromosome(genome, name, mode)
+                    size_chromosome(chromosome, size)
+            else:
+                assert seqfile_type in frozenset(["agp", "fasta"])
+                for filename in filenames:
+                    if verbose:
+                        print(filename, file=sys.stderr)
 
-                with maybe_gzip_open(filename) as infile:
-                    if seqfile_type == "agp":
-                        # Read the entire assembly into a buffer
-                        # Filter out comments
-                        agp_lines = ignore_comments(infile.readlines())
+                    with maybe_gzip_open(filename) as infile:
+                        if seqfile_type == "agp":
+                            # Read the entire assembly into a buffer
+                            # Filter out comments
+                            agp_lines = ignore_comments(infile.readlines())
 
-                        # Split AGP buffer by chromosome entries
-                        agp_chromosome_buffer = defaultdict(list)
-                        # For every AGP line
-                        agp_object_index = AGP_FIELDNAMES.index("object")
-                        for agp_line in agp_lines:
-                            chr_name = agp_line.split("\t")[agp_object_index]
+                            # Split AGP buffer by chromosome entries
+                            agp_chromosome_buffer = defaultdict(list)
+                            # For every AGP line
+                            agp_object_index = AGP_FIELDNAMES.index("object")
+                            for agp_line in agp_lines:
+                                chr_name = agp_line.split("\t")[agp_object_index]
 
-                            # Add the line by chromsome name in the dict
-                            agp_chromosome_buffer[chr_name].append(agp_line)
+                                # Add the line by chromsome name in the dict
+                                agp_chromosome_buffer[chr_name].append(agp_line)
 
-                        # For each chromosome and its agp lines
-                        for chromosome_name in agp_chromosome_buffer:
-                            # Create the chromosome in genomedata
-                            chromosome = create_chromosome(genome,
-                                                           chromosome_name,
-                                                           mode)
-                            # Read the assembly in to the chromosome entry in
-                            # genomedata
-                            read_assembly(chromosome,
-                                          agp_chromosome_buffer[chromosome_name])
+                            # For each chromosome and its agp lines
+                            for chromosome_name in agp_chromosome_buffer:
+                                # Create the chromosome in genomedata
+                                chromosome = create_chromosome(genome,
+                                                               chromosome_name,
+                                                               mode)
+                                # Read the assembly in to the chromosome entry 
+                                # in genomedata
+                                read_assembly(chromosome,
+                                              agp_chromosome_buffer[chromosome_name])
 
-                    else:
-                        for defline, seq in LightIterator(infile):
-                            chromosome = create_chromosome(genome, defline, mode)
-                            read_seq(chromosome, seq)
-    # XXX: this should be enforced even when there is an exception
-    # is there a context manager available?
-    warnings.resetwarnings()
+                        else:
+                            for defline, seq in LightIterator(infile):
+                                chromosome = create_chromosome(genome, defline,
+                                                               mode)
+                                read_seq(chromosome, seq)
 
 def parse_options(args):
 

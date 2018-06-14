@@ -26,6 +26,7 @@ from genomedata._close_data import close_data
 from genomedata._erase_data import erase_data
 from genomedata._hardmask import hardmask_data
 from genomedata._open_data import open_data
+from genomedata._util import GenomedataDirtyWarning, OverlapWarning
 
 test_filename = lambda filename: os.path.join("data", filename)
 
@@ -80,7 +81,8 @@ class GenomedataTesterBase(unittest.TestCase):
         #catch_warnings acts as a context manager storing the original warning filter
         #and resetting it at the end. All non user warnings should still be displayed
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
+            warnings.simplefilter("ignore", GenomedataDirtyWarning)
+            warnings.simplefilter("ignore", OverlapWarning)
             with Genome(self.gdfilepath, mode=mode) as genome:
                 original_num_datapoints = genome.num_datapoints
 
@@ -313,7 +315,7 @@ class GenomedataTester(GenomedataTesterBase):
         # Open new track
         genome = Genome(self.gdfilepath, mode="r+")
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
+            warnings.simplefilter("ignore", GenomedataDirtyWarning)
             with genome:
                 genome.add_track_continuous(new_track_name)
 
@@ -396,7 +398,7 @@ class GenomedataTester(GenomedataTesterBase):
 
         # Test value before deleting track
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
+            warnings.simplefilter("ignore", GenomedataDirtyWarning)
             with Genome(self.gdfilepath) as genome:
                 chromosome = genome["chr1"]
                 self.assertArraysEqual(chromosome[old_entry[0], old_trackname],
@@ -501,7 +503,7 @@ class GenomedataNoDataTester(unittest.TestCase):
         # Open new track
         genome = Genome(self.gdfilepath, mode="r+")
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
+            warnings.simplefilter("ignore", GenomedataDirtyWarning)
             with genome:
                 self.assertEqual(genome.num_tracks_continuous, 0)
                 genome.add_track_continuous(new_track_name)

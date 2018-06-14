@@ -16,16 +16,16 @@ import warnings
 from argparse import ArgumentParser
 
 from . import Genome, __version__
+from ._util import GenomedataDirtyWarning
 
 
 def open_data(gdarchive, tracknames, verbose):
-    warnings.simplefilter("ignore")
-    with Genome(gdarchive, "r+") as genome:
-        # XXXopt: it would be more efficient to add them all at once
-        for trackname in tracknames:
-            genome.add_track_continuous(trackname)
-
-    warnings.resetwarnings()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", GenomedataDirtyWarning)
+        with Genome(gdarchive, "r+") as genome:
+            # XXXopt: it would be more efficient to add them all at once
+            for trackname in tracknames:
+                genome.add_track_continuous(trackname)
 
 
 def parse_options(args):

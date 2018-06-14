@@ -32,7 +32,8 @@ from os import extsep
 from path import Path
 from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
-from ._util import decode_tracknames, add_track
+from ._util import (decode_tracknames, add_track,
+                    GenomedataDirtyWarning, OverlapWarning)
 
 FORMAT_VERSION = 1
 SEQ_DTYPE = uint8
@@ -42,7 +43,7 @@ CONTINUOUS_DTYPE = float32
 
 #Use latin-1 to encode unicode as bytes, this is the 8-bit extension of ASCII
 
-GENOMEDATA_ENCODING="latin-1"
+GENOMEDATA_ENCODING="ascii"
 EXT = "genomedata"
 SUFFIX = extsep + EXT
 
@@ -769,10 +770,10 @@ since being closed with genomedata-close-data.""")
         supercontigs = self.supercontigs[base_key]
         if len(supercontigs) == 0:
             warn("slice of chromosome data does not overlap any supercontig"
-                 " (filling with 'NaN')")
+                 " (filling with 'NaN')", OverlapWarning)
         elif len(supercontigs) > 1:
             warn("slice of chromosome data spans more than one supercontig"
-                 " (filling gaps with 'NaN')")
+                 " (filling gaps with 'NaN')", OverlapWarning)
 
         data = empty((nrows, ncols), dtype=dtype)
         data.fill(nan)
@@ -929,7 +930,8 @@ since being closed with genomedata-close-data.""")
         if self.attrs.dirty:
             warn("Closing Chromosome with modified data. Metadata needs to"
                  " be recalculated by calling genomedata-close-data on the"
-                 " Genomedata archive before re-accessing it")
+                 " Genomedata archive before re-accessing it", 
+                 category=GenomedataDirtyWarning)
 
         if self._isfile:
             self.h5file.close()
@@ -1097,7 +1099,7 @@ since being closed with genomedata-close-data.""")
         'agAATTCNNNNNNNNNNNNN'
         >>> chromosome.seq[121186957:121186960].tostring()  \
 # not in supercontig
-        UserWarning: slice of chromosome sequence does not overlap any \
+        OverlapWarning: slice of chromosome sequence does not overlap any \
 supercontig (filling with 'N')
         'NNN'
 
@@ -1242,10 +1244,10 @@ class _ChromosomeSeqSlice(object):
         supercontigs = self._chromosome.supercontigs[key]
         if len(supercontigs) == 0:
             warn("slice of chromosome sequence does not overlap any"
-                 " supercontig (filling with 'N')")
+                 " supercontig (filling with 'N')", OverlapWarning)
         elif len(supercontigs) > 1:
             warn("slice of chromosome sequence spans more than one supercontig"
-                 " (filling gaps with 'NaN')")
+                 " (filling gaps with 'NaN')", OverlapWarning)
 
         # If index was specific, don't return an array
         key_int = False

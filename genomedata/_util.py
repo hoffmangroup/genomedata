@@ -142,6 +142,11 @@ def add_track(gdfile, trackname, chromosome=False):
             # "truncate" also extends with default values
             continuous.truncate(continuous.nrows + 1)
 
+class GenomedataDirtyWarning(UserWarning):
+    pass
+
+class OverlapWarning(UserWarning):
+    pass
 
 def main(args=sys.argv[1:]):
     pass
