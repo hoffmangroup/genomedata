@@ -137,10 +137,8 @@ else:
         try:
             return _detect_encoding(readline)
         except SyntaxError:
-            return 'latin-1', []
+            return 'ascii', []
     tokenize.detect_encoding = detect_encoding
-
-
 
 class InstallationError(Exception):
     pass
