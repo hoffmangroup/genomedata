@@ -31,7 +31,7 @@ from subprocess import CalledProcessError, check_call
 __version__ = "1.4.1"
 
 if (sys.version_info[0] == 2 and sys.version_info[1] < 7) or \
-   (sys.version_info[0] == 3 and sys.version_info[1] < 6):
+   (sys.version_info[0] == 3 and sys.version_info[1] < 4):
     print("Genomedata requires Python version 2.7 or 3.6")
     sys.exit(1)
 
@@ -51,7 +51,7 @@ classifiers = ["Natural Language :: English",
                "Operating System :: Unix",
                "Programming Language :: Python",
                "Programming Language :: Python :: 2.7"
-               "Programming Language :: Python :: 3.6"]
+               "Programming Language :: Python :: 3"]
 
 entry_points = """
 [console_scripts]

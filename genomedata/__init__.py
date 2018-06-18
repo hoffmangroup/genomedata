@@ -41,9 +41,6 @@ SEQ_ATOM = UInt8Atom()
 
 CONTINUOUS_DTYPE = float32
 
-#Use latin-1 to encode unicode as bytes, this is the 8-bit extension of ASCII
-
-GENOMEDATA_ENCODING="ascii"
 EXT = "genomedata"
 SUFFIX = extsep + EXT
 
