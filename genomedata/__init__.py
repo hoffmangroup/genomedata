@@ -40,6 +40,8 @@ SEQ_DTYPE = uint8
 SEQ_ATOM = UInt8Atom()
 
 CONTINUOUS_DTYPE = float32
+CONTINUOUS_ATOM = Float32Atom(dflt=nan)
+CONTINUOUS_CHUNK_SHAPE = (10000, 1)
 
 EXT = "genomedata"
 SUFFIX = extsep + EXT
@@ -332,7 +334,8 @@ for archives created with Genomedata version 1.2.0 or later.""")
 
         # Let the chromosomes handle the rest
         for chromosome in self:
-            add_track(chromosome, trackname, chromosome=True)
+            add_track(chromosome, trackname)
+            chromosome._add_track_continuous()
 
     @property
     def isopen(self):
@@ -951,6 +954,25 @@ since being closed with genomedata-close-data.""")
         for supercontig, continuous in self.itercontinuous():
             continuous[:, col_index] = nan
 
+    def _add_track_continuous(self):
+        self.attrs.dirty = True  # dirty specific to chromosome
+
+        # Extend supercontigs by a column (or create them)
+        for supercontig in self:
+            supercontig_length = supercontig.end - supercontig.start
+            try:
+                continuous = supercontig.continuous
+            except NoSuchNodeError:
+                # Define an extendible array in the second dimension (0)
+                supercontig_shape = (supercontig_length, 0)
+                self.h5file.create_earray(supercontig.h5group, "continuous",
+                                          CONTINUOUS_ATOM, supercontig_shape,
+                                          chunkshape=CONTINUOUS_CHUNK_SHAPE)
+                continuous = supercontig.continuous
+
+            # Add column to supercontig continuous array
+            # "truncate" also extends with default values
+            continuous.truncate(continuous.nrows + 1)
 
     @property
     def isopen(self):

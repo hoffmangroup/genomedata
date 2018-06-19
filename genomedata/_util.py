@@ -19,11 +19,7 @@ FILTERS_GZIP = Filters(complevel=1)
 EXT_GZ = "gz"
 SUFFIX_GZ = extsep + EXT_GZ
 
-#latin-1 is the name of the bytes encoding used
 GENOMEDATA_ENCODING="ascii"
-
-CONTINUOUS_ATOM = Float32Atom(dflt=nan)
-CONTINUOUS_CHUNK_SHAPE = (10000, 1)
 
 def die(msg="Unexpected error."):
     print(msg, file=sys.stderr)
@@ -121,26 +117,6 @@ def add_track(gdfile, trackname, chromosome=False):
 
         file_attrs.tracknames = append(tracknames,
                                        trackname.encode(GENOMEDATA_ENCODING))
-
-    if chromosome:
-        gdfile.attrs.dirty = True  # dirty specific to chromosome
-
-        # Extend supercontigs by a column (or create them)
-        for supercontig in gdfile:
-            supercontig_length = supercontig.end - supercontig.start
-            try:
-                continuous = supercontig.continuous
-            except NoSuchNodeError:
-                # Define an extendible array in the second dimension (0)
-                supercontig_shape = (supercontig_length, 0)
-                gdfile.h5file.create_earray(supercontig.h5group, "continuous",
-                                          CONTINUOUS_ATOM, supercontig_shape,
-                                          chunkshape=CONTINUOUS_CHUNK_SHAPE)
-                continuous = supercontig.continuous
-
-            # Add column to supercontig continuous array
-            # "truncate" also extends with default values
-            continuous.truncate(continuous.nrows + 1)
 
 class GenomedataDirtyWarning(UserWarning):
     pass

@@ -21,8 +21,8 @@ from tabdelim import DictReader
 
 from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS,
                FORMAT_VERSION, Genome, __version__)
-from ._util import (FILTERS_GZIP, LightIterator, maybe_gzip_open,
-                    ignore_comments, GENOMEDATA_ENCODING, GenomedataDirtyWarning)
+from ._util import (FILTERS_GZIP, GENOMEDATA_ENCODING, GenomedataDirtyWarning,
+                    LightIterator, maybe_gzip_open, ignore_comments)
 
 MIN_GAP_LEN = 100000
 assert not MIN_GAP_LEN % 2 # must be even for division
