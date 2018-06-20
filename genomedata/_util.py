@@ -102,7 +102,8 @@ def ignore_comments(iterable):
 def decode_tracknames(gdfile):
     return [trackname.decode(GENOMEDATA_ENCODING) for trackname in gdfile._file_attrs.tracknames]
 
-def add_trackname(gdfile, trackname, chromosome=False):
+def add_trackname(gdfile, trackname):
+    # gdfile can refer to either a file for the whole genome or a single chromosome 
     assert gdfile.isopen
     if gdfile._isfile:
         # Update tracknames attribute with new trackname
