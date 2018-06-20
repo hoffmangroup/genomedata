@@ -32,7 +32,7 @@ from os import extsep
 from path import Path
 from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
-from ._util import (decode_tracknames, add_track,
+from ._util import (decode_tracknames, add_trackname,
                     GenomedataDirtyWarning, OverlapWarning)
 
 FORMAT_VERSION = 1
@@ -330,11 +330,11 @@ class Genome(object):
 for archives created with Genomedata version 1.2.0 or later.""")
 
         if self._isfile:
-            add_track(self, trackname)
+            add_trackname(self, trackname)
 
         # Let the chromosomes handle the rest
         for chromosome in self:
-            add_track(chromosome, trackname)
+            add_trackname(chromosome, trackname)
             chromosome._add_track_continuous()
 
     @property
