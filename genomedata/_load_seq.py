@@ -71,6 +71,40 @@ def read_agp(iterable):
 
         yield row
 
+
+def get_merged_agp_coordinates(agp_iterable):
+    """
+    merges on an iterator on directly adjacent AGP entries and returns a new
+    iterator with start and end coordinates inside a tuple
+    Assumes AGP entries have been converted to 0-based coordinates and assume
+    AGP regions are sorted based on start coordinates
+    """
+    # Get the first AGP row
+    # NB: will raise an exception if the iterator is empty (allow)
+    current_row = next(agp_iterable)
+
+    # For all remaining AGP rows
+    for agp_row in agp_iterable:
+        # If there is an current agp row to potentially merge
+        if current_row:
+            # If the current row overlaps the region under consideration
+            if current_row["object_end"] >= agp_row["object_beg"]:
+                # Merge into the current agp row
+                # Assumes that the new region's end is larger that our current
+                current_row["object_end"] = agp_row["object_end"]
+            # Otherwise the regions do not overlap
+            else:
+                # Return the current region
+                yield current_row["object_beg"], current_row["object_end"]
+                # Set the new agp row to potentially merge
+                current_row = agp_row
+
+    # If there is a remaining row
+    if current_row:
+        # Return remaining row
+        yield (current_row["object_beg"], current_row["object_end"])
+
+
 def create_supercontig(chromosome, index, seq=None, start=None, end=None):
     name = SUPERCONTIG_NAME_FMT % index
     h5file = chromosome.h5file
@@ -142,14 +176,11 @@ def read_assembly(chromosome, infile):
 
     init_chromosome_start(chromosome)
 
-    for part in read_agp(infile):
-        end = part["object_end"]
+    gap_filtered_agp_rows = (part for part in read_agp(infile)
+                             if part["component_type"] not in
+                             GAP_COMPONENT_TYPES)
 
-        if part["component_type"] in GAP_COMPONENT_TYPES:
-            continue
-
-        start = part["object_beg"]
-
+    for start, end in get_merged_agp_coordinates(gap_filtered_agp_rows):
         create_supercontig(chromosome, supercontig_index, None, start, end)
         supercontig_index += 1
 
