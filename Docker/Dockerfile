@@ -1,3 +1,4 @@
+#Image for genomedata testing in Python 2 and 3
 FROM ubuntu:latest
 
 # Install Ubuntu 18.04.01 LTS (Bionic Beaver)

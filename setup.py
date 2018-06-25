@@ -71,7 +71,7 @@ genomedata-erase-data = genomedata._erase_data:main
 # Exclude PyTables 3.4.1 - incorrect binary distribution causes core dumps
 # See:
 # https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
-# path.py replaces forked-path, path.py 11 renames path to Path
+# path.py 11 renames 'path' to 'Path'
 install_requires = ["numpy", "tables>=3.0,!=3.4.1", "six",
                     "textinput", "path.py>=11"]
 
@@ -126,8 +126,8 @@ library_dirnames = list(library_dirnames)
 include_dirnames = list(include_dirnames)
 
 
-# This overrides the detect_encoding function from the tokenize package to return latin-1, since default utf8 is not correct.
-# Tokenize is used by distutils during setup, not locally here
+# XXX: Monkey patches tokenize.detect_encoding() to return a blank string when it can't recognize encoding
+# setuptools attempts to process some of the C files present, and errors because it can't determine encoding
 try:
     _detect_encoding = tokenize.detect_encoding
 except AttributeError:
@@ -137,7 +137,7 @@ else:
         try:
             return _detect_encoding(readline)
         except SyntaxError:
-            return 'ascii', []
+            return "", []
     tokenize.detect_encoding = detect_encoding
 
 class InstallationError(Exception):

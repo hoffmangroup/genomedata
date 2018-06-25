@@ -38,6 +38,7 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
         print(">> Loading data for track: %s" % trackname)
 
     file_is_big_wig = is_big_wig(datafile)
+
     if file_is_big_wig:
         read_cmd = [BIG_WIG_READ_CMD]
     elif datafile.endswith(SUFFIX_GZ):

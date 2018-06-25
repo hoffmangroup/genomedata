@@ -5,7 +5,7 @@ _hardmask.py: A python interface to mask out track data from a genomedata
 archive
 """
 
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import, print_function
 import argparse
 from functools import partial
 import operator

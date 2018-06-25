@@ -202,6 +202,7 @@ def write_metadata(chromosome, verbose=False):
 
     prev_supercontigs = [None] + supercontigs[:-1]
     next_supercontigs = supercontigs[1:] + [None]
+
     zipper = zip(prev_supercontigs, supercontigs, next_supercontigs)
 
     for prev_supercontig, supercontig, next_supercontig in zipper:

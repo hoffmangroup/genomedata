@@ -26,7 +26,7 @@ from genomedata._close_data import close_data
 from genomedata._erase_data import erase_data
 from genomedata._hardmask import hardmask_data
 from genomedata._open_data import open_data
-from genomedata._util import GenomedataDirtyWarning, OverlapWarning
+from genomedata._util import GENOMEDATA_ENCODING, GenomedataDirtyWarning, OverlapWarning
 
 test_filename = lambda filename: os.path.join("data", filename)
 
@@ -35,7 +35,7 @@ UNFILTERED_TRACKNAME = "zunfiltered"
 UNFILTERED_TRACK_FILENAME = "unfiltered.bed"
 
 def seq2str(seq):
-    return seq.tostring().decode().lower()
+    return seq.tostring().decode(GENOMEDATA_ENCODING).lower()
 
 
 def make_temp_dir():
