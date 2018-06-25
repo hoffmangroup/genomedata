@@ -76,7 +76,7 @@ def get_merged_agp_coordinates(agp_iterable):
     """
     merges on an iterator on directly adjacent AGP entries and returns a new
     iterator with start and end coordinates inside a tuple
-    Assumes AGP entries have been converted to 0-based coordinates and assume
+    assumes AGP entries have been converted to 0-based coordinates and assume
     AGP regions are sorted based on start coordinates
     """
     # Get the first AGP row
@@ -102,7 +102,7 @@ def get_merged_agp_coordinates(agp_iterable):
     # If there is a remaining row
     if current_row:
         # Return remaining row
-        yield (current_row["object_beg"], current_row["object_end"])
+        yield current_row["object_beg"], current_row["object_end"]
 
 
 def create_supercontig(chromosome, index, seq=None, start=None, end=None):
