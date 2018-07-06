@@ -1,5 +1,7 @@
 1.4.2:
 * added compatibilty for Python 3
+* genomedata-load-seq: adjacent AGP entries are merged into a single
+   supercontig
 
 1.4.1:
 * genomedata-load-data: fix hdf5 group leak

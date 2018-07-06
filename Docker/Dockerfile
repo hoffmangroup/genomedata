@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python2-pip \
     python3-pip \
-    libhdf5-serial-dev \
+    libhdf5-dev \
     hdf5-tools 
 
 
