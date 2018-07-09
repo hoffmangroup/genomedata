@@ -9,6 +9,8 @@ import unittest
 
 from path import Path
 
+from genomedata._load_seq import load_seq
+from genomedata._close_data import close_data
 from genomedata.load_genomedata import load_genomedata
 from genomedata import Genome
 
@@ -43,6 +45,10 @@ def isBigWigToBedGraphInstalled():
     except subprocess.CalledProcessError:
         # return true
         return True
+
+
+def test_data_path(filename):
+    return os.path.join("data", filename)
 
 
 class TestGenomedataDir(test_genomedata.GenomedataTester):
@@ -138,17 +144,14 @@ class TestNoDataGenomedataFile(test_genomedata.GenomedataNoDataTester):
 
 class TestChunks(unittest.TestCase):
 
-    def data_path(self, filename):
-        return os.path.join("data", filename)
-
     def setUp(self):
-        self.genomedata_name = self.data_path("chunk_test.genomedata")
+        self.genomedata_name = test_data_path("chunk_test.genomedata")
         self.track_tuples = [("track{}".format(i),
-                             self.data_path(
+                             test_data_path(
                                  "chunk_test_track{}.bed".format(i)))
                              for i in range(1, 3)]
         self.sequence_type = "agp"
-        self.sequences = [self.data_path("test_chunks.agp")]
+        self.sequences = [test_data_path("test_chunks.agp")]
         self.mode = "file"
         self.verbose = False
 
@@ -187,6 +190,46 @@ class TestChunks(unittest.TestCase):
             ([0], [25]),
         ]
         self.assertEqual(expected_chunks, supercontig_chunks)
+
+    def tearDown(self):
+        remove(self.genomedata_name)
+
+
+class TestAGPMerge(unittest.TestCase):
+
+    def setUp(self):
+        self.genomedata_name = test_data_path("mergeagp.genomedata")
+        self.verbose = False
+        self.agp_filenames = [test_data_path("adjacent.agp.gz")]
+        self.mode = "file"
+
+        load_seq(self.genomedata_name, self.agp_filenames, self.verbose,
+                 self.mode, seqfile_type="agp")
+        close_data(self.genomedata_name, self.verbose)
+
+
+    def test_merged_agp_regions(self):
+        with Genome(self.genomedata_name) as genome:
+            # Assume only chr10 is defined
+            chromosome = genome["chr10"]
+            # The following supercontigs should span the following coordinates:
+            expected_supercontig_coordinates = [
+                ( 39239118, 39254773 ),
+                ( 39254793, 39338430 ),
+                ( 39338450, 39341685 ),
+            ]
+            supercontig_coordinates = []
+            # For every supercontig (in chr10)
+            for supercontig in chromosome:
+                # Create a list of start/end coordinates
+                supercontig_attrs = supercontig.attrs
+                supercontig_coordinates.append(
+                    (supercontig_attrs.start,
+                     supercontig_attrs.end)
+                )
+
+        self.assertEqual(expected_supercontig_coordinates,
+                         supercontig_coordinates)
 
     def tearDown(self):
         remove(self.genomedata_name)
