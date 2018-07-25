@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y \
 
 
 # Configure HDF5 include and lib directories
+# Bug needing to set these manually has been reported here
+# https://bugs.launchpad.net/ubuntu/+source/hdf5/+bug/1783558
 ENV C_INCLUDE_PATH /usr/include/hdf5/serial
 ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu/hdf5/serial
 ENV HDF5_DIR /usr/lib/x86_64-linux-gnu/hdf5/serial
