@@ -121,6 +121,16 @@ library_dirnames.add_env("LIBRARY_PATH")
 library_dirnames.add_env("LD_LIBRARY_PATH")
 include_dirnames.add_env("C_INCLUDE_PATH")
 
+try:
+    pkg_config_libraries = check_output(["pkg-config", "--cflags", "--libs", "hdf5"]).split()
+except OSError:
+    pass
+else:
+    c_include = pkg_config_libraries[0][2:]
+    hdf5_lib = pkg_config_libraries[1][2:]
+    library_dirnames.add_dir(hdf5_lib)
+    include_dirnames.add_dir(c_include)
+
 ## fix types, since distutils does type-sniffing:
 library_dirnames = list(library_dirnames)
 include_dirnames = list(include_dirnames)

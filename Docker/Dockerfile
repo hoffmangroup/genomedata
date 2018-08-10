@@ -12,13 +12,6 @@ RUN apt-get update && apt-get install -y \
     libhdf5-dev \
     hdf5-tools 
 
-
-# Configure HDF5 include and lib directories
-ENV C_INCLUDE_PATH /usr/include/hdf5/serial
-ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu/hdf5/serial
-ENV HDF5_DIR /usr/lib/x86_64-linux-gnu/hdf5/serial
-
-
 # Update pip
 # Install mercurial for hgtools (needed to install for testing)
 RUN python2 -m pip install --upgrade \ 
