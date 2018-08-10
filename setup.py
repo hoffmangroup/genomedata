@@ -23,7 +23,7 @@ from distutils.spawn import find_executable
 from platform import system, processor
 from setuptools import find_packages, setup
 from shutil import rmtree
-from subprocess import CalledProcessError, check_call
+from subprocess import CalledProcessError, check_call, check_output
 
 # XXX: Find a way to implement a central version number without importing the
 # genomedata module
