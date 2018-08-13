@@ -334,8 +334,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
 
         # Let the chromosomes handle the rest
         for chromosome in self:
-            add_trackname(chromosome, trackname)
-            chromosome._add_track_continuous()
+            chromosome._add_track_continuous(trackname)
 
     @property
     def isopen(self):
@@ -954,8 +953,10 @@ since being closed with genomedata-close-data.""")
         for supercontig, continuous in self.itercontinuous():
             continuous[:, col_index] = nan
 
-    def _add_track_continuous(self):
+    def _add_track_continuous(self, trackname):
         self.attrs.dirty = True  # dirty specific to chromosome
+        # Add the trackname to the chromosome before 
+        add_trackname(self, trackname)
 
         # Extend supercontigs by a column (or create them)
         for supercontig in self:
