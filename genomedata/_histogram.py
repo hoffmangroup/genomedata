@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
-from six.moves import zip
 
 """
 _histogram: prints histogram
@@ -15,6 +14,7 @@ from argparse import ArgumentParser
 from functools import partial
 
 from numpy import array, histogram
+from six.moves import zip
 
 from . import Genome, __version__
 

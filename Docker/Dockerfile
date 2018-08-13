@@ -20,7 +20,7 @@ RUN python2 -m pip install --upgrade \
     mercurial \
 
 RUN python3 -m pip install --upgrade \
-    pip3 \
+    pip \
     setuptools \
     mercurial \
 

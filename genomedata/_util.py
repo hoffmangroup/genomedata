@@ -9,8 +9,8 @@ from gzip import open as _gzip_open
 from os import extsep
 import sys
 
-from numpy import array, empty, append, nan
-from tables import Filters, NoSuchNodeError, Float32Atom
+from numpy import append, array, empty, nan
+from tables import Filters, Float32Atom, NoSuchNodeError
 
 
 

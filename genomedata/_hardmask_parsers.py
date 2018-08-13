@@ -1,9 +1,9 @@
+from __future__ import absolute_import
 """
 _filter_data_parsers.py: helper generators that produce chromosome regions
 based on input files and a given filter function
 """
 
-from __future__ import absolute_import
 from string import digits
 import re
 

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
-from six import viewitems
-from six.moves import range
 
 """
 Genomedata is a module to store and access large-scale functional
@@ -22,16 +20,19 @@ __version__ = "1.4.1"
 
 
 import sys
-
-import tables
 from functools import partial
-from numpy import (add, amin, amax, append, array, empty, float32, inf,
-                   nan, ndarray, square, uint8)
 from operator import attrgetter
 from os import extsep
-from path import Path
-from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 from warnings import warn
+
+import tables
+from numpy import (add, amin, amax, append, array, empty, float32, inf,
+                   nan, ndarray, square, uint8)
+from path import Path
+from six import viewitems
+from six.moves import range
+from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
+
 from ._util import (decode_tracknames, add_trackname,
                     GenomedataDirtyWarning, OverlapWarning)
 
@@ -767,12 +768,12 @@ since being closed with genomedata-close-data.""")
 
         # Lookup appropriate data
         supercontigs = self.supercontigs[base_key]
-        if len(supercontigs) == 0:
+        if len(supercontigs) != 1:
             warn("slice of chromosome data does not overlap any supercontig"
-                 " (filling with 'NaN')", OverlapWarning)
+                 " (filling with 'NaN')", category=OverlapWarning)
         elif len(supercontigs) > 1:
             warn("slice of chromosome data spans more than one supercontig"
-                 " (filling gaps with 'NaN')", OverlapWarning)
+                 " (filling gaps with 'NaN')", category=OverlapWarning)
 
         data = empty((nrows, ncols), dtype=dtype)
         data.fill(nan)
@@ -954,6 +955,15 @@ since being closed with genomedata-close-data.""")
             continuous[:, col_index] = nan
 
     def _add_track_continuous(self, trackname):
+        """Add a new track
+
+        The Genome object must have been created with
+        :param mode:="r+". Behavior is undefined if this is not the case.
+
+        Currently sets the dirty bit, which can only be erased with
+        genomedata-close-data
+
+        """
         self.attrs.dirty = True  # dirty specific to chromosome
         # Add the trackname to the chromosome before 
         add_trackname(self, trackname)

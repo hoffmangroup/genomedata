@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function
-from six.moves import zip
+
 """
 _close_data: DESCRIPTION
 """
@@ -9,11 +9,11 @@ _close_data: DESCRIPTION
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 import sys
-
 from argparse import ArgumentParser
 
 from numpy import (amin, amax, argmax, array, diff, hstack, isfinite, NINF,
                    PINF, square)
+from six.moves import zip
 from tables import NoSuchNodeError
 
 from . import Genome, __version__

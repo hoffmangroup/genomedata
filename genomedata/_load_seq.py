@@ -22,7 +22,7 @@ from tabdelim import DictReader
 from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS,
                FORMAT_VERSION, Genome, __version__)
 from ._util import (FILTERS_GZIP, GENOMEDATA_ENCODING, GenomedataDirtyWarning,
-                    LightIterator, maybe_gzip_open, ignore_comments)
+                    ignore_comments, LightIterator, maybe_gzip_open)
 
 MIN_GAP_LEN = 100000
 assert not MIN_GAP_LEN % 2 # must be even for division
@@ -306,7 +306,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None, seqfile_type="fast
                                 chromosome = create_chromosome(genome,
                                                                chromosome_name,
                                                                mode)
-                                # Read the assembly in to the chromosome entry 
+                                # Read the assembly in to the chromosome entry
                                 # in genomedata
                                 read_assembly(chromosome,
                                               agp_chromosome_buffer[chromosome_name])

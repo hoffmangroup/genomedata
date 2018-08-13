@@ -76,10 +76,7 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
         read_cmdline = " ".join(read_cmd)
         mask_cmdline = " ".join(mask_cmd)
         load_cmdline = " ".join(load_cmd)
-        print(" | ".join([cmd for cmd in [read_cmdline,
-                                          mask_cmdline,
-                                          load_cmdline] \
-                                                if cmd]),
+        print(read_cmdline, mask_cmdline, load_cmdline, sep=" | "
               file=sys.stderr)
 
     # Open the read command
@@ -118,9 +115,9 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
     loader = Popen(load_cmd, stdin=loader_input_process.stdout)
     loader.communicate()
     loader_input_process.communicate()
-    retcode = [loader_input_process.poll()]
-    retcode.append(loader.poll())
-    if any(retcode):
+    retcodes = [loader_input_process.poll()]
+    retcodes.append(loader.poll())
+    if any(retcodes):
         die(MSG_LOAD_ERROR % (datafile, retcode))
 
 
