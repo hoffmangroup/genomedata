@@ -2,6 +2,7 @@
 * added compatibilty for Python 3
 * genomedata-load-seq: adjacent AGP entries are merged into a single supercontig
 * Use pkg-config during setup to determine paths to HDF5 directories
+* Removed forked-path dependency, added Path.py
 
 1.4.1:
 * genomedata-hard-mask: fix verbosity line not outputting to stderr
