@@ -76,7 +76,7 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
         read_cmdline = " ".join(read_cmd)
         mask_cmdline = " ".join(mask_cmd)
         load_cmdline = " ".join(load_cmd)
-        print(read_cmdline, mask_cmdline, load_cmdline, sep=" | "
+        print(read_cmdline, mask_cmdline, load_cmdline, sep=" | ",
               file=sys.stderr)
 
     # Open the read command
