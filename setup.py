@@ -124,7 +124,7 @@ include_dirnames.add_env("C_INCLUDE_PATH")
 try:
     c_include_path = check_output(["pkg-config", "--cflags", "hdf5"]).split()[0][2:]
     library_path = check_output(["pkg-config", "--libs", "hdf5"]).split()[0][2:]
-except:
+except CalledProcessError or OSError:
     pass
 else:
     library_dirnames.add_dir(library_path)
