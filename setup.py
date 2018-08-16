@@ -13,6 +13,7 @@ from __future__ import absolute_import, division, print_function
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
+import errno
 import os
 import sys
 import tokenize
@@ -126,7 +127,7 @@ try:
     library_path = check_output(["pkg-config", "--libs", "hdf5"]).split()[0][2:]
 except OSError as err:
     # OSError no2 occurs when pkg-config is not installed
-    if err.errno == 2:
+    if err.errno == errno.ENOENT:
         pass
     else:
         raise err
