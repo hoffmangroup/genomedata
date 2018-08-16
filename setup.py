@@ -124,8 +124,13 @@ include_dirnames.add_env("C_INCLUDE_PATH")
 try:
     c_include_path = check_output(["pkg-config", "--cflags", "hdf5"]).split()[0][2:]
     library_path = check_output(["pkg-config", "--libs", "hdf5"]).split()[0][2:]
-except (CalledProcessError, OSError) as e:
-    # OSError occurs when pkg-config is not installed
+except OSError as err:
+    # OSError no2 occurs when pkg-config is not installed
+    if err.errno == 2:
+        pass
+    else:
+        raise err
+except CalledProcessError:
     # CalledProcessError occurs when hdf5 is not found by pkg-config
     pass
 else:
