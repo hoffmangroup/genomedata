@@ -126,7 +126,7 @@ try:
     c_include_path = check_output(["pkg-config", "--cflags", "hdf5"]).split()[0][2:]
     library_path = check_output(["pkg-config", "--libs", "hdf5"]).split()[0][2:]
 except OSError as err:
-    # OSError no2 occurs when pkg-config is not installed
+    # OSError ENOENT occurs when pkg-config is not installed
     if err.errno == errno.ENOENT:
         pass
     else:
