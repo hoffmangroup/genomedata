@@ -78,8 +78,8 @@ class GenomedataTesterBase(unittest.TestCase):
             mode = "r+"
         else:
             mode = "r"
-        #catch_warnings acts as a context manager storing the original warning filter
-        #and resetting it at the end. All non user warnings should still be displayed
+        # catch_warnings acts as a context manager storing the original warning filter
+        # and resetting it at the end. All non user warnings should still be displayed
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", GenomedataDirtyWarning)
             warnings.simplefilter("ignore", OverlapWarning)
