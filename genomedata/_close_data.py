@@ -8,8 +8,8 @@ _close_data: DESCRIPTION
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
-import sys
 from argparse import ArgumentParser
+import sys
 
 from numpy import (amin, amax, argmax, array, diff, hstack, isfinite, NINF,
                    PINF, square)

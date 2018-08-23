@@ -31,6 +31,10 @@ from subprocess import CalledProcessError, check_call, check_output
 #from genomedata import __version__
 __version__ = "1.4.1"
 
+LIBS_IGNORE_PREFIX = "-l"
+LIBS_INCLUDE_PREFIX = "-L"
+CFLAGS_PREFIX = "-I"
+
 if (sys.version_info[0] == 2 and sys.version_info[1] < 7) or \
    (sys.version_info[0] == 3 and sys.version_info[1] < 4):
     print("Genomedata requires Python version 2.7 or 3.4 or later")
@@ -123,8 +127,8 @@ library_dirnames.add_env("LD_LIBRARY_PATH")
 include_dirnames.add_env("C_INCLUDE_PATH")
 
 try:
-    c_include_path = check_output(["pkg-config", "--cflags", "hdf5"]).split()[0][2:]
-    library_path = check_output(["pkg-config", "--libs", "hdf5"]).split()[0][2:]
+    c_include_paths = check_output(["pkg-config", "--cflags", "hdf5"]).split()      
+    library_paths = check_output(["pkg-config", "--libs", "hdf5"]).split()
 except OSError as err:
     # OSError ENOENT occurs when pkg-config is not installed
     if err.errno == errno.ENOENT:
@@ -135,8 +139,13 @@ except CalledProcessError:
     # CalledProcessError occurs when hdf5 is not found by pkg-config
     pass
 else:
-    library_dirnames.add_dir(library_path)
-    include_dirnames.add_dir(c_include_path)
+    for path in library_paths:
+        if not path.find(LIBS_IGNORE_PREFIX) == 0:
+            assert path.find(LIBS_INCLUDE_PREFIX) == 0
+            library_dirnames.add_dir(path.strip(LIBS_INCLUDE_PREFIX))
+    for path in c_include_paths:
+        assert path.find(CFLAGS_PREFIX) == 0
+        include_dirnames.add_dir(path.strip(CFLAGS_PREFIX))
 
 ## fix types, since distutils does type-sniffing:
 library_dirnames = list(library_dirnames)

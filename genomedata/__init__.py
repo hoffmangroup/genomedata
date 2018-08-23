@@ -19,10 +19,10 @@ Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 __version__ = "1.4.1"
 
 
-import sys
 from functools import partial
 from operator import attrgetter
 from os import extsep
+import sys
 from warnings import warn
 
 import tables
@@ -768,7 +768,7 @@ since being closed with genomedata-close-data.""")
 
         # Lookup appropriate data
         supercontigs = self.supercontigs[base_key]
-        if len(supercontigs) != 1:
+        if len(supercontigs) == 0:
             warn("slice of chromosome data does not overlap any supercontig"
                  " (filling with 'NaN')", category=OverlapWarning)
         elif len(supercontigs) > 1:
