@@ -15,6 +15,7 @@ from __future__ import absolute_import, division, print_function
 
 import errno
 import os
+from shlex import split
 import sys
 import tokenize
 
@@ -31,9 +32,9 @@ from subprocess import CalledProcessError, check_call, check_output
 #from genomedata import __version__
 __version__ = "1.4.1"
 
-LIBS_IGNORE_PREFIX = "-l"
-LIBS_INCLUDE_PREFIX = "-L"
-CFLAGS_PREFIX = "-I"
+LDFLAGS_LIBRARY_SWITCH = "-l"
+LDFLAGS_LIBRARY_PATH_SWITCH = "-L"
+CFLAGS_INCLUDE_PATH_SWITCH = "-I"
 
 if (sys.version_info[0] == 2 and sys.version_info[1] < 7) or \
    (sys.version_info[0] == 3 and sys.version_info[1] < 4):
@@ -127,8 +128,8 @@ library_dirnames.add_env("LD_LIBRARY_PATH")
 include_dirnames.add_env("C_INCLUDE_PATH")
 
 try:
-    c_include_paths = check_output(["pkg-config", "--cflags", "hdf5"]).split()      
-    library_paths = check_output(["pkg-config", "--libs", "hdf5"]).split()
+    pkg_config_cflags = split(check_output(["pkg-config", "--cflags", "hdf5"]))
+    pkg_config_libs = split(check_output(["pkg-config", "--libs", "hdf5"]))
 except OSError as err:
     # OSError ENOENT occurs when pkg-config is not installed
     if err.errno == errno.ENOENT:
@@ -139,13 +140,13 @@ except CalledProcessError:
     # CalledProcessError occurs when hdf5 is not found by pkg-config
     pass
 else:
-    for path in library_paths:
-        if not path.find(LIBS_IGNORE_PREFIX) == 0:
-            assert path.find(LIBS_INCLUDE_PREFIX) == 0
-            library_dirnames.add_dir(path.strip(LIBS_INCLUDE_PREFIX))
-    for path in c_include_paths:
-        assert path.find(CFLAGS_PREFIX) == 0
-        include_dirnames.add_dir(path.strip(CFLAGS_PREFIX))
+    for path in pkg_config_cflags:
+        assert path.find(CFLAGS_INCLUDE_PATH_SWITCH) == 0
+        include_dirnames.add_dir(path.lstrip(CFLAGS_INCLUDE_PATH_SWITCH))
+    for word in pkg_config_libs:
+        if not word.startswith(LDFLAGS_LIBRARY_SWITCH):
+            assert word.startswith(LDFLAGS_LIBRARY_PATH_SWITCH)
+            library_dirnames.add_dir(word.lstrip(LDFLAGS_LIBRARY_PATH_SWITCH))
 
 ## fix types, since distutils does type-sniffing:
 library_dirnames = list(library_dirnames)
