@@ -55,8 +55,7 @@ classifiers = ["Natural Language :: English",
                "(GPLv2)",
                "Topic :: Scientific/Engineering :: Bio-Informatics",
                "Operating System :: Unix",
-               "Programming Language :: Python",
-               "Programming Language :: Python :: 2.7"
+               "Programming Language :: Python :: 2.7",
                "Programming Language :: Python :: 3"]
 
 entry_points = """
