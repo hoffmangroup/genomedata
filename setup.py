@@ -78,7 +78,7 @@ genomedata-erase-data = genomedata._erase_data:main
 # https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
 # path.py 11 renames 'path' to 'Path'
 install_requires = ["numpy", "tables>=3.0,!=3.4.1", "six",
-                    "textinput", "path.py>=11"]
+                    "textinput>=0.2.0", "path.py>=11"]
 
 arch = "_".join([system(), processor()])
 
