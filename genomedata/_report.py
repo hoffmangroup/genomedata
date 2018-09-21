@@ -26,8 +26,9 @@ def report(gdarchive):
 
 def parse_options(args):
 
-    parser = ArgumentParser(prog='genomedata-report',
-                            version=__version__)
+    parser = ArgumentParser(prog='genomedata-report')
+
+    parser.add_argument('--version', action='version', version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive')
 
@@ -35,10 +36,12 @@ def parse_options(args):
 
     return args
 
+
 def main(argv=sys.argv[1:]):
     args = parse_options(argv)
 
     return report(args.gdarchive)
+
 
 if __name__ == "__main__":
     sys.exit(main())

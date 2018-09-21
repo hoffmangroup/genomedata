@@ -201,8 +201,9 @@ def parse_cmdline(cmdline):
     parser = ArgumentParser(description=description,
                             epilog=citation,
                             formatter_class=RawDescriptionHelpFormatter,
-                            prog='genomedata-load',
-                            version=__version__)
+                            prog='genomedata-load')
+
+    parser.add_argument('--version', action='version', version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive',
                         metavar='GENOMEDATAFILE')

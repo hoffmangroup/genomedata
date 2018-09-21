@@ -72,8 +72,9 @@ def parse_options(args):
                    " archive")
 
     parser = ArgumentParser(description=description,
-                            prog='genomedata-histogram',
-                            version=__version__)
+                            prog='genomedata-histogram')
+
+    parser.add_argument('--version', action='version', version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive')
     parser.add_argument('trackname', help='track name')

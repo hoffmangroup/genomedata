@@ -39,8 +39,9 @@ def parse_options(args):
 
     parser = ArgumentParser(description=description,
                             usage=usage,
-                            prog='genomedata-open-data',
-                            version=__version__)
+                            prog='genomedata-open-data')
+
+    parser.add_argument('--version', action='version', version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive')
 

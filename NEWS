@@ -1,3 +1,6 @@
+1.4.3:
+* fixed genomedata script entry points for Python 3
+
 1.4.2:
 * added compatibilty for Python 3
 * genomedata-load-seq: adjacent AGP entries are merged into a single supercontig

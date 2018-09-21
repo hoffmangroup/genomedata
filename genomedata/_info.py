@@ -48,11 +48,11 @@ def parse_options(args):
     description = ("Print information about a genomedata archive.")
 
     parser = ArgumentParser(description=description,
-                            prog='genomedata-info',
-                            version=__version__)
+                            prog='genomedata-info')
 
     choices = ["tracknames", "tracknames_continuous", "contigs", "sizes"]
 
+    parser.add_argument('--version', action='version', version=__version__)
     parser.add_argument("command", choices=choices,
                         help='available commands')
 

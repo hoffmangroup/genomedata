@@ -30,9 +30,9 @@ def parse_options(args):
                    ' trackname and coordinates')
 
     parser = ArgumentParser(prog='genomedata-query',
-                            description=description,
-                            version=__version__)
+                            description=description)
     
+    parser.add_argument('--version', action='version', version=__version__)
     parser.add_argument('gdarchive', help='genomedata archive')
     parser.add_argument('trackname', help='track name')
     parser.add_argument('chrom', help='chromosome name')

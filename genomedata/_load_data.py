@@ -145,8 +145,9 @@ def parse_args(args):
                    " of the Genomedata archive")
 
     parser = ArgumentParser(description=description,
-                            prog='genomedata-load-data',
-                            version=__version__)
+                            prog='genomedata-load-data')
+    
+    parser.add_argument('--version', action='version', version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive')
     parser.add_argument('trackname', help='track name')

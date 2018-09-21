@@ -325,8 +325,9 @@ def parse_options(args):
                    " definition line.")
 
     parser = ArgumentParser(description=description,
-                            prog='genomedata-load-seq',
-                            version=__version__)
+                            prog='genomedata-load-seq')
+    
+    parser.add_argument('--version', action='version', version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive')
 

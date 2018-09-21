@@ -165,8 +165,9 @@ def main():
     description = ("Permanently mask TRACKNAME(s) from a genomedata archive with "
                    "MASKFILE using an optional filter operator.")
     parser = argparse.ArgumentParser(description=description,
-                                     prog="genomedata-hard-mask",
-                                     version=__version__)
+                                     prog="genomedata-hard-mask")
+
+    parser.add_argument('--version', action='version', version=__version__)
 
     parser.add_argument("maskfile", help="input mask file")
     parser.add_argument('gdarchive', help='genomedata archive')
