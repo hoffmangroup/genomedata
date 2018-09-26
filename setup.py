@@ -30,8 +30,9 @@ from subprocess import CalledProcessError, check_call, check_output
 # XXX: Find a way to implement a central version number without importing the
 # genomedata module
 #from genomedata import __version__
-__version__ = "1.4.3"
+__version__ = "1.4.4"
 
+DEFAULT_SHELL_ENCODING = "ascii"
 LDFLAGS_LIBRARY_SWITCH = "-l"
 LDFLAGS_LIBRARY_PATH_SWITCH = "-L"
 CFLAGS_INCLUDE_PATH_SWITCH = "-I"
@@ -127,8 +128,19 @@ library_dirnames.add_env("LD_LIBRARY_PATH")
 include_dirnames.add_env("C_INCLUDE_PATH")
 
 try:
-    pkg_config_cflags = split(check_output(["pkg-config", "--cflags", "hdf5"]))
-    pkg_config_libs = split(check_output(["pkg-config", "--libs", "hdf5"]))
+    shell_encoding = sys.stdout.encoding
+    # Depending on the shell, python version (2), and environment this is not
+    # guaranteed to be set. Attempt to fall back to a best-guess if it is not
+    # set
+    if not shell_encoding:
+        shell_encoding = DEFAULT_SHELL_ENCODING
+
+    pkg_config_cflags = split(check_output(
+                                ["pkg-config", "--cflags", "hdf5"]
+                             ).decode(shell_encoding))
+    pkg_config_libs = split(check_output(
+                                ["pkg-config", "--libs", "hdf5"]
+                           ).decode(shell_encoding))
 except OSError as err:
     # OSError ENOENT occurs when pkg-config is not installed
     if err.errno == errno.ENOENT:

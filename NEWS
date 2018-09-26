@@ -1,3 +1,6 @@
+1.4.4:
+* fixed pkg-config output encoding when finding HDF5 directories
+
 1.4.3:
 * fixed genomedata script entry points for Python 3
 
