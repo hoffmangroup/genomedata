@@ -1306,7 +1306,7 @@ void load_data(char *gdfilename, char *trackname, bool verbose) {
 
 /** command-line interface **/
 
-const char *argp_program_version = "1.4.4";
+const char *argp_program_version = "1.4.5";
 const char *argp_program_bug_address = "genomedata-users@uw.edu";
 
 static char doc[] = "Loads data into genomedata format \

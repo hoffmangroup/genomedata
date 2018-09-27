@@ -16,7 +16,7 @@ Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 """
 
-__version__ = "1.4.3"
+__version__ = "1.4.5"
 
 
 from functools import partial

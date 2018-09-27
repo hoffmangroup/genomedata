@@ -30,7 +30,7 @@ from subprocess import CalledProcessError, check_call, check_output
 # XXX: Find a way to implement a central version number without importing the
 # genomedata module
 #from genomedata import __version__
-__version__ = "1.4.4"
+__version__ = "1.4.5"
 
 DEFAULT_SHELL_ENCODING = "ascii"
 LDFLAGS_LIBRARY_SWITCH = "-l"

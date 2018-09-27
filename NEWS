@@ -1,3 +1,5 @@
+1.4.5:
+
 1.4.4:
 * fixed pkg-config output encoding when finding HDF5 directories
 
