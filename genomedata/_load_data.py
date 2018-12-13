@@ -118,7 +118,7 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
     retcodes = [loader_input_process.poll()]
     retcodes.append(loader.poll())
     if any(retcodes):
-        die(MSG_LOAD_ERROR % (datafile, retcode))
+        die(MSG_LOAD_ERROR % (datafile, retcodes))
 
 
 def is_big_wig(filename):
