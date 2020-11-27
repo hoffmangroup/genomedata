@@ -830,7 +830,7 @@ To stay informed of **new releases**, subscribe to the moderated
 For **discussion and questions** about the use of the Genomedata system,
 there is a ``genomedata-users`` mailing list:
 
-  https://mailman1.u.washington.edu/mailman/listinfo/genomedata-users
+  https://listserv.utoronto.ca/cgi-bin/wa?A0=genomedata-l
 
 For issues related to the use of Genomedata on **Mac OS X**,
 please use the above mailing list or contact
@@ -839,7 +839,7 @@ Jay Hesselberth <jay dot hesselberth at ucdenver dot edu>.
 If you want to **report a bug or request a feature**, please do so using
 our issue tracker:
 
-  https://bitbucket.org/hoffmanlab/genomedata/issues
+  https://github.com/hoffmangroup/genomedata/issues/
 
 For other support with Genomedata, or to provide feedback, please write
 contact the authors directly. We are interested in all comments regarding the
