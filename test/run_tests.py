@@ -235,6 +235,38 @@ class TestAGPMerge(unittest.TestCase):
         remove(self.genomedata_name)
 
 
+class TestChromosomeNameTranslation(unittest.TestCase):
+
+    def setUp(self):
+        self.genomedata_name = test_data_path("mapped_names.genomedata")
+        self.verbose = False
+        self.agp_filenames = [test_data_path("chrY.agp.gz"),
+                              test_data_path("chr1.agp.gz")]
+        self.mode = "file"
+
+        with open(test_data_path("assembly_report.txt"), "r") as assembly_report_file:
+            load_seq(self.genomedata_name, self.agp_filenames, self.verbose,
+                    self.mode, seqfile_type="agp",
+                    assembly_report_file=assembly_report_file,
+                    chromosome_name_style="UCSC-style-name")
+
+        close_data(self.genomedata_name, self.verbose)
+
+
+    def test_translated_chromsome_names(self):
+        chromosome_names = []
+
+        with Genome(self.genomedata_name) as genome:
+            # Check to see if chrY from Genbank and chr1 from RefSeq were translated
+            chromosome_names = [chromosome.name for chromosome in genome]
+
+        self.assertIn("chr1", chromosome_names)
+        self.assertIn("chrY", chromosome_names)
+
+    def tearDown(self):
+        remove(self.genomedata_name)
+
+
 def main():
     dirpath = Path(__file__).dirname()
     if dirpath:
