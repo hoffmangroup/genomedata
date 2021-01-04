@@ -20,11 +20,12 @@ from tempfile import mkdtemp, mkstemp
 import traceback
 
 from . import EXT, FILE_MODE_CHROMS, SUFFIX, __version__
-from ._load_seq import DEFAULT_CHROMOSOME_NAME_STYLE, load_seq
+from ._load_seq import load_seq
 from ._open_data import open_data
 from ._load_data import DEFAULT_CHUNK_SIZE, load_data
 from ._close_data import close_data
-from ._util import die
+from ._util import (chromosome_name_map_parser,
+                    DEFAULT_CHROMOSOME_NAME_STYLE, die)
 
 def print_timestamp(msg=""):
     print(">> %s: %s" % (datetime.now().isoformat(), msg), file=sys.stderr)
@@ -205,6 +206,7 @@ def parse_cmdline(cmdline):
     parser = ArgumentParser(description=description,
                             epilog=citation,
                             formatter_class=RawDescriptionHelpFormatter,
+                            parents=[chromosome_name_map_parser],
                             prog='genomedata-load')
 
     parser.add_argument('--version', action='version', version=__version__)
@@ -242,18 +244,6 @@ def parse_cmdline(cmdline):
                             const="sizes",
                             help="sequence files contain list of sizes instead of"
                             " sequence")
-
-    chromsome_names = parser.add_argument_group("Chromosome naming")
-    chromsome_names.add_argument("-r", "--assembly-report",
-                                 dest="assembly_report", type=FileType('r'),
-                                 help="A CSV-style file that contains columnar"
-                                 " mappings between chromosome naming styles.")
-    chromsome_names.add_argument("-n", "--name-style",
-                                 default=DEFAULT_CHROMOSOME_NAME_STYLE,
-                                 dest="name_style",
-                                 help="Chromsome naming style to use based on"
-                                 " ASSEMBLY_REPORT. Default: {}"
-                                 .format(DEFAULT_CHROMOSOME_NAME_STYLE))
 
     implementation = parser.add_argument_group("Implementation")
     implementation_ex = implementation.add_mutually_exclusive_group()

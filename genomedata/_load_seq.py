@@ -13,7 +13,7 @@ from re import compile, VERBOSE
 import sys
 import warnings
 
-from argparse import ArgumentParser, FileType
+from argparse import ArgumentParser
 from collections import defaultdict
 
 from numpy import frombuffer, uint32
@@ -22,7 +22,9 @@ from tabdelim import DictReader
 
 from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS,
                FORMAT_VERSION, Genome, __version__)
-from ._util import (FILTERS_GZIP, GENOMEDATA_ENCODING, GenomedataDirtyWarning,
+from ._util import (chromosome_name_map_parser,
+                    DEFAULT_CHROMOSOME_NAME_STYLE, FILTERS_GZIP,
+                    GENOMEDATA_ENCODING, GenomedataDirtyWarning,
                     ignore_comments, LightIterator, maybe_gzip_open)
 
 MIN_GAP_LEN = 100000
@@ -41,7 +43,6 @@ AGP_FIELDNAMES = ["object", "object_beg", "object_end", "part_number",
                   "component_type", "col6", "col7", "col8", "col9"]
 
 # See NCBI Assembly reports
-DEFAULT_CHROMOSOME_NAME_STYLE = "UCSC-style-name"
 ASSEMBLY_REPORT_COMMENT_DELIMITER = "#"
 ASSEMBLY_REPORT_FIELD_DELIMITER = "\t"
 
@@ -221,7 +222,7 @@ def get_num_seq(filenames):
     return res
 
 
-def load_chromosome_name_mapping(assembly_report_file):
+def load_chromosome_name_map(assembly_report_file):
     res = {}
 
     # Assume commented line above the first non-commented line is the header
@@ -231,28 +232,14 @@ def load_chromosome_name_mapping(assembly_report_file):
     # NB: These csv files are assumed to be small enough to be held in memory
     assembly_report_lines = assembly_report_file.readlines()
 
-    # For every line in the file
-    header_index = 0
-    for line_index, line in enumerate(assembly_report_lines):
-        # If the header line has not been defined
-        if not header_line:
-            # Assume it is the first line
-            header_line = line
-
-        # If the line does not start with a comment
-        if not line.startswith(ASSEMBLY_REPORT_COMMENT_DELIMITER):
-            # Stop and use the previous line as header line
-            break
-        # Otherwise
-        else:
-            # Use the current line as the candidate for the header line
-            header_line = line
-            header_index = line_index
+    # Get the header line from the assembly report
+    header_index = get_assembly_report_header_index(assembly_report_lines)
+    header_line = assembly_report_lines[header_index]
 
     # Retrive the string after the comment delimiter and split on whitespace
-    # for the headers
+    # for the header fields
     header_fields = \
-    header_line.split(ASSEMBLY_REPORT_COMMENT_DELIMITER)[1].strip().split()
+    header_line.partition(ASSEMBLY_REPORT_COMMENT_DELIMITER)[2].strip().split()
 
     # Return a dictionary with header fields for keys containing a list for
     # their respective column
@@ -267,17 +254,49 @@ def load_chromosome_name_mapping(assembly_report_file):
     return res
 
 
-def get_chromosome_name(name, chromosome_name_map, name_style):
-    res = name
+def get_assembly_report_header_index(assembly_report_lines):
+    """
+    Retrieve the index of the last commented header line from a list of
+    assembly report lines which is assumed to be the header for the following
+    fields
+    """
 
-    # If the chromosome name mapping exists
-    if chromosome_name_map:
+    res = 0
+    for line_index, line in enumerate(assembly_report_lines):
+        # If the line does not start with a comment
+        if not line.startswith(ASSEMBLY_REPORT_COMMENT_DELIMITER):
+            # Stop and use the previous line as header line
+            # If the first line was not commented, use that line and assume it
+            # has the header information
+            res = max(0, line_index - 1)
+            break
+
+    return res
+
+
+def get_chromosome_name(name, chromosome_name_map, name_style):
+    """
+    Retrieve alias for a chromsome name based on given map and style
+
+    name: name of the chromsome to translate
+    chromsome_name_map: dictionary with keys of styles and ordered lists for
+    chromosome names as values
+    name_style: the style to translate the given 'name' to
+    """
+
+    # If no chromsome name mapping exists
+    if not chromosome_name_map:
+        # Return given name
+        return name
+    # Otherwise the chromosome name mapping exists
+    else:
         name_position = None
 
         # Find current name in the map
         for style in chromosome_name_map:
-            # Store position in the list
+            # If the name was found in the map
             try:
+                # Store position in the list
                 name_position = chromosome_name_map[style].index(name)
             except ValueError:
                 pass
@@ -285,13 +304,12 @@ def get_chromosome_name(name, chromosome_name_map, name_style):
         # If the query was name found
         if name_position is not None:
             # Look up name from style and position in its list
-            res = chromosome_name_map[name_style][name_position]
+            # Return name lookup
+            return chromosome_name_map[name_style][name_position]
         # Otherwise
         else:
             # Raise an exception for an unknown query name
             raise ValueError("Cannot find {} in assembly report".format(name))
-
-    return res
 
 
 def create_chromosome(genome, name, mode):
@@ -308,8 +326,8 @@ def create_chromosome(genome, name, mode):
     return res
 
 def load_seq(gdfilename, filenames, verbose=False, mode=None,
-            seqfile_type="fasta", assembly_report_file=None,
-            chromosome_name_style=DEFAULT_CHROMOSOME_NAME_STYLE):
+             seqfile_type="fasta", assembly_report_file=None,
+             chromosome_name_style=DEFAULT_CHROMOSOME_NAME_STYLE):
     gdpath = Path(gdfilename)
 
     ## load sizes if necessary to figure out number of chromosomes
@@ -351,7 +369,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None,
     # If there's an assembly report file to map chromosome names
     if assembly_report_file:
         # Load the chrosome name mapping
-        chromosome_name_map = load_chromosome_name_mapping(assembly_report_file)
+        chromosome_name_map = load_chromosome_name_map(assembly_report_file)
     else:
         chromosome_name_map = None
 
@@ -394,8 +412,9 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None,
                             # For each chromosome and its agp lines
                             for chromosome_name in agp_chromosome_buffer:
                                 # Create the chromosome in genomedata
-                                name = get_chromosome_name(chromosome_name,
-                                chromosome_name_map, chromosome_name_style)
+                                name = get_chromosome_name(
+                                       chromosome_name, chromosome_name_map,
+                                       chromosome_name_style)
 
                                 chromosome = create_chromosome(genome, name,
                                                                mode)
@@ -421,6 +440,7 @@ def parse_options(args):
                    " definition line.")
 
     parser = ArgumentParser(description=description,
+                            parents=[chromosome_name_map_parser],
                             prog='genomedata-load-seq')
     
     parser.add_argument('--version', action='version', version=__version__)
@@ -438,15 +458,6 @@ def parse_options(args):
                         dest="seqfile_type", default="fasta",
                         help="SEQFILE contains list of sizes instead of"
                         " sequence")
-    parser.add_argument("-r", "--assembly-report",
-                        dest="assembly_report", type=FileType('r'),
-                        help="A CSV-style file that contains columnar"
-                        " mappings between chromosome naming styles.")
-    parser.add_argument("-n", "--name-style",
-                        default=DEFAULT_CHROMOSOME_NAME_STYLE, dest="name_style",
-                        help="Chromsome naming style to use based on"
-                        " ASSEMBLY_REPORT. Default: {}"
-                        .format(DEFAULT_CHROMOSOME_NAME_STYLE))
     parser.add_argument("-f", "--file-mode", dest="mode",
                         default=None, action="store_const", const="file",
                         help="If specified, the Genomedata archive will be"
