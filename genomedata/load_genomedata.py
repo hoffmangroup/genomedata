@@ -9,7 +9,7 @@ load_genomedata: DESCRIPTION
 # Copyright 2009, 2011 Orion Buske <orion.buske@gmail.com>
 # Copyright 2010 Michael Hoffman <mmh1@uw.edu>
 
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from argparse import ArgumentParser, FileType, RawDescriptionHelpFormatter
 from datetime import datetime
 from glob import glob
 from os import close, extsep
@@ -24,7 +24,8 @@ from ._load_seq import load_seq
 from ._open_data import open_data
 from ._load_data import DEFAULT_CHUNK_SIZE, load_data
 from ._close_data import close_data
-from ._util import die
+from ._util import (chromosome_name_map_parser,
+                    DEFAULT_CHROMOSOME_NAME_STYLE, die)
 
 def print_timestamp(msg=""):
     print(">> %s: %s" % (datetime.now().isoformat(), msg), file=sys.stderr)
@@ -40,6 +41,8 @@ def repack(infilename, outfilename, verbose=False):
 
 def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                     seqfile_type="fasta", chunk_size=DEFAULT_CHUNK_SIZE,
+                    assembly_report_file=None,
+                    chromosome_name_style=DEFAULT_CHROMOSOME_NAME_STYLE,
                     maskfilename=None, verbose=False):
     """Loads Genomedata collection with given data
 
@@ -95,6 +98,8 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             print_timestamp("Loading %s files:" % seqfile_desc)
 
         load_seq(tempdatapath, seqfilenames, verbose=verbose, mode=mode,
+                 assembly_report_file=assembly_report_file,
+                 chromosome_name_style=chromosome_name_style,
                  seqfile_type=seqfile_type)
 
         # Load tracks if any are specified
@@ -201,6 +206,7 @@ def parse_cmdline(cmdline):
     parser = ArgumentParser(description=description,
                             epilog=citation,
                             formatter_class=RawDescriptionHelpFormatter,
+                            parents=[chromosome_name_map_parser],
                             prog='genomedata-load')
 
     parser.add_argument('--version', action='version', version=__version__)
@@ -238,6 +244,7 @@ def parse_cmdline(cmdline):
                             const="sizes",
                             help="sequence files contain list of sizes instead of"
                             " sequence")
+
     implementation = parser.add_argument_group("Implementation")
     implementation_ex = implementation.add_mutually_exclusive_group()
     implementation_ex.add_argument("-f", "--file-mode", dest="mode",
@@ -296,7 +303,10 @@ def main(cmdline=sys.argv[1:]):
              "in NAME=FILE form, such as: -t high=signal.high") % track_expr)
 
     load_genomedata(args.gdarchive, tracks, seqfilenames,
-                    seqfile_type=seqfile_type, verbose=args.verbose,
+                    seqfile_type=seqfile_type,
+                    assembly_report_file=args.assembly_report,
+                    chromosome_name_style=args.name_style,
+                    verbose=args.verbose,
                     maskfilename=args.maskfile, mode=args.mode)
 
 if __name__ == "__main__":

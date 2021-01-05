@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 
 # Copyright 2008-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
+from argparse import ArgumentParser, FileType
 from contextlib import closing
 from gzip import open as _gzip_open
 from os import extsep
@@ -20,6 +21,24 @@ EXT_GZ = "gz"
 SUFFIX_GZ = extsep + EXT_GZ
 
 GENOMEDATA_ENCODING="ascii"
+
+DEFAULT_CHROMOSOME_NAME_STYLE = "UCSC-style-name"
+
+chromosome_name_map_parser = ArgumentParser(add_help=False)
+chromsome_names = chromosome_name_map_parser.add_argument_group("Chromosome naming")
+chromsome_names.add_argument(
+    "-r", "--assembly-report",
+    dest="assembly_report", type=FileType('r'),
+    metavar="ASSEMBLY-REPORT",
+    help="Tab-delimited file with columnar mappings"
+    " between chromosome naming styles.")
+chromsome_names.add_argument(
+    "-n", "--name-style",
+    default=DEFAULT_CHROMOSOME_NAME_STYLE, dest="name_style",
+    help="Chromsome naming style to use based on"
+    " ASSEMBLY-REPORT. Default: {}"
+    .format(DEFAULT_CHROMOSOME_NAME_STYLE))
+
 
 def die(msg="Unexpected error."):
     print(msg, file=sys.stderr)
