@@ -16,12 +16,11 @@ Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 
 """
 
-__version__ = "1.4.5"
-
 
 from functools import partial
 from operator import attrgetter
 from os import extsep
+from pkg_resources import get_distribution
 import sys
 from warnings import warn
 
@@ -35,6 +34,10 @@ from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 
 from ._util import (decode_tracknames, add_trackname,
                     GenomedataDirtyWarning, OverlapWarning)
+
+# Allow raising a DistributionNotFound error if somehow genomedata was not
+# installed
+__version__ = get_distribution(__name__.split('.')[0]).version
 
 FORMAT_VERSION = 1
 SEQ_DTYPE = uint8

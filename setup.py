@@ -27,11 +27,6 @@ from setuptools import find_packages, setup
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
 
-# XXX: Find a way to implement a central version number without importing the
-# genomedata module
-#from genomedata import __version__
-__version__ = "1.4.5"
-
 DEFAULT_SHELL_ENCODING = "ascii"
 LDFLAGS_LIBRARY_SWITCH = "-l"
 LDFLAGS_LIBRARY_PATH_SWITCH = "-L"
@@ -46,8 +41,8 @@ doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")
 long_description = "\n".join(doclines[2:])
 
-url = "http://pmgenomics.ca/hoffmanlab/proj/%s/" % name.lower()
-download_url = "%s%s-%s.tar.gz" % (url, name, __version__)
+url = "https://pmgenomics.ca/hoffmanlab/proj/%s/" % name.lower()
+download_url = "https://pypi.python.org/pypi/%s" % name.lower()
 
 classifiers = ["Natural Language :: English",
                "Development Status :: 5 - Production/Stable",
@@ -74,6 +69,7 @@ genomedata-report = genomedata._report:main
 genomedata-erase-data = genomedata._erase_data:main
 """
 
+setup_requires = ["setuptools_scm"] # source control management packaging
 # Exclude PyTables 3.4.1 - incorrect binary distribution causes core dumps
 # See:
 # https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
@@ -327,7 +323,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
     setup(name=name,
-          version=__version__,
+          use_scm_version=True,
           description=short_description,
           author="Michael Hoffman",
           author_email="michael.hoffman@utoronto.ca",
@@ -335,7 +331,7 @@ if __name__ == "__main__":
           download_url=download_url,
           classifiers=classifiers,
           long_description=long_description,
-          setup_requires=["hgtools"],
+          setup_requires=setup_requires,
           install_requires=install_requires,
           zip_safe=False,
           # XXX: this should be based off of __file__ instead
