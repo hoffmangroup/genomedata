@@ -4,6 +4,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - genomedata
   - python=3
   - six
   - hdf5
