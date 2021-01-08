@@ -389,60 +389,67 @@ See the :ref:`full example <genomedata-load-example>` for more details.
 
 .. _FASTA: http://www.ncbi.nlm.nih.gov/blast/fasta.shtml
 
+Chromosome naming
+~~~~~~~~~~~~~~~~
+When loading sequence data that does not have a UCSC-style name (e.g.
+'chr1'), you may provide a tab-delimited file that provides a mapping between
+naming styles to be given to the '--assembly-report' option. This file
+expects a commented header to provide labels to the columns below it. For
+example the following is a valid file for '--assembly-report':
+
+::
+
+    # Sequence-Name	GenBank-Accn	RefSeq-Accn	UCSC-style-name
+    1	CM000663.2	NC_000001.11	chr1
+
+This file format style is based on the assembly reports provided by NCBI_.
+
+.. _NCBI: https://www.ncbi.nlm.nih.gov/
+
 Command-line usage information::
 
-    usage: genomedata-load [-h] [-v] [--verbose] -s SEQUENCE -t NAME=FILE
-                           [--assembly | --sizes] [-f | -d]
-                           GENOMEDATAFILE
+    usage: genomedata-load [-h] [-r ASSEMBLY-REPORT] [-n NAME_STYLE] [--version] [--verbose] -s SEQUENCE -t NAME=FILE [-m MASKFILE] [--assembly | --sizes] [-f | -d] GENOMEDATAFILE
 
     Create Genomedata archive named GENOMEDATAFILE by loading
-     specified track data and sequences. If GENOMEDATAFILE
-     already exists, it will be overwritten.
-     --track and --sequence may be repeated to specify
-     multiple trackname=trackfile pairings and sequence files,
-     respectively.
+    specified track data and sequences. If GENOMEDATAFILE
+    already exists, it will be overwritten.
+    --track and --sequence may be repeated to specify
+    multiple trackname=trackfile pairings and sequence files,
+    respectively.
 
-     Example: genomedata-load -t high=signal.high.wig -t low=signal.low.bed.gz -s chrX.fa -s chrY.fa.gz gdarchive
+    Example: genomedata-load -t high=signal.high.wig -t low=signal.low.bed.gz -s chrX.fa -s chrY.fa.gz GENOMEDATAFILE
 
     positional arguments:
       GENOMEDATAFILE        genomedata archive
 
     optional arguments:
       -h, --help            show this help message and exit
-      -v, --version         show program's version number and exit
+      --version             show program's version number and exit
+
+    Chromosome naming:
+      -r ASSEMBLY-REPORT, --assembly-report ASSEMBLY-REPORT
+                            Tab-delimited file with columnar mappings between chromosome naming styles.
+      -n NAME_STYLE, --name-style NAME_STYLE
+                            Chromsome naming style to use based on ASSEMBLY-REPORT. Default: UCSC-style-name
 
     Flags:
       --verbose             Print status updates and diagnostic messages
 
     Input data:
       -s SEQUENCE, --sequence SEQUENCE
-                            Add the sequence data in the specified file or files
-                            (may use UNIX glob wildcard syntax)
+                            Add the sequence data in the specified file or files (may use UNIX glob wildcard syntax)
       -t NAME=FILE, --track NAME=FILE
-                            Add data from FILE as the track NAME, such as: -t
-                            signal=signal.wig
+                            Add data from FILE as the track NAME, such as: -t signal=signal.wig
       -m MASKFILE, --maskfile MASKFILE
-                            A BED file containing regions to mask out from tracks
-                            before loading
-      --assembly            sequence files contain assembly (AGP) files instead of
-                            sequence
-      --sizes               sequence files contain list of sizes instead of
-                            sequence
+                            A BED file containing regions to mask out from tracks before loading
+      --assembly            sequence files contain assembly (AGP) files instead of sequence
+      --sizes               sequence files contain list of sizes instead of sequence
 
     Implementation:
-      -f, --file-mode       If specified, the Genomedata archive will be
-                            implemented as a single file, with a separate h5 group
-                            for each Chromosome. This is recommended if there are
-                            a large number of Chromosomes. The default behavior is
-                            to use a single file if there are at least 100
-                            Chromosomes being added.
-      -d, --directory-mode  If specified, the Genomedata archive will be
-                            implemented as a directory, with a separate file for
-                            each Chromosome. This is recommended if there are a
-                            small number of Chromosomes. The default behavior is
-                            to use a directory if there are fewer than 100
-                            Chromosomes being added.
-
+      -f, --file-mode       If specified, the Genomedata archive will be implemented as a single file, with a separate h5 group for each Chromosome. This is recommended if there are a large
+                            number of Chromosomes. The default behavior is to use a single file if there are at least 100 Chromosomes being added.
+      -d, --directory-mode  If specified, the Genomedata archive will be implemented as a directory, with a separate file for each Chromosome. This is recommended if there are a small number of
+                            Chromosomes. The default behavior is to use a directory if there are fewer than 100 Chromosomes being added.
 
 Alternately, as described in :ref:`genomedata-overview`, the underlying
 Python and C load scripts are also accessible for more finely-grained control.
@@ -477,12 +484,9 @@ these sequence files and the data loaded later with
 
 ::
 
-    usage: genomedata-load-seq [-h] [-v] [-a] [-s] [-f] [-d] [--verbose]
-                               GENOMEDATAFILE seqfiles [seqfiles ...]
+    usage: genomedata-load-seq [-h] [-r ASSEMBLY-REPORT] [-n NAME_STYLE] [--version] [-a] [-s] [-f] [-d] [--verbose] gdarchive seqfiles [seqfiles ...]
 
-    Start a Genomedata archive at GENOMEDATAFILE with the provided sequences.
-    SEQFILEs should be in fasta format, and a separate Chromosome will be created
-    for each definition line.
+    Start a Genomedata archive at GENOMEDATAFILE with the provided sequences. SEQFILEs should be in fasta format, and a separate Chromosome will be created for each definition line.
 
     positional arguments:
       gdarchive             genomedata archive
@@ -490,24 +494,20 @@ these sequence files and the data loaded later with
 
     optional arguments:
       -h, --help            show this help message and exit
-      -v, --version         show program's version number and exit
-      -a, --assembly        SEQFILE contains assembly (AGP) files instead of
-                            sequence
+      --version             show program's version number and exit
+      -a, --assembly        SEQFILE contains assembly (AGP) files instead of sequence
       -s, --sizes           SEQFILE contains list of sizes instead of sequence
-      -f, --file-mode       If specified, the Genomedata archive will be
-                            implemented as a single file, with a separate h5 group
-                            for each Chromosome. This is recommended if there are
-                            a large number of Chromosomes. The default behavior is
-                            to use a single file if there are at least 100
-                            Chromosomes being added.
-      -d, --directory-mode  If specified, the Genomedata archive will be
-                            implemented as a directory, with a separate file for
-                            each Chromosome. This is recommended if there are a
-                            small number of Chromosomes. The default behavior is
-                            to use a directory if there are fewer than 100
-                            Chromosomes being added.
+      -f, --file-mode       If specified, the Genomedata archive will be implemented as a single file, with a separate h5 group for each Chromosome. This is recommended if there are a large
+                            number of Chromosomes. The default behavior is to use a single file if there are at least 100 Chromosomes being added.
+      -d, --directory-mode  If specified, the Genomedata archive will be implemented as a directory, with a separate file for each Chromosome. This is recommended if there are a small number of
+                            Chromosomes. The default behavior is to use a directory if there are fewer than 100 Chromosomes being added.
       --verbose             Print status updates and diagnostic messages
 
+    Chromosome naming:
+      -r ASSEMBLY-REPORT, --assembly-report ASSEMBLY-REPORT
+                            Tab-delimited file with columnar mappings between chromosome naming styles.
+      -n NAME_STYLE, --name-style NAME_STYLE
+                            Chromsome naming style to use based on ASSEMBLY-REPORT. Default: UCSC-style-name
 
 .. _genomedata-open-data:
 
