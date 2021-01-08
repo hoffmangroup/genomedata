@@ -1,0 +1,15 @@
+name: genomedata
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3
+  - six
+  - hdf5
+  - zlib
+  - pytabes >= 3.4.3
+  - path.py
+  - textinput
+  - bedtools
+  - ucsc-bigwigtobedgraph
