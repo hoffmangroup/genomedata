@@ -1,4 +1,4 @@
-1.4.5:
+1.5.0:
 * genomedata-load-data: fix bad error message when loading process fails
 * genomedata-load-seq: add chromsome name mapping based on assembly reports
 
