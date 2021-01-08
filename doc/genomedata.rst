@@ -390,7 +390,7 @@ See the :ref:`full example <genomedata-load-example>` for more details.
 .. _FASTA: http://www.ncbi.nlm.nih.gov/blast/fasta.shtml
 
 Chromosome naming
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 When loading sequence data that does not have a UCSC-style name (e.g.
 'chr1'), you may provide a tab-delimited file that provides a mapping between
 naming styles to be given to the '--assembly-report' option. This file
