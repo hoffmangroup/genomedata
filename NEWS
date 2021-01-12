@@ -1,6 +1,6 @@
 1.5.0:
 * genomedata-load-data: fix bad error message when loading process fails
-* genomedata-load-seq: add chromsome name mapping based on assembly reports
+* genomedata-load-seq: add chromosome name mapping based on assembly reports
 
 1.4.4:
 * fixed pkg-config output encoding when finding HDF5 directories
