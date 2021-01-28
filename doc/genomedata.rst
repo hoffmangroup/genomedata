@@ -404,7 +404,7 @@ example the following is a valid file for '--assembly-report':
 
 This file format style is based on the assembly reports provided by NCBI_.
 
-.. _NCBI: https://www.ncbi.nlm.nih.gov/
+.. _NCBI: https://www.ncbi.nlm.nih.gov/assembly/help/#report
 
 Command-line usage information::
 

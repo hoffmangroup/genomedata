@@ -225,9 +225,8 @@ def get_num_seq(filenames):
 def load_chromosome_name_map(assembly_report_file):
     res = {}
 
-    # Assume commented line above the first non-commented line is the header
-    # containing the field names
-    header_line = ""
+    # NB: The format for these files are based on NCBI assembly reports:
+    # https://www.ncbi.nlm.nih.gov/assembly/help/#report
 
     # NB: These csv files are assumed to be small enough to be held in memory
     assembly_report_lines = assembly_report_file.readlines()
