@@ -222,11 +222,12 @@ def get_num_seq(filenames):
     return res
 
 
-def load_chromosome_name_map(assembly_report_file):
+def read_chromosome_name_map(assembly_report_file):
     res = {}
 
     # NB: The format for these files are based on NCBI assembly reports:
     # https://www.ncbi.nlm.nih.gov/assembly/help/#report
+    # A copy of the current hg38 assembly report is in the test/data directory
 
     # NB: These csv files are assumed to be small enough to be held in memory
     assembly_report_lines = assembly_report_file.readlines()
@@ -242,13 +243,13 @@ def load_chromosome_name_map(assembly_report_file):
 
     # Return a dictionary with header fields for keys containing a list for
     # their respective column
-    for header in header_fields:
-        res[header] = []
+    for header_field in header_fields:
+        res[header_field] = []
 
     for row in csv.DictReader(assembly_report_lines[header_index+1:], header_fields,
                               delimiter=ASSEMBLY_REPORT_FIELD_DELIMITER):
-        for header in header_fields:
-            res[header].append(row[header])
+        for header_field in header_fields:
+            res[header_field].append(row[header_field])
 
     return res
 
@@ -258,19 +259,19 @@ def get_assembly_report_header_index(assembly_report_lines):
     Retrieve the index of the last commented header line from a list of
     assembly report lines which is assumed to be the header for the following
     fields
+    If no comment is found, assumes first line is the header line
     """
 
-    res = 0
     for line_index, line in enumerate(assembly_report_lines):
         # If the line does not start with a comment
         if not line.startswith(ASSEMBLY_REPORT_COMMENT_DELIMITER):
             # Stop and use the previous line as header line
             # If the first line was not commented, use that line and assume it
             # has the header information
-            res = max(0, line_index - 1)
-            break
+            return max(0, line_index - 1)
 
-    return res
+    # If no commented lines were found return the first line index
+    return 0
 
 
 def get_chromosome_name(name, chromosome_name_map, name_style):
@@ -368,7 +369,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None,
     # If there's an assembly report file to map chromosome names
     if assembly_report_file:
         # Load the chrosome name mapping
-        chromosome_name_map = load_chromosome_name_map(assembly_report_file)
+        chromosome_name_map = read_chromosome_name_map(assembly_report_file)
     else:
         chromosome_name_map = None
 
