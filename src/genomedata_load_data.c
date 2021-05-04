@@ -20,11 +20,11 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <argp.h>
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h> /* includes stdio, string, errno, and stdlib */
 
 #include <hdf5.h>
 
@@ -116,6 +116,42 @@ typedef struct {
 #define NORETURN
 #endif /* GCC_VERSION >= 20500*/
 #endif /* __GNUC__ */
+
+void load_data(char* gdfilename, char* trackname, bool verbose);
+
+static PyObject* load_data_from_stdin(PyObject* self, PyObject* args) {
+  const char* gdfilename;
+  const char* trackname = "dummy";
+  int verbose; /* needs to be int, not bool for parsing */
+
+  if (!PyArg_ParseTuple(args, "ssp", &gdfilename, &trackname, &verbose)) /* string string bool predicate */
+    return NULL;
+
+  load_data(gdfilename, trackname, (bool)verbose);
+
+  /* Return None in Python */
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef LoadDataMethods[] = {
+    {"load_data_from_stdin", load_data_from_stdin, METH_VARARGS,
+     "Loads data in BED or WIG format from stdin into a track in a genomedata archive"},
+    {NULL, NULL, 0, NULL} /* Sentinel */
+};
+
+static struct PyModuleDef loadDateModule = {
+    PyModuleDef_HEAD_INIT,
+    "_load_data_c_ext", /* name of module */
+    NULL,               /* module documentation, may be NULL */
+    -1,                 /* size of per-interpreter state of the module,
+          or -1 if the module keeps state in global variables. */
+    LoadDataMethods };
+
+PyMODINIT_FUNC
+PyInit__load_data_c_ext(void) /* name is important for ref on import */
+{
+  return PyModule_Create(&loadDateModule);
+}
 
 /** helper functions **/
 
@@ -1303,74 +1339,3 @@ void load_data(char *gdfilename, char *trackname, bool verbose) {
   /* free heap variables */
   free(line);
 }
-
-/** command-line interface **/
-
-const char *argp_program_version = "1.5.1";
-const char *argp_program_bug_address = "genomedata-l@listserv.utoronto.ca";
-
-static char doc[] = "Loads data into genomedata format \
-\nTakes track data in on stdin";
-static char args_doc[] = "GENOMEDATAFILE TRACKNAME";
-
-/* static means that remaining fields are initialized to 0 */
-static struct argp_option options[] = {
-  {"verbose", 'v', 0, 0, "Print status and diagnostic messages"},
-  { 0 }
-};
-
-struct arguments {
-  char *args[NARGS];
-  bool verbose;
-};
-
-static error_t parse_opt (int key, char *arg, struct argp_state *state) {
-  struct arguments *arguments = state->input;
-
-  switch (key) {
-  case 'v':
-    arguments->verbose = true;
-    break;
-  case ARGP_KEY_ARG:
-    if (state->arg_num >= NARGS) {
-      argp_usage(state);
-      exit(EXIT_FAILURE);
-    }
-    arguments->args[state->arg_num] = arg;
-    break;
-
-  case ARGP_KEY_END:
-    if (state->arg_num < NARGS) {
-      argp_usage(state);
-      exit(EXIT_FAILURE);
-    }
-    break;
-
-  default:
-    return ARGP_ERR_UNKNOWN;
-  }
-  return 0;
-}
-
-/* static means that remaining fields are initialized to 0 */
-static struct argp argp = {options, parse_opt, args_doc, doc};
-
-int main(int argc, char **argv) {
-  struct arguments arguments;
-  char *gdfilename, *trackname;
-  bool verbose;
-
-  /* default value */
-  arguments.verbose = DEFAULT_VERBOSE;
-
-  assert(argp_parse(&argp, argc, argv, 0, 0, &arguments) == 0);
-
-  gdfilename = arguments.args[0];
-  trackname = arguments.args[1];
-  verbose = arguments.verbose;
-
-  load_data(gdfilename, trackname, verbose);
-
-  return EXIT_SUCCESS;
-}
-
