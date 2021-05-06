@@ -15,7 +15,7 @@ jobs:
     # Run job for both python versions in the docker image
     strategy:
       matrix:
-        python-version: [2, 3]
+        python-version: [3]
     container:
       image: hoffmanlab/genomedata-test:latest
       env:
