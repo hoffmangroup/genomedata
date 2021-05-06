@@ -10,7 +10,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     build-essential \
     pkg-config \
     python \
+    python2-dev \
     python3 \
+    python3-dev \
     python3-pip \
     libhdf5-dev \
     hdf5-tools \
@@ -20,7 +22,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 && rm -rf /var/lib/apt/lists/*
 
 # Install pip for Python 2
-RUN curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py && python2 get-pip.py
+RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py && python2 get-pip.py
 
 # Update pip
 # Install PyFlakes for testing

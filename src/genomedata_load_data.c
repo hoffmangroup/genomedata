@@ -121,7 +121,7 @@ void load_data(char* gdfilename, char* trackname, bool verbose);
 
 static PyObject* load_data_from_stdin(PyObject* self, PyObject* args) {
   const char* gdfilename;
-  const char* trackname = "dummy";
+  const char* trackname;
   int verbose; /* needs to be int, not bool for parsing */
 
   if (!PyArg_ParseTuple(args, "ssp", &gdfilename, &trackname, &verbose)) /* string string bool predicate */
@@ -133,24 +133,24 @@ static PyObject* load_data_from_stdin(PyObject* self, PyObject* args) {
   Py_RETURN_NONE;
 }
 
-static PyMethodDef LoadDataMethods[] = {
+static PyMethodDef loadDataMethods[] = {
     {"load_data_from_stdin", load_data_from_stdin, METH_VARARGS,
      "Loads data in BED or WIG format from stdin into a track in a genomedata archive"},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 
-static struct PyModuleDef loadDateModule = {
+static struct PyModuleDef loadDataModule = {
     PyModuleDef_HEAD_INIT,
     "_load_data_c_ext", /* name of module */
     NULL,               /* module documentation, may be NULL */
     -1,                 /* size of per-interpreter state of the module,
           or -1 if the module keeps state in global variables. */
-    LoadDataMethods };
+    loadDataMethods };
 
 PyMODINIT_FUNC
 PyInit__load_data_c_ext(void) /* name is important for ref on import */
 {
-  return PyModule_Create(&loadDateModule);
+  return PyModule_Create(&loadDataModule);
 }
 
 /** helper functions **/
