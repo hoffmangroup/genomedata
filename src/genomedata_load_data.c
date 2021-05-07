@@ -14,6 +14,8 @@
 #define _GNU_SOURCE
 #define __STDC_FORMAT_MACROS
 
+#undef NDEBUG /* Keep assert macros from becoming NOP */
+
 #include <assert.h>
 #include <error.h>
 #include <inttypes.h>
@@ -141,14 +143,14 @@ static PyMethodDef loadDataMethods[] = {
 
 static struct PyModuleDef loadDataModule = {
     PyModuleDef_HEAD_INIT,
-    "_load_data_c_ext", /* name of module */
+    "_c_load_data", /* name of module */
     NULL,               /* module documentation, may be NULL */
     -1,                 /* size of per-interpreter state of the module,
           or -1 if the module keeps state in global variables. */
     loadDataMethods };
 
 PyMODINIT_FUNC
-PyInit__load_data_c_ext(void) /* name is important for ref on import */
+PyInit__c_load_data(void) /* name is important for ref on import */
 {
   return PyModule_Create(&loadDataModule);
 }

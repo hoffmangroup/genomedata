@@ -3,7 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 """
-_load_data.py: A python interface for genome_load_data.c
+_load_data.py: A python interface for both genomedata_load_data.c and load_genomedata.py
 """
 
 import struct
@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 from subprocess import PIPE, Popen
 
 from . import __version__
-from ._load_data_c_ext import load_data_from_stdin
+from ._c_load_data import load_data_from_stdin
 from ._util import SUFFIX_GZ, die
 
 BIG_WIG_SIGNATURE = 0x888FFC26

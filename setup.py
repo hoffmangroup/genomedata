@@ -136,13 +136,12 @@ else:
             library_dirnames.append(word.lstrip(LDFLAGS_LIBRARY_PATH_SWITCH))
 
 
-load_data_module = Extension('_load_data_c_ext', # needs to match C file PyInit definition
+load_data_module = Extension('_c_load_data', # needs to match C file PyInit definition
                             sources=source_files,
                             include_dirs = include_dirnames,
                             libraries = libs,
                             library_dirs = library_dirnames,
                             define_macros = c_define_macros,
-                            extra_compile_args = ["-UNDEBUG"] # NB: Keep assert macros functioning
                             )
 
 
