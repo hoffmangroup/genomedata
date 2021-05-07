@@ -28,9 +28,15 @@ LDFLAGS_LIBRARY_SWITCH = "-l"
 LDFLAGS_LIBRARY_PATH_SWITCH = "-L"
 CFLAGS_INCLUDE_PATH_SWITCH = "-I"
 
-if (sys.version_info[0] == 2 and sys.version_info[1] < 7) or \
-   (sys.version_info[0] == 3 and sys.version_info[1] < 4):
-    print("Genomedata requires Python version 2.7 or 3.4 or later")
+MINIMUM_PYTHON_VERSION_MAJ = 3
+MINIMUM_PYTHON_VERSION_MIN = 7
+MINIMUM_PYTHON_VERSION_STR = "{}.{}".format(MINIMUM_PYTHON_VERSION_MAJ,
+                                            MINIMUM_PYTHON_VERSION_MIN)
+
+if (sys.version_info[0] == MINIMUM_PYTHON_VERSION_MAJ and 
+    sys.version_info[1] < MINIMUM_PYTHON_VERSION_MIN):
+    print("Genomedata requires Python version {} or "
+          "later".format(MINIMUM_PYTHON_VERSION_STR))
     sys.exit(1)
 
 doclines = __doc__.splitlines()
@@ -47,7 +53,6 @@ classifiers = ["Natural Language :: English",
                "(GPLv2)",
                "Topic :: Scientific/Engineering :: Bio-Informatics",
                "Operating System :: Unix",
-               "Programming Language :: Python :: 2.7",
                "Programming Language :: Python :: 3"]
 
 entry_points = """
@@ -163,5 +168,6 @@ if __name__ == "__main__":
           include_package_data=True,
           entry_points=entry_points,
           ext_package= "genomedata", # place extension in the base genomedata package
-          ext_modules=[load_data_module]
+          ext_modules=[load_data_module],
+          python_requires=">={}".format(MINIMUM_PYTHON_VERSION_STR)
           )
