@@ -13,20 +13,15 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     # Run job for both python versions in the docker image
-    strategy:
-      matrix:
-        python-version: [2, 3]
     container:
       image: hoffmanlab/genomedata-test:latest
-      env:
-        GENOMEDATA_TEST_PYTHON_VERSION: ${{matrix.python-version}}
 
     steps:
       - uses: actions/checkout@v2
       - name: Build repository
         run: |
-          python${GENOMEDATA_TEST_PYTHON_VERSION} -m pip install --verbose .
+          python3 -m pip install --verbose .
           pip list
       - name: Run tests
         run: |
-          cd test && python${GENOMEDATA_TEST_PYTHON_VERSION} run_tests.py
+          cd test && python3 run_tests.py

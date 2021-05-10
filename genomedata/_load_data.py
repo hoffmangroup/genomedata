@@ -3,7 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 """
-_load_data.py: A python interface for genome_load_data.c
+_load_data.py: A python interface for both genomedata_load_data.c and load_genomedata.py
 """
 
 import struct
@@ -13,6 +13,7 @@ from argparse import ArgumentParser
 from subprocess import PIPE, Popen
 
 from . import __version__
+from ._c_load_data import load_data_from_stdin
 from ._util import SUFFIX_GZ, die
 
 BIG_WIG_SIGNATURE = 0x888FFC26
@@ -141,31 +142,18 @@ def is_big_wig(filename):
 
 def parse_args(args):
 
-    description = ("Load data from DATAFILE into the specified TRACKNAME"
-                   " of the Genomedata archive")
+    description = ("Load data into genomedata format. "
+                   "Takes track data in on stdin")
 
     parser = ArgumentParser(description=description,
                             prog='genomedata-load-data')
     
-    parser.add_argument('--version', action='version', version=__version__)
+    parser.add_argument('-V', '--version', action='version', version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive')
     parser.add_argument('trackname', help='track name')
-    parser.add_argument('datafile', help='data file')
 
-    parser.add_argument("-m", "--maskfile",
-                        help='A BED file containing regions to mask out from'
-                        'the data file')
-
-    parser.add_argument("-c", "--chunk-size",
-                        metavar="NROWS", type=int,
-                        default=DEFAULT_CHUNK_SIZE,
-                        help="Chunk hdf5 data into blocks of NROWS."
-                        " A higher value increases compression but slows"
-                        " random access. Must always be smaller than the"
-                        " max size for a dataset. [default: %(default)s]")
-
-    parser.add_argument("--verbose", default=False, action="store_true",
+    parser.add_argument("-v", "--verbose", default=False, action="store_true",
                       help="Print status and diagnostic messages")
 
     args = parser.parse_args(args)
@@ -175,8 +163,7 @@ def parse_args(args):
 
 def main(argv=sys.argv[1:]):
     args = parse_args(argv)
-    load_data(args.gdarchive, args.trackname, args.datafile,
-              args.maskfile, verbose=args.verbose, chunk_size=args.chunk_size)
+    load_data_from_stdin(args.gdarchive, args.trackname, args.verbose)
 
 if __name__ == "__main__":
     sys.exit(main())

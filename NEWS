@@ -1,3 +1,7 @@
+1.6.0:
+* required Python is now >=3.7
+* genomedata-load-data: changed to a python script with a c-extension
+
 1.5.0:
 * genomedata-load-data: fix bad error message when loading process fails
 * genomedata-load-seq: add chromosome name mapping based on assembly reports
