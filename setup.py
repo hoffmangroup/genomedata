@@ -28,16 +28,7 @@ LDFLAGS_LIBRARY_SWITCH = "-l"
 LDFLAGS_LIBRARY_PATH_SWITCH = "-L"
 CFLAGS_INCLUDE_PATH_SWITCH = "-I"
 
-MINIMUM_PYTHON_VERSION_MAJ = 3
-MINIMUM_PYTHON_VERSION_MIN = 7
-MINIMUM_PYTHON_VERSION_STR = "{}.{}".format(MINIMUM_PYTHON_VERSION_MAJ,
-                                            MINIMUM_PYTHON_VERSION_MIN)
-
-if (sys.version_info[0] == MINIMUM_PYTHON_VERSION_MAJ and 
-    sys.version_info[1] < MINIMUM_PYTHON_VERSION_MIN):
-    print("Genomedata requires Python version {} or "
-          "later".format(MINIMUM_PYTHON_VERSION_STR))
-    sys.exit(1)
+MINIMUM_PYTHON_VERSION_STR = "3.7"
 
 doclines = __doc__.splitlines()
 name, short_description = doclines[0].split(": ")
@@ -93,7 +84,7 @@ else:
             return "", []
     tokenize.detect_encoding = detect_encoding
 
-source_files = ["src/genomedata_load_data.c"]
+source_files = ["src/_c_load_data.c"]
 # sz may be needed here if it's statically builtin with an hdf5 distribution? Or someone built their own hdf5 version with sz in which case they should rely on using LD_LIBRARY_PATH?
 libs = ["hdf5", "m", "z"] # hdf5, math, zlib, (sz? lossless compression libray for scientific data)
 library_dirnames = []
@@ -134,19 +125,20 @@ except CalledProcessError:
 else:
     for path in pkg_config_cflags:
         assert path.find(CFLAGS_INCLUDE_PATH_SWITCH) == 0
-        include_dirnames.append(path.lstrip(CFLAGS_INCLUDE_PATH_SWITCH))
+        # NB for Python >= 3.9, should swap partition to removeprefix
+        include_dirnames.append(path.partition(CFLAGS_INCLUDE_PATH_SWITCH)[2])
     for word in pkg_config_libs:
         if not word.startswith(LDFLAGS_LIBRARY_SWITCH):
             assert word.startswith(LDFLAGS_LIBRARY_PATH_SWITCH)
-            library_dirnames.append(word.lstrip(LDFLAGS_LIBRARY_PATH_SWITCH))
+            library_dirnames.append(word.partition(LDFLAGS_LIBRARY_PATH_SWITCH)[2])
 
 
 load_data_module = Extension('_c_load_data', # needs to match C file PyInit definition
                             sources=source_files,
-                            include_dirs = include_dirnames,
-                            libraries = libs,
-                            library_dirs = library_dirnames,
-                            define_macros = c_define_macros,
+                            include_dirs=include_dirnames,
+                            libraries=libs,
+                            library_dirs=library_dirnames,
+                            define_macros=c_define_macros,
                             )
 
 
@@ -167,7 +159,7 @@ if __name__ == "__main__":
           packages=find_packages("."),  # including "test"
           include_package_data=True,
           entry_points=entry_points,
-          ext_package= "genomedata", # place extension in the base genomedata package
+          ext_package="genomedata", # place extension in the base genomedata package
           ext_modules=[load_data_module],
           python_requires=">={}".format(MINIMUM_PYTHON_VERSION_STR)
           )

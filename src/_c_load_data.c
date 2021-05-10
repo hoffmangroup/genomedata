@@ -126,7 +126,7 @@ static PyObject* load_data_from_stdin(PyObject* self, PyObject* args) {
   const char* trackname;
   int verbose; /* needs to be int, not bool for parsing */
 
-  if (!PyArg_ParseTuple(args, "ssp", &gdfilename, &trackname, &verbose)) /* string string bool predicate */
+  if (!PyArg_ParseTuple(args, "ssp", &gdfilename, &trackname, &verbose)) /* string string predicate */
     return NULL;
 
   load_data(gdfilename, trackname, (bool)verbose);

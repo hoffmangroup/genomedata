@@ -1,5 +1,5 @@
 1.6.0:
-* drop support for Python 2
+* required Python is now >=3.7
 * genomedata-load-data: changed to a python script with a c-extension
 
 1.5.0:
