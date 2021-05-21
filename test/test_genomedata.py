@@ -35,7 +35,7 @@ UNFILTERED_TRACKNAME = "zunfiltered"
 UNFILTERED_TRACK_FILENAME = "unfiltered.bed"
 
 def seq2str(seq):
-    return seq.tostring().decode(GENOMEDATA_ENCODING).lower()
+    return seq.tobytes().decode(GENOMEDATA_ENCODING).lower()
 
 
 def make_temp_dir():
