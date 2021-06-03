@@ -68,7 +68,8 @@ setup_requires = ["setuptools_scm"] # source control management packaging
 # https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
 # path.py 11 renames 'path' to 'Path'
 install_requires = ["numpy", "tables>=3.0,!=3.4.1", "six",
-                    "textinput>=0.2.0", "path.py>=11"]
+                    "textinput>=0.2.0", "path.py>=11",
+                    "pybigwig>=0.3"]
 
 # Monkey patches tokenize.detect_encoding() to return a blank string when it can't recognize encoding
 # setuptools attempts to process some of the C files present, and errors because it can't determine encoding
