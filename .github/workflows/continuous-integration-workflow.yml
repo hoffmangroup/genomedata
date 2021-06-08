@@ -18,6 +18,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install test dependencies
+        run: |
+        pip install flake8
+      - name: Lint with flake8
+        run: |
+        flake8 . --count --statistics
       - name: Build repository
         run: |
           python3 -m pip install --verbose .
