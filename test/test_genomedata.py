@@ -26,13 +26,17 @@ from genomedata._close_data import close_data
 from genomedata._erase_data import erase_data
 from genomedata._hardmask import hardmask_data
 from genomedata._open_data import open_data
-from genomedata._util import GENOMEDATA_ENCODING, GenomedataDirtyWarning, OverlapWarning
-
-test_filename = lambda filename: os.path.join("data", filename)
+from genomedata._util import (GENOMEDATA_ENCODING, GenomedataDirtyWarning,
+                              OverlapWarning)
 
 DEFAULT_TRACK_FILTER_THRESHOLD = 0.5
 UNFILTERED_TRACKNAME = "zunfiltered"
 UNFILTERED_TRACK_FILENAME = "unfiltered.bed"
+
+
+def test_filename(filename):
+    return os.path.join("data", filename)
+
 
 def seq2str(seq):
     return seq.tobytes().decode(GENOMEDATA_ENCODING).lower()
@@ -45,7 +49,8 @@ def make_temp_dir():
 class GenomedataTesterBase(unittest.TestCase):
     def setUp(self):
         # Defaults
-        # XXX: adding verbosity when unittest is run with verbosity would be useful
+        # XXX: adding verbosity when unittest is run with verbosity would be
+        # useful
         self.verbose = False
         self.write = True
         self.mode = "dir"
@@ -78,8 +83,9 @@ class GenomedataTesterBase(unittest.TestCase):
             mode = "r+"
         else:
             mode = "r"
-        # catch_warnings acts as a context manager storing the original warning filter
-        # and resetting it at the end. All non user warnings should still be displayed
+        # catch_warnings acts as a context manager storing the original warning
+        # filter and resetting it at the end. All non user warnings should
+        # still be displayed
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", GenomedataDirtyWarning)
             warnings.simplefilter("ignore", OverlapWarning)
@@ -133,7 +139,6 @@ class GenomedataTesterBase(unittest.TestCase):
                 self.assertArraysEqual(chromosome[290, array([1, 0])],
                                        [-2.327, -2.297])
 
-
                 # Test filling of unassigned continuous segments
                 chromosome = genome["chrY"]
                 # Get first supercontig
@@ -148,7 +153,8 @@ class GenomedataTesterBase(unittest.TestCase):
                     # Test writing scalar to multiple tracks
                     chromosome[290] = 100.0
                     # Test writing scalar to tracks by named list
-                    chromosome[291, ["placental", "primate", "vertebrate"]] = 101.0
+                    chromosome[291,
+                               ["placental", "primate", "vertebrate"]] = 101.0
                     # Test writing scalar to select tracks by named list
                     chromosome[292, ["placental", "vertebrate"]] = 102.0
                     # Test writing scalar to tracks by index
@@ -159,7 +165,8 @@ class GenomedataTesterBase(unittest.TestCase):
                     # Test writing an array to a single index
                     chromosome[295] = [105.0, 106.0, 107.0]
                     # Test writing a subarray to a index subset
-                    chromosome[296, ["placental", "vertebrate"]] = [108.0, 109.0]
+                    chromosome[296,
+                               ["placental", "vertebrate"]] = [108.0, 109.0]
 
                     # Test removing datapoints by writing NaN
                     chromosome[297, ["primate"]] = nan
@@ -190,7 +197,8 @@ class GenomedataTesterBase(unittest.TestCase):
                                        [100.0, 100.0, 100.0])
                 self.assertArraysEqual(chromosome[291],
                                        [101.0, 101.0, 101.0])
-                self.assertArraysEqual(chromosome[292],  # L14 in primate wigFix
+                # L14 in primate wigFix
+                self.assertArraysEqual(chromosome[292],
                                        [102.0, 0.371, 102.0])
                 self.assertArraysEqual(chromosome[293],
                                        [103.0, 0.372, 103.0])
@@ -205,7 +213,6 @@ class GenomedataTesterBase(unittest.TestCase):
                                        [genome.num_datapoints[0],
                                         genome.num_datapoints[1] + 1,
                                         genome.num_datapoints[2]])
-
 
     def test_repr_str(self):
         genome = Genome(self.gdfilepath, mode="r")
@@ -355,15 +362,18 @@ class GenomedataTester(GenomedataTesterBase):
         # Make sure filtering was successful
         genome = Genome(self.gdfilepath)
         with genome:
-            self.assertArraysEqual(genome["chr1"][0:4, UNFILTERED_TRACKNAME],
+            self.assertArraysEqual(genome["chr1"][0:4,
+                                   UNFILTERED_TRACKNAME],
                                    [nan, nan, nan, nan])
-            self.assertArraysEqual(genome["chr1"][128:132, UNFILTERED_TRACKNAME],
+            self.assertArraysEqual(genome["chr1"][128:132,
+                                   UNFILTERED_TRACKNAME],
                                    [nan, nan, 0.5, 0.5])
-            self.assertArraysEqual(genome["chr1"][168:172, UNFILTERED_TRACKNAME],
+            self.assertArraysEqual(genome["chr1"][168:172,
+                                   UNFILTERED_TRACKNAME],
                                    [0.9, 0.9, nan, nan])
-            self.assertArraysEqual(genome["chr1"][206:210, UNFILTERED_TRACKNAME],
+            self.assertArraysEqual(genome["chr1"][206:210,
+                                   UNFILTERED_TRACKNAME],
                                    [nan, nan, nan, nan])
-
 
     def test_delete_tracks(self):
         # Test ability to delete a track
@@ -433,7 +443,7 @@ class GenomedataGivenDataTester(GenomedataTesterBase):
         self.tracknames = ["placental", "primate", "vertebrate"]
 
 
-## XXX: why isn't this a sublcass of GenomeDataTesterBase?
+# XXX: why isn't this a sublcass of GenomeDataTesterBase?
 class GenomedataNoDataTester(unittest.TestCase):
     def setUp(self):
         # Defaults
@@ -548,6 +558,7 @@ def main(args=sys.argv[1:]):
     args = parse_options(args)
 
     return test_genomedata(*args)
+
 
 if __name__ == "__main__":
     sys.exit(main())
