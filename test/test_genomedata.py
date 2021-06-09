@@ -11,7 +11,6 @@ __version__ = "$Revision$"
 
 # Copyright 2010-2013 Michael M. Hoffman <mmh1@uw.edu>
 import os
-import sys
 from tempfile import mkdtemp, mkstemp
 import unittest
 import warnings
