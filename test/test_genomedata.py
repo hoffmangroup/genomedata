@@ -535,30 +535,3 @@ class GenomedataNoDataTester(unittest.TestCase):
             self.assertArraysEqual(genome["chr1"][305:310, new_track_name],
                                    [-2.65300012, 0.37200001, 0.37200001,
                                     0.37200001, 0.37099999])
-
-
-def test_genomedata(*args):
-    pass
-
-
-def parse_options(args):
-
-    from argparse import ArgumentParser
-    from . import __version__
-
-    parser = ArgumentParser(prog='test_genomedata',
-                            version=__version__)
-
-    args = parser.parse_args(args)
-
-    return args
-
-
-def main(args=sys.argv[1:]):
-    args = parse_options(args)
-
-    return test_genomedata(*args)
-
-
-if __name__ == "__main__":
-    sys.exit(main())
