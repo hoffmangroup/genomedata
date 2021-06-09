@@ -3,7 +3,8 @@
 from __future__ import absolute_import, division, print_function
 
 """
-_load_data.py: A python interface for both genomedata_load_data.c and load_genomedata.py
+_load_data.py: A python interface for both genomedata_load_data.c and
+load_genomedata.py
 """
 
 import struct
@@ -24,7 +25,8 @@ BEDTOOLS_INTERSECT_CMD = "intersect"
 BEDTOOLS_STDIN = "stdin"
 DEFAULT_CHUNK_SIZE = 10000
 LOAD_DATA_CMD = "genomedata-load-data"
-MSG_LOAD_ERROR = "Error loading data from track file %%s. %s returned %%s." % LOAD_DATA_CMD
+MSG_LOAD_ERROR = ("Error loading data from track file %%s. " +
+                  "{} returned %%s.".format(LOAD_DATA_CMD))
 
 
 def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
@@ -147,14 +149,15 @@ def parse_args(args):
 
     parser = ArgumentParser(description=description,
                             prog='genomedata-load-data')
-    
-    parser.add_argument('-V', '--version', action='version', version=__version__)
+
+    parser.add_argument('-V', '--version', action='version',
+                        version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive')
     parser.add_argument('trackname', help='track name')
 
     parser.add_argument("-v", "--verbose", default=False, action="store_true",
-                      help="Print status and diagnostic messages")
+                        help="Print status and diagnostic messages")
 
     args = parser.parse_args(args)
 
@@ -164,6 +167,7 @@ def parse_args(args):
 def main(argv=sys.argv[1:]):
     args = parse_args(argv)
     load_data_from_stdin(args.gdarchive, args.trackname, args.verbose)
+
 
 if __name__ == "__main__":
     sys.exit(main())

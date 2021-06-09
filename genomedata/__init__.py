@@ -25,7 +25,7 @@ import sys
 from warnings import warn
 
 import tables
-from numpy import (add, amin, amax, append, array, empty, float32, inf,
+from numpy import (add, amin, amax, array, empty, float32, inf,
                    nan, ndarray, square, uint8)
 from path import Path
 from six import viewitems
@@ -55,6 +55,7 @@ SUFFIX = extsep + EXT
 # more than this many, it will be a single file by default.
 FILE_MODE_CHROMS = 100
 
+
 class _InactiveDict(dict):
     """A fake dict that can't be added to."""
     def __setitem__(self, key, value):
@@ -63,8 +64,9 @@ class _InactiveDict(dict):
 
 def _open_file(filename, *args, **kwargs):
     # From pytables 3 docs:
-    # [open_file] recognizes the (lowercase) names of parameters present in tables/parameters.py
-    if not "buffer_times" in kwargs:
+    # [open_file] recognizes the (lowercase) names of parameters present in
+    # tables/parameters.py
+    if "buffer_times" not in kwargs:
         # eliminate spurious PerformanceWarning
         kwargs["buffer_times"] = inf
 
@@ -92,17 +94,17 @@ class Genome(object):
 
     """
     def __init__(self, filename, *args, **kwargs):
-        """Create a Genome object from a genomdata archive.
+        r"""Create a Genome object from a genomdata archive.
 
         :param filename: the root of the Genomedata object
                          hierarchy. This can either be a .genomedata
                          file that contains the entire genome or a
                          directory containing multiple chromosome files.
         :type filename: string
-        :param \*args: args passed on to open_file if single file or to
-                       Chromosome if directory
-        :param \*\*kwargs: keyword args passed on to open_file if single file
-                           or to Chromosome if directory
+        :param *args: args passed on to open_file if single file or to
+                      Chromosome if directory
+        :param **kwargs: keyword args passed on to open_file if single file
+                         or to Chromosome if directory
 
         Example:
 
@@ -569,7 +571,7 @@ since being closed with genomedata-close-data.""")
 
     @classmethod
     def _fromfilename(cls, filename, mode=default_mode, *args, **kwargs):
-        """
+        r"""
         :param filename: name of the chromosome (.genomedata) file to access
 
         :param mode: mode of interaction with the chromosome file,
@@ -578,8 +580,8 @@ since being closed with genomedata-close-data.""")
                      for tables.open_file().)
 
         :type mode: string
-        :param \*args: args passed on to open_file
-        :param \*\*kwargs: keyword args passed on to open_file
+        :param *args: args passed on to open_file
+        :param **kwargs: keyword args passed on to open_file
 
         """
         filepath = Path(filename).expand()
@@ -829,8 +831,8 @@ since being closed with genomedata-close-data.""")
 
         # Check if the given region overlaps with any gap in the assembly
         self._check_region_inside_supercontigs(supercontigs,
-                                                 base_key.start,
-                                                 base_key.stop)
+                                               base_key.start,
+                                               base_key.stop)
 
         # For each supercontig
         for supercontig in supercontigs:
@@ -933,7 +935,7 @@ since being closed with genomedata-close-data.""")
         if self.attrs.dirty:
             warn("Closing Chromosome with modified data. Metadata needs to"
                  " be recalculated by calling genomedata-close-data on the"
-                 " Genomedata archive before re-accessing it", 
+                 " Genomedata archive before re-accessing it",
                  category=GenomedataDirtyWarning)
 
         if self._isfile:
@@ -968,7 +970,7 @@ since being closed with genomedata-close-data.""")
 
         """
         self.attrs.dirty = True  # dirty specific to chromosome
-        # Add the trackname to the chromosome before 
+        # Add the trackname to the chromosome before
         add_trackname(self, trackname)
 
         # Extend supercontigs by a column (or create them)
@@ -1362,6 +1364,7 @@ def _key_to_tuple(key):
 
 def main(argv=sys.argv[1:]):
     pass
+
 
 if __name__ == "__main__":
     sys.exit(main())

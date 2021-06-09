@@ -60,5 +60,6 @@ def main(argv=sys.argv[1:]):
     args = parse_options(argv)
     return open_data(args.gdarchive, args.tracknames, verbose=args.verbose)
 
+
 if __name__ == "__main__":
     sys.exit(main())

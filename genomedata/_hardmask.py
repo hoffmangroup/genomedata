@@ -18,7 +18,7 @@ from numpy import full, nan
 from ._close_data import write_genome_metadata
 from ._util import EXT_GZ, maybe_gzip_open
 from ._hardmask_parsers import (get_bed_filter_region, get_wig_filter_region,
-                                  merged_filter_region_generator)
+                                merged_filter_region_generator)
 from . import Genome, __version__
 
 BED_FILETYPE = "bed"
@@ -151,8 +151,8 @@ def parse_hardmask_option(mask_option):
         # Attempt to convert the filter value into a number
         mask_value = float(mask_value)
         # Get the function associated with this operator and given value
-        hard_mask_function = partial(HARDMASK_OPERATORS[mask_operator],
-                                     mask_value)
+        hardmask_function = partial(HARDMASK_OPERATORS[mask_operator],
+                                    mask_value)
     # Otherwise display an error about the operator
     except KeyError:
         raise ValueError("The operator {} is not understood or "
@@ -162,8 +162,8 @@ def parse_hardmask_option(mask_option):
 
 
 def main():
-    description = ("Permanently mask TRACKNAME(s) from a genomedata archive with "
-                   "MASKFILE using an optional filter operator.")
+    description = ("Permanently mask TRACKNAME(s) from a genomedata archive "
+                   "with MASKFILE using an optional filter operator.")
     parser = argparse.ArgumentParser(description=description,
                                      prog="genomedata-hard-mask")
 
@@ -206,8 +206,8 @@ def main():
         hardmask_function = None
 
     hardmask_data(gd_filename, mask_filename, track_names,
-                   hardmask_function, is_verbose, keep_archive_open,
-                   is_dry_run)
+                  hardmask_function, is_verbose, keep_archive_open,
+                  is_dry_run)
 
 
 if __name__ == "__main__":
