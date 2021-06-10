@@ -18,6 +18,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install test dependencies
+        run: |
+          pip install flake8 mypy types-six types-pkg_resources
+      - name: Lint with flake8
+        run: |
+          flake8 . --exclude 'doc/conf.py examples/*' --count --statistics
+      - name: Type check with mypy
+        run: |
+          mypy genomedata test
       - name: Build repository
         run: |
           python3 -m pip install --verbose .

@@ -62,7 +62,7 @@ genomedata-report = genomedata._report:main
 genomedata-erase-data = genomedata._erase_data:main
 """
 
-setup_requires = ["setuptools_scm"] # source control management packaging
+setup_requires = ["setuptools_scm"]  # source control management packaging
 # Exclude PyTables 3.4.1 - incorrect binary distribution causes core dumps
 # See:
 # https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
@@ -71,8 +71,9 @@ install_requires = ["numpy", "tables>=3.0,!=3.4.1", "six",
                     "textinput>=0.2.0", "path.py>=11",
                     "pybigwig>=0.3"]
 
-# Monkey patches tokenize.detect_encoding() to return a blank string when it can't recognize encoding
-# setuptools attempts to process some of the C files present, and errors because it can't determine encoding
+# Monkey patches tokenize.detect_encoding() to return a blank string when it
+# can't recognize encoding setuptools attempts to process some of the C files
+# present, and errors because it can't determine encoding
 try:
     _detect_encoding = tokenize.detect_encoding
 except AttributeError:
@@ -86,11 +87,13 @@ else:
     tokenize.detect_encoding = detect_encoding
 
 source_files = ["src/_c_load_data.c"]
-# sz may be needed here if it's statically builtin with an hdf5 distribution? Or someone built their own hdf5 version with sz in which case they should rely on using LD_LIBRARY_PATH?
-libs = ["hdf5", "m", "z"] # hdf5, math, zlib, (sz? lossless compression libray for scientific data)
+# sz may be needed here if it's statically builtin with an hdf5 distribution?
+# Or someone built their own hdf5 version with sz in which case they should
+# rely on using LD_LIBRARY_PATH?
+libs = ["hdf5", "m", "z"]  # hdf5, math, zlib, (sz?)
 library_dirnames = []
 include_dirnames = [
-    sysconfig.get_config_var("INCLUDEDIR"), # environment headers
+    sysconfig.get_config_var("INCLUDEDIR"),  # environment headers
 ]
 c_define_macros = [("H5_NO_DEPRECATED_SYMBOLS", None)]
 
@@ -131,16 +134,17 @@ else:
     for word in pkg_config_libs:
         if not word.startswith(LDFLAGS_LIBRARY_SWITCH):
             assert word.startswith(LDFLAGS_LIBRARY_PATH_SWITCH)
-            library_dirnames.append(word.partition(LDFLAGS_LIBRARY_PATH_SWITCH)[2])
+            library_dirnames.append(
+                word.partition(LDFLAGS_LIBRARY_PATH_SWITCH)[2])
 
 
-load_data_module = Extension('_c_load_data', # needs to match C file PyInit definition
-                            sources=source_files,
-                            include_dirs=include_dirnames,
-                            libraries=libs,
-                            library_dirs=library_dirnames,
-                            define_macros=c_define_macros,
-                            )
+load_data_module = Extension(
+    '_c_load_data',  # needs to match C file PyInit definition
+    sources=source_files,
+    include_dirs=include_dirnames,
+    libraries=libs,
+    library_dirs=library_dirnames,
+    define_macros=c_define_macros)
 
 
 if __name__ == "__main__":
@@ -160,7 +164,8 @@ if __name__ == "__main__":
           packages=find_packages("."),  # including "test"
           include_package_data=True,
           entry_points=entry_points,
-          ext_package="genomedata", # place extension in the base genomedata package
+          # place extension in the base genomedata package
+          ext_package="genomedata",
           ext_modules=[load_data_module],
           python_requires=">={}".format(MINIMUM_PYTHON_VERSION_STR)
           )

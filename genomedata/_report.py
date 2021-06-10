@@ -16,6 +16,7 @@ from argparse import ArgumentParser
 from . import Genome, __version__
 from tabdelim import ListWriter
 
+
 def report(gdarchive):
     writer = ListWriter()
 
@@ -23,6 +24,7 @@ def report(gdarchive):
         writer.writerow(["measurement"] + genome.tracknames_continuous)
         writer.writerow(["mean"] + list(genome.means))
         writer.writerow(["var"] + list(genome.vars))
+
 
 def parse_options(args):
 

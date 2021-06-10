@@ -28,11 +28,11 @@ from ._util import (chromosome_name_map_parser,
                     ignore_comments, LightIterator, maybe_gzip_open)
 
 MIN_GAP_LEN = 100000
-assert not MIN_GAP_LEN % 2 # must be even for division
+assert not MIN_GAP_LEN % 2  # must be even for division
 
 # sre_constants.MAXREPEAT is 65535, so I have to break repeats into
 # two segments
-REGEX_SEGMENT_LEN = MIN_GAP_LEN // 2 # max == MAXREPEAT
+REGEX_SEGMENT_LEN = MIN_GAP_LEN // 2  # max == MAXREPEAT
 
 DNA_LETTERS_UNAMBIG = "ACGTacgt"
 
@@ -50,6 +50,7 @@ GAP_COMPONENT_TYPES = frozenset("NU")
 
 GenomicPosition = uint32
 GENOMIC_POSITION_0 = GenomicPosition(0)
+
 
 def read_agp(iterable):
     """
@@ -134,6 +135,7 @@ def create_supercontig(chromosome, index, seq=None, start=None, end=None):
     attrs.start = GenomicPosition(start)
     attrs.end = GenomicPosition(end)
 
+
 # XXXopt: the all-regex approach is much slower than the hybrid
 # approach (3 min to load chr21, 6 min to load chr1), but it is easier
 # to understand the code and get it correct
@@ -152,16 +154,20 @@ re_gap_segment = compile(r"""
        DNA_LETTERS_UNAMBIG, REGEX_SEGMENT_LEN-1,
        DNA_LETTERS_UNAMBIG), VERBOSE)
 
+
 def init_chromosome_start(chromosome):
     """
-    doesn't set end, so you can't use create_supercontig(end=None) if you use this
+    doesn't set end, so you can't use create_supercontig(end=None) if you use
+    this
     """
     chromosome.attrs.start = GENOMIC_POSITION_0
     chromosome._file_attrs.genomedata_format_version = FORMAT_VERSION
 
+
 def init_chromosome(chromosome, size):
     init_chromosome_start(chromosome)
     chromosome.attrs.end = GenomicPosition(size)
+
 
 def read_seq(chromosome, seq):
     supercontig_index = 0
@@ -178,6 +184,7 @@ def read_seq(chromosome, seq):
         else:
             assert m_segment.group(1)
 
+
 def read_assembly(chromosome, infile):
     supercontig_index = 0
 
@@ -193,9 +200,11 @@ def read_assembly(chromosome, infile):
 
     chromosome.attrs.end = GenomicPosition(end)
 
+
 def size_chromosome(chromosome, size):
     init_chromosome(chromosome, size)
     create_supercontig(chromosome, 0)
+
 
 def load_sizes(filename):
     res = {}
@@ -206,6 +215,7 @@ def load_sizes(filename):
             res[row[0]] = int(row[1])
 
     return res
+
 
 def get_num_seq(filenames):
     """
@@ -238,15 +248,16 @@ def read_chromosome_name_map(assembly_report_file):
 
     # Retrive the string after the comment delimiter and split on whitespace
     # for the header fields
-    header_fields = \
-    header_line.partition(ASSEMBLY_REPORT_COMMENT_DELIMITER)[2].strip().split()
+    header_fields = header_line.partition(
+        ASSEMBLY_REPORT_COMMENT_DELIMITER)[2].strip().split()
 
     # Return a dictionary with header fields for keys containing a list for
     # their respective column
     for header_field in header_fields:
         res[header_field] = []
 
-    for row in csv.DictReader(assembly_report_lines[header_index+1:], header_fields,
+    for row in csv.DictReader(assembly_report_lines[header_index+1:],
+                              header_fields,
                               delimiter=ASSEMBLY_REPORT_FIELD_DELIMITER):
         for header_field in header_fields:
             res[header_field].append(row[header_field])
@@ -316,7 +327,7 @@ def create_chromosome(genome, name, mode):
     name = "_".join(name.split())  # Remove any whitespace
     if mode == "dir":
         res = genome[name]
-    else: # mode == "file"
+    else:  # mode == "file"
         h5file = genome.h5file
         h5file.create_group("/", name, filters=FILTERS_GZIP)
         res = genome[name]
@@ -325,19 +336,20 @@ def create_chromosome(genome, name, mode):
 
     return res
 
+
 def load_seq(gdfilename, filenames, verbose=False, mode=None,
              seqfile_type="fasta", assembly_report_file=None,
              chromosome_name_style=DEFAULT_CHROMOSOME_NAME_STYLE):
     gdpath = Path(gdfilename)
 
-    ## load sizes if necessary to figure out number of chromosomes
+    # load sizes if necessary to figure out number of chromosomes
     if seqfile_type == "sizes":
         assert len(filenames) == 1
         sizes = load_sizes(filenames[0])
     else:
         sizes = None
 
-    ## decide whether should use dir or file mode
+    # decide whether should use dir or file mode
     if mode is None:
         if seqfile_type == "sizes":
             num_seq = len(sizes)
@@ -404,10 +416,12 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None,
                             # For every AGP line
                             agp_object_index = AGP_FIELDNAMES.index("object")
                             for agp_line in agp_lines:
-                                chr_name = agp_line.split("\t")[agp_object_index]
+                                chr_name = \
+                                    agp_line.split("\t")[agp_object_index]
 
                                 # Add the line by chromsome name in the dict
-                                agp_chromosome_buffer[chr_name].append(agp_line)
+                                agp_chromosome_buffer[chr_name].append(
+                                    agp_line)
 
                             # For each chromosome and its agp lines
                             for chromosome_name in agp_chromosome_buffer:
@@ -421,16 +435,20 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None,
                                 # Read the assembly in to the chromosome entry
                                 # in genomedata
                                 read_assembly(chromosome,
-                                              agp_chromosome_buffer[chromosome_name])
+                                              agp_chromosome_buffer[
+                                                  chromosome_name])
 
                         else:
                             for defline, seq in LightIterator(infile):
-                                name = get_chromosome_name(defline,
-                                chromosome_name_map, chromosome_name_style)
+                                name = get_chromosome_name(
+                                    defline,
+                                    chromosome_name_map,
+                                    chromosome_name_style)
 
                                 chromosome = create_chromosome(genome, name,
                                                                mode)
                                 read_seq(chromosome, seq)
+
 
 def parse_options(args):
 
@@ -442,7 +460,7 @@ def parse_options(args):
     parser = ArgumentParser(description=description,
                             parents=[chromosome_name_map_parser],
                             prog='genomedata-load-seq')
-    
+
     parser.add_argument('--version', action='version', version=__version__)
 
     parser.add_argument('gdarchive', help='genomedata archive')
@@ -461,11 +479,12 @@ def parse_options(args):
     parser.add_argument("-f", "--file-mode", dest="mode",
                         default=None, action="store_const", const="file",
                         help="If specified, the Genomedata archive will be"
-                        " implemented as a single file, with a separate h5 group"
-                        " for each Chromosome. This is recommended if there are"
-                        " a large number of Chromosomes. The default behavior is"
-                        " to use a single file if there are at least %s"
-                        " Chromosomes being added." % FILE_MODE_CHROMS)
+                        " implemented as a single file, with a separate h5"
+                        " group for each Chromosome. This is recommended if"
+                        " there are a large number of Chromosomes. The default"
+                        " behavior is to use a single file if there are at"
+                        " least %s Chromosomes being added." %
+                        FILE_MODE_CHROMS)
     parser.add_argument("-d", "--directory-mode", dest="mode",
                         action="store_const", const="dir",
                         help="If specified, the Genomedata archive will be"
@@ -474,12 +493,13 @@ def parse_options(args):
                         " small number of Chromosomes. The default behavior is"
                         " to use a directory if there are fewer than %s"
                         " Chromosomes being added." % FILE_MODE_CHROMS)
-    parser.add_argument("--verbose",default=False, action="store_true",
-                      help="Print status updates and diagnostic messages")
+    parser.add_argument("--verbose", default=False, action="store_true",
+                        help="Print status updates and diagnostic messages")
 
     args = parser.parse_args(args)
 
     return args
+
 
 def main(argv=sys.argv[1:]):
     args = parse_options(argv)
@@ -488,6 +508,7 @@ def main(argv=sys.argv[1:]):
                     mode=args.mode, seqfile_type=args.seqfile_type,
                     assembly_report_file=args.assembly_report,
                     chromosome_name_style=args.name_style)
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -9,7 +9,7 @@ load_genomedata: DESCRIPTION
 # Copyright 2009, 2011 Orion Buske <orion.buske@gmail.com>
 # Copyright 2010 Michael Hoffman <mmh1@uw.edu>
 
-from argparse import ArgumentParser, FileType, RawDescriptionHelpFormatter
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from datetime import datetime
 from glob import glob
 from os import close, extsep
@@ -27,8 +27,10 @@ from ._close_data import close_data
 from ._util import (chromosome_name_map_parser,
                     DEFAULT_CHROMOSOME_NAME_STYLE, die)
 
+
 def print_timestamp(msg=""):
     print(">> %s: %s" % (datetime.now().isoformat(), msg), file=sys.stderr)
+
 
 def repack(infilename, outfilename, verbose=False):
     if verbose:
@@ -38,6 +40,7 @@ def repack(infilename, outfilename, verbose=False):
     retcode = call(["h5repack", "-f", "GZIP=1", infilename, outfilename])
     if retcode != 0:
         die("HDF5 repacking failed.")
+
 
 def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                     seqfile_type="fasta", chunk_size=DEFAULT_CHUNK_SIZE,
@@ -79,7 +82,8 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             raise ValueError("Unknown mode: %s" % mode)
 
         if verbose:
-            print(">> Using temporary Genomedata archive: %s" % tempdatapath, file=sys.stderr)
+            print(">> Using temporary Genomedata archive: %s" % tempdatapath,
+                  file=sys.stderr)
 
         # Load sequences if any are specified
         if not seqfilenames:
@@ -133,7 +137,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
         # Close genomedata
         try:
             close_data(tempdatapath, verbose=verbose)
-        except:
+        except Exception:  # Any program-based error
             error_msg = "Error saving metadata."
 
             if verbose:
@@ -159,7 +163,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                 repack(tempfilepath, outfilepath, verbose)
         else:
             repack(tempdatapath, gdpath, verbose)
-    except:
+    except Exception:  # Any program based error
         print("Error creating genomedata.", file=sys.stderr)
         raise
     finally:
@@ -180,26 +184,29 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             print("\nCleanup failed: %s" % str(e), file=sys.stderr)
 
     if verbose:
-        print("\n===== Genomedata archive successfully created: %s =====\n" % \
+        print("\n===== Genomedata archive successfully created: %s =====\n" %
               gdfilename, file=sys.stderr)
 
     return gdfilename
 
+
 def parse_cmdline(cmdline):
 
-    description = ("Create Genomedata archive named GENOMEDATAFILE by loading\n"
-                   " specified track data and sequences. If GENOMEDATAFILE\n"
-                   " already exists, it will be overwritten.\n"
-                   " --track and --sequence may be repeated to specify\n"
-                   " multiple trackname=trackfile pairings and sequence files,\n"
-                   " respectively.\n\n"
-                   " Example: %(prog)s -t high=signal.high.wig -t"
-                   " low=signal.low.bed.gz"
-                   " -s chrX.fa -s chrY.fa.gz"
-                   " GENOMEDATAFILE")
+    description = (
+        "Create Genomedata archive named GENOMEDATAFILE by loading\n"
+        " specified track data and sequences. If GENOMEDATAFILE\n"
+        " already exists, it will be overwritten.\n"
+        " --track and --sequence may be repeated to specify\n"
+        " multiple trackname=trackfile pairings and sequence files,\n"
+        " respectively.\n\n"
+        " Example: %(prog)s -t high=signal.high.wig -t"
+        " low=signal.low.bed.gz"
+        " -s chrX.fa -s chrY.fa.gz"
+        " GENOMEDATAFILE")
 
     citation = ("Citation: Hoffman MM, Buske OJ, Noble WS.\n"
-                "2010. The Genomedata format for storing large-scale functional genomics data.\n"
+                "2010. The Genomedata format for storing large-scale "
+                "functional genomics data.\n"
                 "Bioinformatics 26 (11):1458-1459.\n"
                 "http://dx.doi.org/10.1093/bioinformatics/btq164")
 
@@ -216,59 +223,64 @@ def parse_cmdline(cmdline):
 
     flags = parser.add_argument_group("Flags")
     flags.add_argument("--verbose",
-                      default=False, action="store_true",
-                      help="Print status updates and diagnostic messages")
+                       default=False, action="store_true",
+                       help="Print status updates and diagnostic messages")
 
     input_data = parser.add_argument_group("Input data")
     input_data.add_argument("-s", "--sequence", action='append', required=True,
                             default=None,
-                            help="Add the sequence data in the specified file or files"
-                            " (may use UNIX glob wildcard syntax)")
-    input_data.add_argument("-t", "--track", action='append', 
+                            help="Add the sequence data in the specified file"
+                            " or files (may use UNIX glob wildcard syntax)")
+    input_data.add_argument("-t", "--track", action='append',
                             default=None,
                             metavar="NAME=FILE", required=True,
                             help="Add data from FILE as the track NAME,"
                             " such as: -t signal=signal.wig")
     input_data.add_argument("-m", "--maskfile",
-                            help='A BED file containing regions to mask out from'
-                            ' tracks before loading')
+                            help='A BED file containing regions to mask out'
+                            ' from tracks before loading')
 
     input_data_ex = input_data.add_mutually_exclusive_group()
     input_data_ex.add_argument("--assembly", action="store_const",
-                            default=None,
-                            const="agp",
-                            help="sequence files contain assembly (AGP) files instead of"
-                            " sequence")
+                               default=None,
+                               const="agp",
+                               help="sequence files contain assembly (AGP)"
+                               " files instead of sequence")
     input_data_ex.add_argument("--sizes", action="store_const",
-                            default=None,
-                            const="sizes",
-                            help="sequence files contain list of sizes instead of"
-                            " sequence")
+                               default=None,
+                               const="sizes",
+                               help="sequence files contain list of sizes"
+                               " instead of sequence")
 
     implementation = parser.add_argument_group("Implementation")
     implementation_ex = implementation.add_mutually_exclusive_group()
     implementation_ex.add_argument("-f", "--file-mode", dest="mode",
-                                default='file',
-                                action="store_const", const="file",
-                                help="If specified, the Genomedata archive will be"
-                                " implemented as a single file, with a separate h5 group"
-                                " for each Chromosome. This is recommended if there are"
-                                " a large number of Chromosomes. The default behavior is"
-                                " to use a single file if there are at least %s"
-                                " Chromosomes being added." % FILE_MODE_CHROMS)
+                                   default='file',
+                                   action="store_const", const="file",
+                                   help="If specified, the Genomedata archive"
+                                   " will be implemented as a single file,"
+                                   " with a separate h5 group for each"
+                                   " Chromosome. This is recommended if there"
+                                   " are a large number of Chromosomes. The"
+                                   " default behavior is to use a single file"
+                                   " if there are at least %s Chromosomes"
+                                   " being added." % FILE_MODE_CHROMS)
 
     implementation_ex.add_argument("-d", "--directory-mode", dest="mode",
-                                action="store_const", const="dir",
-                                help="If specified, the Genomedata archive will be"
-                                " implemented as a directory, with a separate file for"
-                                " each Chromosome. This is recommended if there are a"
-                                " small number of Chromosomes. The default behavior is"
-                                " to use a directory if there are fewer than %s"
-                                " Chromosomes being added." % FILE_MODE_CHROMS)
+                                   action="store_const", const="dir",
+                                   help="If specified, the Genomedata archive"
+                                   " will be implemented as a directory, with"
+                                   " a separate file for each Chromosome. This"
+                                   " is recommended if there are a small"
+                                   " number of Chromosomes. The default"
+                                   " behavior is to use a directory if there"
+                                   " are fewer than %s Chromosomes being"
+                                   " added." % FILE_MODE_CHROMS)
 
     args = parser.parse_args(cmdline)
 
     return args
+
 
 def main(cmdline=sys.argv[1:]):
     args = parse_cmdline(cmdline)
@@ -299,7 +311,7 @@ def main(cmdline=sys.argv[1:]):
             track_name, _, track_filename = track_expr.partition("=")
             tracks.append((track_name, track_filename))  # Tuple
     except ValueError:
-        die(("Error parsing track expression: %s\Specify tracks"
+        die(("Error parsing track expression: %s\nSpecify tracks"
              "in NAME=FILE form, such as: -t high=signal.high") % track_expr)
 
     load_genomedata(args.gdarchive, tracks, seqfilenames,
@@ -308,6 +320,7 @@ def main(cmdline=sys.argv[1:]):
                     chromosome_name_style=args.name_style,
                     verbose=args.verbose,
                     maskfilename=args.maskfile, mode=args.mode)
+
 
 if __name__ == "__main__":
     sys.exit(main())

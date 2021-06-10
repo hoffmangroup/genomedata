@@ -99,5 +99,6 @@ def main(argv=sys.argv[1:]):
     return _histogram(args.gdarchive, args.trackname, args.num_bins,
                       args.include_coords)
 
+
 if __name__ == "__main__":
     sys.exit(main())

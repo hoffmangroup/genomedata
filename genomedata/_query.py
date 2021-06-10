@@ -14,6 +14,7 @@ from argparse import ArgumentParser
 
 from . import Genome, __version__
 
+
 def _query(filename, trackname, chromosome_name, begin, end):
 
     with Genome(filename) as genome:
@@ -31,7 +32,7 @@ def parse_options(args):
 
     parser = ArgumentParser(prog='genomedata-query',
                             description=description)
-    
+
     parser.add_argument('--version', action='version', version=__version__)
     parser.add_argument('gdarchive', help='genomedata archive')
     parser.add_argument('trackname', help='track name')
@@ -49,6 +50,7 @@ def main(argv=sys.argv[1:]):
 
     return _query(args.gdarchive, args.trackname, args.chrom,
                   args.begin, args.end)
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -214,16 +214,15 @@ class TestAGPMerge(unittest.TestCase):
                  self.mode, seqfile_type="agp")
         close_data(self.genomedata_name, self.verbose)
 
-
     def test_merged_agp_regions(self):
         with Genome(self.genomedata_name) as genome:
             # Assume only chr10 is defined
             chromosome = genome["chr10"]
             # The following supercontigs should span the following coordinates:
             expected_supercontig_coordinates = [
-                ( 39239118, 39254773 ),
-                ( 39254793, 39338430 ),
-                ( 39338450, 39341685 ),
+                (39239118, 39254773),
+                (39254793, 39338430),
+                (39338450, 39341685),
             ]
             supercontig_coordinates = []
             # For every supercontig (in chr10)
@@ -251,20 +250,21 @@ class TestChromosomeNameTranslation(unittest.TestCase):
                               test_data_path("chr1.agp.gz")]
         self.mode = "file"
 
-        with open(test_data_path("assembly_report.txt"), "r") as assembly_report_file:
+        with open(test_data_path("assembly_report.txt"), "r") as \
+                assembly_report_file:
             load_seq(self.genomedata_name, self.agp_filenames, self.verbose,
-                    self.mode, seqfile_type="agp",
-                    assembly_report_file=assembly_report_file,
-                    chromosome_name_style="UCSC-style-name")
+                     self.mode, seqfile_type="agp",
+                     assembly_report_file=assembly_report_file,
+                     chromosome_name_style="UCSC-style-name")
 
         close_data(self.genomedata_name, self.verbose)
-
 
     def test_translated_chromsome_names(self):
         chromosome_names = []
 
         with Genome(self.genomedata_name) as genome:
-            # Check to see if chrY from Genbank and chr1 from RefSeq were translated
+            # Check to see if chrY from Genbank and chr1 from RefSeq were
+            # translated
             chromosome_names = [chromosome.name for chromosome in genome]
 
         self.assertIn("chr1", chromosome_names)
@@ -280,6 +280,7 @@ def main():
         chdir(dirpath)
 
     unittest.main()
+
 
 if __name__ == "__main__":
     main()

@@ -68,5 +68,6 @@ def main(argv=sys.argv[1:]):
 
     return _info(args.command, args.gdarchive)
 
+
 if __name__ == "__main__":
     sys.exit(main())

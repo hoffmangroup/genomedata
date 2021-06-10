@@ -15,6 +15,7 @@ from . import Genome, __version__
 
 LINE_WIDTH = 70
 
+
 def erase_data(gdfilename, trackname, verbose=False):
     if verbose:
         print("Erasing data for track: %s." % trackname, file=sys.stderr)
@@ -35,6 +36,7 @@ def erase_data(gdfilename, trackname, verbose=False):
         if verbose:
             print("\ndone", file=sys.stderr)
 
+
 def parse_options(args):
 
     description = ("Erase the specified tracks from the Genomedata archive"
@@ -48,7 +50,7 @@ def parse_options(args):
 
     parser.add_argument('gdarchive', help='genomedata archive')
 
-    parser.add_argument("--trackname", required=True, nargs='+', 
+    parser.add_argument("--trackname", required=True, nargs='+',
                         help="tracknames to erase")
 
     parser.add_argument("--verbose", default=False, action="store_true",
@@ -58,12 +60,14 @@ def parse_options(args):
 
     return args
 
+
 def main(argv=sys.argv[1:]):
     args = parse_options(argv)
     gdarchive = args.archive
 
     for trackname in args.tracknames:
         erase_data(gdarchive, trackname, verbose=args.verbose)
+
 
 if __name__ == "__main__":
     sys.exit(main())
