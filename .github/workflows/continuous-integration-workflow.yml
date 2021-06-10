@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install test dependencies
         run: |
-          pip install flake8 mypy
+          pip install flake8 mypy types-six types-pkg_resources
       - name: Lint with flake8
         run: |
           flake8 . --exclude 'doc/conf.py examples/*' --count --statistics
