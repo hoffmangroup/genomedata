@@ -14,7 +14,7 @@ from genomedata._close_data import close_data
 from genomedata.load_genomedata import load_genomedata
 from genomedata import Genome
 
-from . import test_genomedata
+import test_genomedata
 from six.moves import range
 
 """
