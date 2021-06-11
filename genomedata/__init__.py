@@ -94,7 +94,7 @@ class Genome(object):
 
     """
     def __init__(self, filename, *args, **kwargs):
-        r"""Create a Genome object from a genomdata archive.
+        r"""Create a Genome object from a genomedata archive.
 
         :param filename: the root of the Genomedata object
                          hierarchy. This can either be a .genomedata
