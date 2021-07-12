@@ -132,13 +132,6 @@ class TestGivenDataV1(test_genomedata.GenomedataGivenDataTester):
         self.set_gdfilepath("data/v1.genomedata")
 
 
-class TestGivenDataBigWig(test_genomedata.GenomedataGivenDataTester):
-    def init(self):
-        self.mode = "file"
-        self.write = False
-        self.set_gdfilepath("data/ENCFF324BPE.bigWig")
-
-
 class TestNoDataGenomedataDir(test_genomedata.GenomedataNoDataTester):
     def init(self):
         self.mode = "dir"

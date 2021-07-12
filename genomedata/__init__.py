@@ -17,6 +17,7 @@ Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 """
 
 
+from enum import Enum
 from functools import partial
 from operator import attrgetter
 from os import extsep
@@ -30,7 +31,7 @@ from numpy import (add, amin, amax, array, empty, float32, inf,
 from path import Path
 from six import viewitems
 from six.moves import range
-from tables import Float32Atom, NoSuchNodeError, open_file, UInt8Atom
+from tables import Filters, Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 
 from ._util import (decode_tracknames, add_trackname,
                     GenomedataDirtyWarning, OverlapWarning)
@@ -54,6 +55,13 @@ SUFFIX = extsep + EXT
 # is to implement the Genomedata archive as a directory. If there are
 # more than this many, it will be a single file by default.
 FILE_MODE_CHROMS = 100
+
+FILTERS_GZIP = Filters(complevel=1)
+
+
+class GenomedataFileTypes(Enum):
+    HDF5_FILE_LIST = 1
+    HDF5_FILE = 2
 
 
 class _InactiveDict(dict):
@@ -136,20 +144,19 @@ class Genome(object):
 
         if filepath.isfile():
             # Open the Genomedata file
-            isfile = True
-            self.h5file = _open_file(filepath, *args, **kwargs)
-            self._file_attrs = self.h5file.root._v_attrs
+            self.file_type = GenomedataFileTypes.HDF5_FILE
+            self._chromosomes = _HDF5SingleFileChromosomeList(filepath, *args,
+                                                              **kwargs)
         elif filepath.isdir():
             # Genomedata directory
-            isfile = False
+            self.file_type = GenomedataFileTypes.HDF5_FILE_LIST
+            self._chromosomes = _HDF5DirectoryChromosomeList(
+                               filepath,
+                               *args, **kwargs)
         else:
             raise ValueError("Genomedata archive must be file or directory: %s"
                              % filepath)
 
-        self._path = filepath
-        self._isfile = isfile
-        # Keep track of open chromosomes
-        self.open_chromosomes = {}
         # a kind of refcounting for context managers
         self._context_count = 0
         self._isopen = True
@@ -172,17 +179,9 @@ class Genome(object):
               [...]
 
         """
-        assert self.isopen
-        if self._isfile:  # Chromosomes are groups
-            # Iterate over child group of root
-            for group in self.h5file.iter_nodes("/", classname="Group"):
-                groupname = group._v_name
-                yield self[groupname]
-        else:  # Chromosomes are files
-            # sorted so that the order is always the same
-            for filepath in sorted(self._path.files("*" + SUFFIX)):
-                # pass through __getitem__() to allow memoization
-                yield self[filepath.stem]
+        assert self.isopen  # TODO: Change to an error?
+        for chromosome in self._chromosomes:
+            yield chromosome
 
     def __getitem__(self, name):
         """Return a reference to a chromosome of the given name.
@@ -203,23 +202,12 @@ class Genome(object):
 
         """
         assert self.isopen
-        try:
-            # memoization
-            return self.open_chromosomes[name]
-        except KeyError:
-            pass
 
         try:
-            if self._isfile:
-                res = Chromosome(self.h5file, where="/" + name)
-            else:
-                res = Chromosome._fromfilename(
-                    self._path.joinpath(name + SUFFIX),
-                    *self.args, **self.kwargs)
+            res = self._chromosomes[name]
         except (IOError, NoSuchNodeError):
             raise KeyError("Could not find chromosome: %s" % name)
 
-        self.open_chromosomes[name] = res
         return res
 
     def __contains__(self, name):
@@ -264,6 +252,19 @@ class Genome(object):
         if self.isopen:
             self.close()
 
+    def _create_chromosome(self, name, mode):
+        name = "_".join(name.split())  # Remove any whitespace
+
+        if (self.file_type == GenomedataFileTypes.HDF5_FILE_LIST or
+           self.file_type == GenomedataFileTypes.HDF5_FILE):
+            res = self._chromosomes.create(name)
+            res.attrs.dirty = True
+        else:
+            raise NotImplementedError(
+                "Cannot create chromosome for non HDF5 types")
+
+        return res
+
     def close(self):
         """Close this Genomedata archive and any open chromosomes
 
@@ -276,18 +277,8 @@ class Genome(object):
         """
         assert self.isopen
 
-        # Whether a single file or a directory, close all the chromosomes
-        # so they know they shouldn't be read. Do this before closing
-        # Genome.h5file in case the chromosomes need access to it in closing.
-        for name, chromosome in viewitems(self.open_chromosomes):
-            # Only close those not closed manually by the user
-            if chromosome.isopen:
-                chromosome.close()
+        self._chromosomes.close()
 
-        if self._isfile:
-            self.h5file.close()
-
-        self.open_chromosomes = {}
         self._isopen = False
 
     def __repr__(self):
@@ -335,8 +326,8 @@ class Genome(object):
             raise NotImplementedError("""Adding tracks is only supported \
 for archives created with Genomedata version 1.2.0 or later.""")
 
-        if self._isfile:
-            add_trackname(self, trackname)
+        if self.file_type == GenomedataFileTypes.HDF5_FILE:
+            add_trackname(self._chromosomes, trackname)
 
         # Let the chromosomes handle the rest
         for chromosome in self:
@@ -351,10 +342,10 @@ for archives created with Genomedata version 1.2.0 or later.""")
     def tracknames_continuous(self):
         """Return a list of the names of all data tracks stored."""
         assert self.isopen
-        if self._isfile:
+        if self.file_type == GenomedataFileTypes.HDF5_FILE:
             # Tracknames are stored at the root of each file, so we can
             # access them directly in this case
-            return decode_tracknames(self)
+            return decode_tracknames(self._chromosomes)
         else:
             # check that all chromosomes have the same tracknames_continuous
             res = None
@@ -403,9 +394,10 @@ for archives created with Genomedata version 1.2.0 or later.""")
         None means there are no chromosomes in it already.
         """
         assert self.isopen
-        if self._isfile:
+        # Get the Genomedata format version from the HDF5 file configurations
+        if self.file_type == GenomedataFileTypes.HDF5_FILE:
             try:
-                return self._file_attrs.genomedata_format_version
+                return self._chromosomes._file_attrs.genomedata_format_version
             except AttributeError:
                 pass
 
@@ -492,6 +484,93 @@ for archives created with Genomedata version 1.2.0 or later.""")
         # (see Wikipedia)
         return (self.sums_squares / self.num_datapoints) - \
             square(self.means)
+
+
+class _HDF5DirectoryChromosomeList(object):
+    def __init__(self, filepath, *args, **kwargs):
+        # Folder path containing chromosome genomedata files
+        self.filepath = filepath
+        # Mode for accessing chromosome genomedata files
+        self.args = args
+        self.kwargs = kwargs
+        self.open_chromosomes = {}  # NB: access through __getitem__
+
+    def __iter__(self):
+        # sorted so that the order is always the same
+        for filepath in sorted(self.filepath.files("*" + SUFFIX)):
+            # pass through __getitem__() to allow memoization
+            yield self[filepath.stem]
+
+    def __getitem__(self, name):
+        # If we have opened the chromosome already
+        if (name in self.open_chromosomes and
+           self.open_chromosomes[name].isopen):  # NB: manual closure check
+            # Return cached object
+            res = self.open_chromosomes[name]
+        # Otherwise
+        else:
+            # Return a new chromosome from from hdf5 file
+            res = Chromosome._fromfilename(
+                  self.filepath.joinpath(name + SUFFIX),
+                  *self.args, **self.kwargs)
+            self.open_chromosomes[name] = res
+
+        return res
+
+    def create(self, name):
+        return self[name]
+
+    def close(self):
+        # Close all the chromosomes so they know they shouldn't be read
+        for chrom in self:
+            chrom.close()
+        self.open_chromosomes = {}
+
+
+class _HDF5SingleFileChromosomeList(object):
+    def __init__(self, filepath, *args, **kwargs):
+        self.h5file = _open_file(filepath, *args, **kwargs)
+        self.isopen = True  # NB: Flag used in add_tracknames assertion
+        # NB: Allows use of util functions
+        self._file_attrs = self.h5file.root._v_attrs
+        self._isfile = True
+        self.open_chromosomes = {}  # NB: access through __getitem__
+
+    def __iter__(self):
+        # Iterate over child group of root
+        for group in self.h5file.iter_nodes("/", classname="Group"):
+            groupname = group._v_name
+            # Pass through to __getitem__()
+            yield self[groupname]
+
+    def __getitem__(self, name):
+        # If we have opened the chromosome already
+        if (name in self.open_chromosomes and
+           self.open_chromosomes[name].isopen):  # NB: manual closure check
+            # Return cached object
+            res = self.open_chromosomes[name]
+        # Otherwise
+        else:
+            # Return a new chromosome from from hdf5 file
+            res = Chromosome(self.h5file, where="/" + name)
+            self.open_chromosomes[name] = res
+
+        return res
+
+    def create(self, name):
+        self.h5file.create_group("/", name, filters=FILTERS_GZIP)
+        return self[name]
+
+    def close(self):
+        # Close all the chromosomes so they know they shouldn't be read. Do
+        # this before closing h5file in case the chromosomes need access
+        # to it in closing.
+        for chrom in self:
+            chrom.close()
+        self.open_chromosomes = {}
+
+        self.h5file.close()
+        self.isopen = False
 
 
 class Chromosome(object):
