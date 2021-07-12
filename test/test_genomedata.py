@@ -251,9 +251,9 @@ class GenomedataTesterBase(unittest.TestCase):
             chr2 = genome["chr1"]  # Memoized
             self.assertEqual(chr1, chr2)
             genome["chrY"]
-            self.assertEqual(len(genome.open_chromosomes), 2)
+            self.assertEqual(len(genome._chromosomes.open_chromosomes), 2)
 
-        self.assertEqual(genome.open_chromosomes, {})
+        self.assertEqual(genome._chromosomes.open_chromosomes, {})
 
     def set_gdfilepath(self, filename):
         self.gdfilepath = Path(filename).expand()
