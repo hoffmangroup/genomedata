@@ -29,7 +29,6 @@ import tables
 from numpy import (add, amin, amax, array, empty, float32, inf,
                    nan, ndarray, square, uint8)
 from path import Path
-from six import viewitems
 from six.moves import range
 from tables import Filters, Float32Atom, NoSuchNodeError, open_file, UInt8Atom
 
