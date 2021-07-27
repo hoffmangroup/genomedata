@@ -127,28 +127,22 @@ def ignore_comments(iterable):
     return (item for item in iterable if not item.startswith("#"))
 
 
-def decode_tracknames(gdfile):
-    return [trackname.decode(GENOMEDATA_ENCODING)
-            for trackname in gdfile._file_attrs.tracknames]
+def decode_trackname(trackname):
+    return trackname.decode(GENOMEDATA_ENCODING)
 
 
-def add_trackname(gdfile, trackname):
-    # gdfile can refer to either a file for the whole genome or a
-    # single chromosome
-    assert gdfile.isopen
-    if gdfile._isfile:
-        # Update tracknames attribute with new trackname
-        file_attrs = gdfile._file_attrs
-        if "tracknames" in file_attrs:
-            tracknames = file_attrs.tracknames
-            if trackname in tracknames:
-                raise ValueError("%s already has a track of name: %s"
-                                 % (gdfile.filename, trackname))
-        else:
-            tracknames = array([])
+def _hdf5_add_trackname(h5file, trackname):
+    h5file_attr = h5file.root._v_attrs
+    if "tracknames" in h5file_attr:
+        tracknames = h5file_attr.tracknames
+        if trackname in tracknames:
+            raise ValueError("%s already has a track of name: %s" %
+                             (h5file.filename, trackname))
+    else:
+        tracknames = array([])
 
-        file_attrs.tracknames = append(tracknames,
-                                       trackname.encode(GENOMEDATA_ENCODING))
+    h5file_attr.tracknames = append(tracknames,
+                                    trackname.encode(GENOMEDATA_ENCODING))
 
 
 class GenomedataDirtyWarning(UserWarning):
