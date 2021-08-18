@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+title: Genomedata
+version: 1.5.0
+date-released: "2020-01-08"
+message: If you use this software, please cite both the article from preferred-citation and the software itself.
+abstract: This software implements a method of fast random access of numeric data anchored to a genome
+authors:
+  - family-names: Hoffman
+    given-names: Michael M.
+    affiliation: "University Health Network"
+    orcid: "https://orcid.org/0000-0002-4517-1562"
+license: GPL-2.0-only
+repository-code: "https://github.com/hoffmangroup/genomedata"
+url: "https://genomedata.hoffmanlab.org"
+preferred-citation:
+  type: edited-work
+  title: The Genomedata format for storing large-scale functional genomics data
+  year: 2010
+  authors:
+    - family-names: Hoffman
+      given-names: Michael M.
+      affiliation: "University of Washington"
+      orcid: "https://orcid.org/0000-0002-4517-1562"
+    - family-names: Buske
+      given-names: Orion J.
+      affiliation: "University of Washington"
+      orcid: "https://orcid.org/0000-0002-9064-092X"
+    - family-names: Bilmes
+      given-names: Jeff A.
+      affiliation: "University of Washington"
+      orcid: "https://orcid.org/0000-0002-7372-8778"
+    - family-names: Noble
+      affiliation: "University of Washington"
+      orcid: "https://orcid.org/0000-0001-7283-4715"
+      given-names: William Stafford
+  doi: doi.org/10.1093/bioinformatics/btq164
+  volume: 26
+  issue: 11
+  journal: "Bioinformatics"
+  publisher:
+    name: "Oxford University Press"
