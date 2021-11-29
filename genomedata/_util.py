@@ -10,11 +10,13 @@ from gzip import open as _gzip_open
 from os import extsep
 import sys
 
-from numpy import append, array, empty
+from numpy import array, empty
 from tables import Filters
 
-
 FILTERS_GZIP = Filters(complevel=1)
+
+EXT = "genomedata"
+SUFFIX = extsep + EXT
 
 EXT_GZ = "gz"
 SUFFIX_GZ = extsep + EXT_GZ
@@ -129,20 +131,6 @@ def ignore_comments(iterable):
 
 def decode_trackname(trackname):
     return trackname.decode(GENOMEDATA_ENCODING)
-
-
-def _hdf5_add_trackname(h5file, trackname):
-    h5file_attr = h5file.root._v_attrs
-    if "tracknames" in h5file_attr:
-        tracknames = h5file_attr.tracknames
-        if trackname in tracknames:
-            raise ValueError("%s already has a track of name: %s" %
-                             (h5file.filename, trackname))
-    else:
-        tracknames = array([])
-
-    h5file_attr.tracknames = append(tracknames,
-                                    trackname.encode(GENOMEDATA_ENCODING))
 
 
 class GenomedataDirtyWarning(UserWarning):

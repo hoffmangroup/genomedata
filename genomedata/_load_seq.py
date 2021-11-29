@@ -20,8 +20,8 @@ from numpy import frombuffer, uint32
 from path import Path
 from tabdelim import DictReader
 
-from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS,
-               FORMAT_VERSION, Genome, __version__)
+from . import FILE_MODE_CHROMS, FORMAT_VERSION, Genome, __version__
+from ._chromosome import SEQ_ATOM, SEQ_DTYPE
 from ._util import (chromosome_name_map_parser,
                     DEFAULT_CHROMOSOME_NAME_STYLE, FILTERS_GZIP,
                     GENOMEDATA_ENCODING, GenomedataDirtyWarning,
