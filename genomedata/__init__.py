@@ -21,7 +21,7 @@ from functools import partial
 from pkg_resources import get_distribution
 import sys
 
-from numpy import (add, amin, amax, square)
+from numpy import add, amin, amax, square
 from path import Path
 
 from ._hdf5 import _HDF5DirectoryChromosomeList, _HDF5SingleFileChromosomeList
@@ -158,11 +158,6 @@ class Genome(object):
         """
         assert self.isopen
 
-        # try:
-        #     res = self._chromosomes[name]
-        # except (IOError, NoSuchNodeError):
-        #     raise KeyError("Could not find chromosome: %s" % name)
-
         return self._chromosomes[name]
 
     def __contains__(self, name):
@@ -211,7 +206,6 @@ class Genome(object):
         name = "_".join(name.split())  # Remove any whitespace
 
         res = self._chromosomes.create(name)
-        res.attrs.dirty = True
 
         return res
 

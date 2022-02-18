@@ -3,15 +3,12 @@ from warnings import warn
 
 from numpy import (array, empty, float32, nan, ndarray, uint8)
 from six.moves import range
-from tables import NoSuchNodeError, UInt8Atom
 
 from ._util import OverlapWarning
 
 CONTINUOUS_DTYPE = float32
 
-SEQ_ATOM = UInt8Atom()
 SEQ_DTYPE = uint8
-
 
 class Chromosome(object):
     """The Genomedata object corresponding to data for a given chromosome.
@@ -231,7 +228,7 @@ class Chromosome(object):
             try:
                 data[data_slice, :] = supercontig.continuous[supercontig_slice,
                                                              track_key]
-            except NoSuchNodeError:
+            except MissingContinuousData:
                 # Allow the supercontig to not have a continuous dataset
                 pass
 
@@ -315,7 +312,7 @@ class Chromosome(object):
         for supercontig in self:
             try:
                 yield supercontig, supercontig.continuous
-            except NoSuchNodeError:
+            except MissingContinuousData:
                 continue
 
     def _index_continuous(self, track_key):
@@ -497,17 +494,7 @@ class _ChromosomeList(object):
 class Supercontig(object):
     """A container for a segment of data in one chromosome.
 
-    Implemented via a HDF5 Group
-
     """
-    def __init__(self, h5group):
-        """
-        :param h5group: group containing the supercontig data
-        :type h5group: HDF5 Group
-
-        """
-        self.h5group = h5group
-
     def __repr__(self):
         return "<Supercontig '%s', [%d:%d]>" % (self.name, self.start,
                                                 self.end)
@@ -533,17 +520,11 @@ class Supercontig(object):
 
     @property
     def _seq_dtype(self):
-        try:
-            return self.seq.atom.dtype
-        except NoSuchNodeError:
-            return SEQ_DTYPE
+        raise NotImplementedError
 
     @property
     def _continuous_dtype(self):
-        try:
-            return self.continuous.atom.dtype
-        except NoSuchNodeError:
-            return CONTINUOUS_DTYPE
+        raise NotImplementedError
 
     @property
     def continuous(self):
@@ -551,25 +532,23 @@ class Supercontig(object):
         To read the whole dataset into memory as a `numpy.array`, use
         continuous.read()
 
-        :returns: `tables.EArray`
-
         """
-        return self.h5group.continuous
+        raise NotImplementedError
 
     @property
     def attrs(self):
         """Return the attributes of this supercontig."""
-        return self.h5group._v_attrs
+        raise NotImplementedError
 
     @property
     def name(self):
         """Return the name of this supercontig."""
-        return self.h5group._v_name
+        raise NotImplementedError
 
     @property
     def seq(self):
         """See :attr:`Chromosome.seq`."""
-        return self.h5group.seq
+        raise NotImplementedError
 
     @property
     def start(self):
@@ -578,7 +557,7 @@ class Supercontig(object):
         The first base is index 0.
 
         """
-        return int(self.attrs.start)
+        raise NotImplementedError
 
     @property
     def end(self):
@@ -589,7 +568,12 @@ class Supercontig(object):
         >>> supercontig.seq[supercontig.start:supercontig:end]
 
         """
-        return int(self.attrs.end)
+        raise NotImplementedError
+
+
+class MissingContinuousData(Exception):
+    """Raised when a continuous section of a supercontig does not exist"""
+    pass
 
 
 class _ChromosomeSeqSlice(object):

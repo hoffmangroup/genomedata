@@ -4,7 +4,8 @@ from numpy import array, append, inf, nan
 from path import Path
 import tables
 
-from ._chromosome import Chromosome, _ChromosomeList, Supercontig
+from ._chromosome import (CONTINUOUS_DTYPE, Chromosome, _ChromosomeList, 
+                          MissingContinuousData, Supercontig, SEQ_DTYPE)
 from ._util import (decode_trackname, GenomedataDirtyWarning,
                     GENOMEDATA_ENCODING, SUFFIX)
 
@@ -86,7 +87,7 @@ since being closed with genomedata-close-data.""")
         assert self.isopen
         supercontigs = []
         for group in self.h5group:
-            supercontig = Supercontig(group)
+            supercontig = _HDF5_Supercontig(group)
             supercontigs.append((supercontig.start, supercontig))
 
         supercontigs.sort()
@@ -130,7 +131,7 @@ since being closed with genomedata-close-data.""")
             supercontig_length = supercontig.end - supercontig.start
             try:
                 continuous = supercontig.continuous
-            except tables.NoSuchNodeError:
+            except MissingContinuousData:
                 # Define an extendible array in the second dimension (0)
                 supercontig_shape = (supercontig_length, 0)
                 self.h5file.create_earray(supercontig.h5group, "continuous",
@@ -321,7 +322,9 @@ class _HDF5DirectoryChromosomeList(_ChromosomeList):
             chromosome.add_trackname(trackname)
 
     def create(self, name):
-        return self[name]
+        res = self[name]
+        res.attrs.dirty = True
+        return res
 
     def close(self):
         # Close all the chromosomes so they know they shouldn't be read
@@ -371,7 +374,10 @@ class _HDF5SingleFileChromosomeList(_ChromosomeList):
 
     def create(self, name):
         self.h5file.create_group("/", name, filters=FILTERS_GZIP)
-        return self[name]
+
+        res = self[name]
+        res.attrs.dirty = True
+        return res
 
     def close(self):
         # Close all the chromosomes so they know they shouldn't be read. Do
@@ -399,3 +405,83 @@ def _hdf5_add_trackname(h5file, trackname):
 
     h5file_attr.tracknames = append(tracknames,
                                     trackname.encode(GENOMEDATA_ENCODING))
+
+
+class _HDF5_Supercontig(Supercontig):
+    """A container for a segment of data in one chromosome.
+
+    Implemented via a HDF5 Group
+
+    """
+    def __init__(self, h5group):
+        """
+        :param h5group: group containing the supercontig data
+        :type h5group: HDF5 Group
+
+        """
+        self.h5group = h5group
+
+    @property
+    def _seq_dtype(self):
+        try:
+            return self.seq.atom.dtype
+        except tables.NoSuchNodeError:
+            return SEQ_DTYPE
+
+    @property
+    def _continuous_dtype(self):
+        try:
+            return self.continuous.atom.dtype
+        except MissingContinuousData:
+            return CONTINUOUS_DTYPE
+
+    @property
+    def continuous(self):
+        """Return the underlying continuous data in this supercontig.
+        To read the whole dataset into memory as a `numpy.array`, use
+        continuous.read()
+
+        :returns: `tables.EArray`
+
+        """
+        try:
+            res = self.h5group.continuous
+        except tables.NoSuchNodeError:
+            raise MissingContinuousData
+
+        return res
+
+    @property
+    def attrs(self):
+        """Return the attributes of this supercontig."""
+        return self.h5group._v_attrs
+
+    @property
+    def name(self):
+        """Return the name of this supercontig."""
+        return self.h5group._v_name
+
+    @property
+    def seq(self):
+        """See :attr:`Chromosome.seq`."""
+        return self.h5group.seq
+
+    @property
+    def start(self):
+        """Return the index of the first base in this supercontig.
+
+        The first base is index 0.
+
+        """
+        return int(self.attrs.start)
+
+    @property
+    def end(self):
+        """Return the index past the last base in this supercontig.
+
+        This is the end in half-open coordinates, making slicing simpler:
+
+        >>> supercontig.seq[supercontig.start:supercontig:end]
+
+        """
+        return int(self.attrs.end)

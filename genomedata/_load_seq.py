@@ -19,9 +19,10 @@ from collections import defaultdict
 from numpy import frombuffer, uint32
 from path import Path
 from tabdelim import DictReader
+from tables import UInt8Atom
 
 from . import FILE_MODE_CHROMS, FORMAT_VERSION, Genome, __version__
-from ._chromosome import SEQ_ATOM, SEQ_DTYPE
+from ._chromosome import SEQ_DTYPE
 from ._util import (chromosome_name_map_parser,
                     DEFAULT_CHROMOSOME_NAME_STYLE, FILTERS_GZIP,
                     GENOMEDATA_ENCODING, GenomedataDirtyWarning,
@@ -37,6 +38,8 @@ REGEX_SEGMENT_LEN = MIN_GAP_LEN // 2  # max == MAXREPEAT
 DNA_LETTERS_UNAMBIG = "ACGTacgt"
 
 SUPERCONTIG_NAME_FMT = "supercontig_%s"
+
+SEQ_ATOM = UInt8Atom()
 
 # https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/
 AGP_FIELDNAMES = ["object", "object_beg", "object_end", "part_number",
