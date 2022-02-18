@@ -10,6 +10,7 @@ CONTINUOUS_DTYPE = float32
 
 SEQ_DTYPE = uint8
 
+
 class Chromosome(object):
     """The Genomedata object corresponding to data for a given chromosome.
 

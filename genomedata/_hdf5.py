@@ -4,7 +4,7 @@ from numpy import array, append, inf, nan
 from path import Path
 import tables
 
-from ._chromosome import (CONTINUOUS_DTYPE, Chromosome, _ChromosomeList, 
+from ._chromosome import (CONTINUOUS_DTYPE, Chromosome, _ChromosomeList,
                           MissingContinuousData, Supercontig, SEQ_DTYPE)
 from ._util import (decode_trackname, GenomedataDirtyWarning,
                     GENOMEDATA_ENCODING, SUFFIX)
