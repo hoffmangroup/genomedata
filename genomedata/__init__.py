@@ -332,17 +332,22 @@ for archives created with Genomedata version 1.2.0 or later.""")
         except AttributeError:
             pass
 
-        # else: self is a directory
+        # else: assume self is a genomedata directory
         chromosomes = iter(self)
         try:
             first_chromosome = next(chromosomes)
         except StopIteration:
             return None
 
-        res = first_chromosome._format_version
+        # Try to get the format version from a chromsome file
+        try:
+            res = first_chromosome._format_version
 
-        assert all(res == chromosome._format_version
-                   for chromosome in chromosomes)
+            assert all(res == chromosome._format_version
+                       for chromosome in chromosomes)
+        # Otherwise assume we have no format version information
+        except AttributeError:
+            return None
 
         return res
 
