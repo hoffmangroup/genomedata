@@ -87,7 +87,7 @@ since being closed with genomedata-close-data.""")
         assert self.isopen
         supercontigs = []
         for group in self.h5group:
-            supercontig = _HDF5_Supercontig(group)
+            supercontig = _HDF5Supercontig(group)
             supercontigs.append((supercontig.start, supercontig))
 
         supercontigs.sort()
@@ -407,7 +407,7 @@ def _hdf5_add_trackname(h5file, trackname):
                                     trackname.encode(GENOMEDATA_ENCODING))
 
 
-class _HDF5_Supercontig(Supercontig):
+class _HDF5Supercontig(Supercontig):
     """A container for a segment of data in one chromosome.
 
     Implemented via a HDF5 Group
