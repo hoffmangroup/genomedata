@@ -19,9 +19,10 @@ from collections import defaultdict
 from numpy import frombuffer, uint32
 from path import Path
 from tabdelim import DictReader
+from tables import UInt8Atom
 
-from . import (SEQ_ATOM, SEQ_DTYPE, FILE_MODE_CHROMS,
-               FORMAT_VERSION, Genome, __version__)
+from . import FILE_MODE_CHROMS, FORMAT_VERSION, Genome, __version__
+from ._chromosome import SEQ_DTYPE
 from ._util import (chromosome_name_map_parser,
                     DEFAULT_CHROMOSOME_NAME_STYLE, FILTERS_GZIP,
                     GENOMEDATA_ENCODING, GenomedataDirtyWarning,
@@ -37,6 +38,8 @@ REGEX_SEGMENT_LEN = MIN_GAP_LEN // 2  # max == MAXREPEAT
 DNA_LETTERS_UNAMBIG = "ACGTacgt"
 
 SUPERCONTIG_NAME_FMT = "supercontig_%s"
+
+SEQ_ATOM = UInt8Atom()
 
 # https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/
 AGP_FIELDNAMES = ["object", "object_beg", "object_end", "part_number",
@@ -323,20 +326,6 @@ def get_chromosome_name(name, chromosome_name_map, name_style):
             raise ValueError("Cannot find {} in assembly report".format(name))
 
 
-def create_chromosome(genome, name, mode):
-    name = "_".join(name.split())  # Remove any whitespace
-    if mode == "dir":
-        res = genome[name]
-    else:  # mode == "file"
-        h5file = genome.h5file
-        h5file.create_group("/", name, filters=FILTERS_GZIP)
-        res = genome[name]
-
-    res.attrs.dirty = True
-
-    return res
-
-
 def load_seq(gdfilename, filenames, verbose=False, mode=None,
              seqfile_type="fasta", assembly_report_file=None,
              chromosome_name_style=DEFAULT_CHROMOSOME_NAME_STYLE):
@@ -397,7 +386,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None,
                 for name, size in sizes.items():
                     name = get_chromosome_name(name, chromosome_name_map,
                                                chromosome_name_style)
-                    chromosome = create_chromosome(genome, name, mode)
+                    chromosome = genome._create_chromosome(name, mode)
                     size_chromosome(chromosome, size)
             else:
                 assert seqfile_type in frozenset(["agp", "fasta"])
@@ -430,8 +419,8 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None,
                                        chromosome_name, chromosome_name_map,
                                        chromosome_name_style)
 
-                                chromosome = create_chromosome(genome, name,
-                                                               mode)
+                                chromosome = genome._create_chromosome(
+                                    name, mode)
                                 # Read the assembly in to the chromosome entry
                                 # in genomedata
                                 read_assembly(chromosome,
@@ -445,8 +434,8 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None,
                                     chromosome_name_map,
                                     chromosome_name_style)
 
-                                chromosome = create_chromosome(genome, name,
-                                                               mode)
+                                chromosome = genome._create_chromosome(
+                                    name, mode)
                                 read_seq(chromosome, seq)
 
 

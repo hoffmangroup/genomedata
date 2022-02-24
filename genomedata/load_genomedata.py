@@ -19,13 +19,13 @@ import sys
 from tempfile import mkdtemp, mkstemp
 import traceback
 
-from . import EXT, FILE_MODE_CHROMS, SUFFIX, __version__
+from . import FILE_MODE_CHROMS, __version__
 from ._load_seq import load_seq
 from ._open_data import open_data
 from ._load_data import DEFAULT_CHUNK_SIZE, load_data
 from ._close_data import close_data
 from ._util import (chromosome_name_map_parser,
-                    DEFAULT_CHROMOSOME_NAME_STYLE, die)
+                    DEFAULT_CHROMOSOME_NAME_STYLE, die, EXT, SUFFIX)
 
 
 def print_timestamp(msg=""):

@@ -10,11 +10,13 @@ from gzip import open as _gzip_open
 from os import extsep
 import sys
 
-from numpy import append, array, empty
+from numpy import array, empty
 from tables import Filters
 
-
 FILTERS_GZIP = Filters(complevel=1)
+
+EXT = "genomedata"
+SUFFIX = extsep + EXT
 
 EXT_GZ = "gz"
 SUFFIX_GZ = extsep + EXT_GZ
@@ -127,28 +129,8 @@ def ignore_comments(iterable):
     return (item for item in iterable if not item.startswith("#"))
 
 
-def decode_tracknames(gdfile):
-    return [trackname.decode(GENOMEDATA_ENCODING)
-            for trackname in gdfile._file_attrs.tracknames]
-
-
-def add_trackname(gdfile, trackname):
-    # gdfile can refer to either a file for the whole genome or a
-    # single chromosome
-    assert gdfile.isopen
-    if gdfile._isfile:
-        # Update tracknames attribute with new trackname
-        file_attrs = gdfile._file_attrs
-        if "tracknames" in file_attrs:
-            tracknames = file_attrs.tracknames
-            if trackname in tracknames:
-                raise ValueError("%s already has a track of name: %s"
-                                 % (gdfile.filename, trackname))
-        else:
-            tracknames = array([])
-
-        file_attrs.tracknames = append(tracknames,
-                                       trackname.encode(GENOMEDATA_ENCODING))
+def decode_trackname(trackname):
+    return trackname.decode(GENOMEDATA_ENCODING)
 
 
 class GenomedataDirtyWarning(UserWarning):
