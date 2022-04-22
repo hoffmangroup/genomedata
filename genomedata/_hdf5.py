@@ -91,7 +91,7 @@ since being closed with genomedata-close-data.""")
             supercontigs.append((supercontig.start, supercontig))
 
         supercontigs.sort()
-        for start, supercontig in supercontigs:
+        for _start, supercontig in supercontigs:
             yield supercontig
 
     def close(self):
@@ -306,6 +306,27 @@ class _HDF5DirectoryChromosomeList(_ChromosomeList):
 
         return res
 
+    def _format_version(self):
+        res = None
+        chromosomes = iter(self)
+
+        try:
+            first_chromosome = next(chromosomes)
+        except StopIteration:
+            return res
+
+        # Try to get the format version from a chromsome file
+        try:
+            res = first_chromosome._format_version
+
+            assert all(res == chromosome._format_version
+                       for chromosome in chromosomes)
+        # Otherwise assume we have no format version information
+        except AttributeError:
+            return res
+
+        return res
+
     def tracknames_continuous(self):
         # check that all chromosomes have the same tracknames_continuous
         res = None
@@ -362,6 +383,13 @@ class _HDF5SingleFileChromosomeList(_ChromosomeList):
             self.open_chromosomes[name] = res
 
         return res
+
+    def _format_version(self):
+        # Get the Genomedata format version from the HDF5 file configurations
+        try:
+            return self._file_attrs.genomedata_format_version
+        except AttributeError:
+            return None
 
     def add_trackname(self, trackname):
         _hdf5_add_trackname(self.h5file, trackname)
