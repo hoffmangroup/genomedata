@@ -177,7 +177,7 @@ class _BigWigChromosome(Chromosome):
     @property
     def mode(self):
         """Return the read/write properties for this chromosome as string"""
-        pass 
+        pass
 
     @property
     def attrs(self):

@@ -1,8 +1,9 @@
+from functools import partial
 from operator import attrgetter
 from warnings import warn
 
 from numpy import (add, amin, amax, array, empty, float32, nan, ndarray,
-                   square, uint8)
+                   uint8)
 from six.moves import range
 
 from ._util import OverlapWarning
@@ -499,7 +500,7 @@ class _ChromosomeList(object):
 
         extrema = [getattr(chromosome, name) for chromosome in self]
         return accumulator(extrema)
-        
+
     def tracknames_continuous(self):
         raise NotImplementedError
 
