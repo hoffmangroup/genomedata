@@ -34,39 +34,6 @@ def is_big_wig(filename):
     return False
 
 
-# def merge_intervals(start_end_list):
-#     """Takes a list of tuples consisting of start and end coordinates and
-#     returns reduced list of tuples based on adjacent intervals. Assumes that
-#     there are no overlapping intervals and the coordinates are sorted."""
-
-#     first_interval = start_end_list[0]
-#     merged_start = first_interval[0]
-#     merged_end = first_interval[1]
-
-#     merged_intervals = []
-
-#     # For each start and end coordinate past the first interval
-#     for start, end in start_end_list[1:]:
-#         # If the start of the new interval matches the end of the current
-#         # merged interval
-#         if start == merged_end:
-#             # Merge the interval by using the new end coord of current interval
-#             merged_end = end
-#         # Otherwise no further merging can take place
-#         else:
-#             # Put current merged coordinates into list to return
-#             merged_intervals.append((merged_start, merged_end))
-#             # Mark new coordinates for merging
-#             merged_start = start
-#             merged_end = end
-
-#     # Append remaining merged coordinates to list
-#     merged_intervals.append((merged_start, merged_end))
-
-#     # Return the list of merged intervals
-#     return merged_intervals
-
-
 class _BigWigChromosomeList(_ChromosomeList):
 
     def __init__(self, filepath):
