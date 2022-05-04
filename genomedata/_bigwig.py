@@ -1,20 +1,21 @@
 import struct
 
-import pyBigWig
 from numpy import array
+import pyBigWig
 
 from ._chromosome import (Chromosome, CONTINUOUS_DTYPE, _ChromosomeList,
                           _key_to_tuple, Supercontig)
 
-
+# From kent utils source code in kent/src/inc/sig.h for bigWigSig
 BIG_WIG_SIGNATURE = 0x888FFC26
-BIG_WIG_SIGNATURE_BYTE_SIZE = 4
+# NB: pack using standard size unsigned long
+BIG_WIG_SIGNATURE_BYTE_SIZE = len(struct.pack("=L", BIG_WIG_SIGNATURE))
 
 
 def is_big_wig(filename):
     """ Checks that the given filename refers to a valid bigWig file """
-    with open(filename, "rb") as big_wig_file:
-        signature_string = big_wig_file.read(BIG_WIG_SIGNATURE_BYTE_SIZE)
+    with open(filename, "rb") as bw_file:
+        signature_string = bw_file.read(BIG_WIG_SIGNATURE_BYTE_SIZE)
 
     # If we have successfully read in the number of signature bytes
     if len(signature_string) == BIG_WIG_SIGNATURE_BYTE_SIZE:
@@ -97,7 +98,7 @@ class _BigWigChromosomeList(_ChromosomeList):
         raise NotImplementedError
 
     def close(self):
-        # Close all the chromosomes so they know they shouldn't be read
+        # Close all the chromosomes to avoid further reading
         self.bw_file.close()
 
         super().close()
@@ -105,8 +106,8 @@ class _BigWigChromosomeList(_ChromosomeList):
 
 class _BigWigChromosome(Chromosome):
 
-    def __init__(self, name, big_wig_file, filepath):
-        self.bw_file = big_wig_file
+    def __init__(self, name, bw_file, filepath):
+        self.bw_file = bw_file
         self.filepath = filepath
 
         # Check if the chromosome exists
@@ -191,27 +192,16 @@ class _BigWigChromosome(Chromosome):
     def start(self):
         """Return the index of the first base in this chromosome.
 
-        For :attr:`Genome.format_version` > 0, this will always be 0.
-        For == 0, this will be the start of the first supercontig.
-
         """
-        # if self._format_version == 0:
-        #     return min(supercontig.start for supercontig in self)
-        # else:
-        #     return self.attrs.start
         return self._start
 
     @property
     def end(self):
         """Return the index past the last base in this chromosome.
 
-        For :attr:`Genome.format_version` > 0, this will be
-        the number of bases of sequence in the chromosome. For == 0,
-        this will be the end of the last supercontig.
-
         This is the end in half-open coordinates, making slicing simple:
 
-        >>> chromosome.seq[chromosome.start:chromosome.end]
+        >>> chromosome[chromosome.start:chromosome.end]
 
         """
         return self._end
@@ -221,13 +211,12 @@ class _BigWigSupercontig(Supercontig):
     """A container for a segment of data in one chromosome."""
 
     class _Continuous():
-        """An indexable-type for the continuous region.
-        This type also should implement the .read() method which returns the
-        whole region as a numpy array """
+        """A sequential type for the continuous region."""
         def __init__(self, parent_chromosome):
             self.parent_chromosome = parent_chromosome
 
         def read(self):
+            """Read entire region into memory"""
             return self.parent_chromsome[self.parent_chromosome.start:
                                          self.parent_chromosome.end]
 
