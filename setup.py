@@ -96,45 +96,46 @@ include_dirnames = [
 ]
 c_define_macros = [("H5_NO_DEPRECATED_SYMBOLS", None)]
 
+# If possible, use HDF5_DIR environment variable as preferred library source
 if "HDF5_DIR" in os.environ:
     hdf5_dir = os.environ["HDF5_DIR"]
     include_dirnames.append(os.path.join(hdf5_dir, "include"))
     library_dirnames.append(os.path.join(hdf5_dir, "lib"))
+# Otherwise attempt to get HDF5 development directories through pkg-config
+else:
+    try:
+        shell_encoding = sys.stdout.encoding
+        # Depending on the shell, python version (2), and environment this is
+        # not guaranteed to be set. Attempt to fall back to a best-guess if it
+        # is not set
+        if not shell_encoding:
+            shell_encoding = DEFAULT_SHELL_ENCODING
 
-# Attempt to get HDF5 development directories through pkg-config
-try:
-    shell_encoding = sys.stdout.encoding
-    # Depending on the shell, python version (2), and environment this is not
-    # guaranteed to be set. Attempt to fall back to a best-guess if it is not
-    # set
-    if not shell_encoding:
-        shell_encoding = DEFAULT_SHELL_ENCODING
-
-    pkg_config_cflags = split(check_output(
-                                ["pkg-config", "--cflags", "hdf5"]
-                             ).decode(shell_encoding))
-    pkg_config_libs = split(check_output(
-                                ["pkg-config", "--libs", "hdf5"]
-                           ).decode(shell_encoding))
-except OSError as err:
-    # OSError ENOENT occurs when pkg-config is not installed
-    if err.errno == errno.ENOENT:
+        pkg_config_cflags = split(check_output(
+                                    ["pkg-config", "--cflags", "hdf5"]
+                                ).decode(shell_encoding))
+        pkg_config_libs = split(check_output(
+                                    ["pkg-config", "--libs", "hdf5"]
+                            ).decode(shell_encoding))
+    except OSError as err:
+        # OSError ENOENT occurs when pkg-config is not installed
+        if err.errno == errno.ENOENT:
+            pass
+        else:
+            raise err
+    except CalledProcessError:
+        # CalledProcessError occurs when hdf5 is not found by pkg-config
         pass
     else:
-        raise err
-except CalledProcessError:
-    # CalledProcessError occurs when hdf5 is not found by pkg-config
-    pass
-else:
-    for path in pkg_config_cflags:
-        assert path.find(CFLAGS_INCLUDE_PATH_SWITCH) == 0
-        # NB for Python >= 3.9, should swap partition to removeprefix
-        include_dirnames.append(path.partition(CFLAGS_INCLUDE_PATH_SWITCH)[2])
-    for word in pkg_config_libs:
-        if not word.startswith(LDFLAGS_LIBRARY_SWITCH):
-            assert word.startswith(LDFLAGS_LIBRARY_PATH_SWITCH)
-            library_dirnames.append(
-                word.partition(LDFLAGS_LIBRARY_PATH_SWITCH)[2])
+        for path in pkg_config_cflags:
+            assert path.find(CFLAGS_INCLUDE_PATH_SWITCH) == 0
+            # NB for Python >= 3.9, should swap partition to remove prefix
+            include_dirnames.append(path.partition(CFLAGS_INCLUDE_PATH_SWITCH)[2])
+        for word in pkg_config_libs:
+            if not word.startswith(LDFLAGS_LIBRARY_SWITCH):
+                assert word.startswith(LDFLAGS_LIBRARY_PATH_SWITCH)
+                library_dirnames.append(
+                    word.partition(LDFLAGS_LIBRARY_PATH_SWITCH)[2])
 
 
 load_data_module = Extension(
