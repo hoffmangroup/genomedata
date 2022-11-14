@@ -18,6 +18,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 # Install PyFlakes for testing
 RUN python3 -m pip install --upgrade \
+    build \
     pip \
     setuptools \
+    mypy \
     pyflakes

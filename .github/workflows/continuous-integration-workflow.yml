@@ -29,7 +29,10 @@ jobs:
           mypy genomedata test
       - name: Build repository
         run: |
-          python3 -m pip install --verbose .
+          python3 -m build
+      - name: Install from source
+        run: |
+          python3 -m pip install .
           pip list
       - name: Run tests
         run: |
