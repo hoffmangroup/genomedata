@@ -25,8 +25,7 @@ library_dirnames = []
 include_dirnames = [
     sysconfig.get_config_var("INCLUDEDIR"),  # environment headers
 ]
-c_define_macros = [("H5_NO_DEPRECATED_SYMBOLS", None),
-                   ("Py_LIMITED_API", 3)]
+c_define_macros = [("Py_LIMITED_API", 3)]
 
 # If possible, use HDF5_DIR environment variable as preferred library source
 if "HDF5_DIR" in os.environ:

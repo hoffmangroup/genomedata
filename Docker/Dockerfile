@@ -11,7 +11,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     python3-dev \
     python3-venv \
     python3-pip \
-    libhdf5-dev \
+    libhdf5-serial-dev \
     hdf5-tools \
     git \
 && apt-get clean \
@@ -21,6 +21,4 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 RUN python3 -m pip install --upgrade \
     build \
     pip \
-    setuptools \
-    mypy \
-    pyflakes
+    setuptools
