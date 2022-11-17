@@ -17,7 +17,7 @@ jobs:
       image: hoffmanlab/genomedata-test:latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install test dependencies
         run: |
           python3 -m pip install flake8 mypy types-six types-pkg_resources
@@ -32,7 +32,7 @@ jobs:
           python3 -m build
       - name: Install from source
         run: |
-          python3 -m pip install .
+          python3 -m pip install -v .
           pip list
       - name: Run tests
         run: |
