@@ -81,8 +81,6 @@ load_data_module = Extension(
 
 
 if __name__ == "__main__":
-    setup(use_scm_version=True,
-          # place extension in the base genomedata package
-          ext_package="genomedata",
-          ext_modules=[load_data_module],
-          )
+    # place extension in the base genomedata package
+    setup(ext_package="genomedata",
+          ext_modules=[load_data_module])
