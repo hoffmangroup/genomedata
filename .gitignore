@@ -1,6 +1,7 @@
 build
 dist
 .eggs
+.mypy_cache
 *.pyc
 *.egg-info
 *.egg
