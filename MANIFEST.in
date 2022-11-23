@@ -9,4 +9,4 @@ exclude .gitignore
 
 # Exclude readthedocs configuration
 exclude .readthedocs.yml
-exclude environmest.yml
+exclude environment.yml

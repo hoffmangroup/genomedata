@@ -25,7 +25,9 @@ library_dirnames = []
 include_dirnames = [
     sysconfig.get_config_var("INCLUDEDIR"),  # environment headers
 ]
-c_define_macros = [("Py_LIMITED_API", 3)]
+
+# Build against the stable ABI to support 3.7 onwards
+c_define_macros = [("Py_LIMITED_API", "0x03070000")]
 
 # If possible, use HDF5_DIR environment variable as preferred library source
 if "HDF5_DIR" in os.environ:
