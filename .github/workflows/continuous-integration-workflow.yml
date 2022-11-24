@@ -58,5 +58,5 @@ jobs:
         python -m cibuildwheel --output-dir wheelhouse
     - uses: actions/upload-artifact@v3
       with:
-        name: Wheel build
+        name: genomedata-build
         path: wheelhouse/*
