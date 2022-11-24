@@ -38,5 +38,5 @@ jobs:
           cd test && python3 run_tests.py 
       - uses: actions/upload-artifact@v3
         with:
-          name: Source build
+          name: genomedata-source
           path: dist/genomedata*.tar.gz
