@@ -8,21 +8,31 @@ jobs:
   deploy:
 
     runs-on: ubuntu-latest
+       # Run job for both python versions in the docker image
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.7'
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip build
-        pip install setuptools twine
-    - name: Build and publish
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools twine build
+    - name: Install cibuildwheel
+      run: |
+        python -m pip install --upgrade cibuildwheel      
+    - name: Build sdist
+      run: |
+        python -m build --sdist
+    - name: Build wheel(s)
+      run: |
+        python -m cibuildwheel --output-dir wheelhouse
+    - name: Publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        python -m build
-        twine upload dist/*
+        twine upload dist/*.tar.gz
+        twine upload wheelhouse/*

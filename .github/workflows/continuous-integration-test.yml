@@ -12,7 +12,6 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    # Run job for both python versions in the docker image
     container:
       image: hoffmanlab/genomedata-test:latest
 
@@ -36,4 +35,8 @@ jobs:
           pip list
       - name: Run tests
         run: |
-          cd test && python3 run_tests.py
+          cd test && python3 run_tests.py 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Source build
+          path: dist/genomedata*.tar.gz

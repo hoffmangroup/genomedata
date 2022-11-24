@@ -57,3 +57,10 @@ packages = ["genomedata"]
 
 # Enable version inference from scm
 [tool.setuptools_scm]
+
+[tool.cibuildwheel]
+# Only build on CPython 3.7 as minimum targeted abi
+build = "cp37-manylinux_x86_64"
+
+[tool.cibuildwheel.linux]
+before-all = "yum -y install hdf5-devel"

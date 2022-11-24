@@ -4,6 +4,7 @@ FROM ubuntu:latest
 # Install HDF5 and development libraries
 # Install pkg-config for locationg development files (hdf5)
 # Install Python 3 and development libraries
+# Install node for github actions
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential \
     pkg-config \
@@ -14,6 +15,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     libhdf5-serial-dev \
     hdf5-tools \
     git \
+    nodejs \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 
