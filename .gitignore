@@ -3,6 +3,7 @@ dist
 .eggs
 .mypy_cache
 *.pyc
+*.so
 *.egg-info
 *.egg
 doc/*
