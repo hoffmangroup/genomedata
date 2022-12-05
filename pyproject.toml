@@ -30,10 +30,10 @@ readme = "README.rst"
 requires-python = ">=3.7"
 
 [project.license]
-file = "LICENSE"
+text = "GPL-2.0-only"
 
 [project.urls]
-"Bug Tracker" = "https://github.com/hoffmangroup/genomedata/"
+"Bug Tracker" = "https://github.com/hoffmangroup/genomedata/issues"
 "Download" = "https://pypi.python.org/pypi/genomedata"
 "Homepage" = "https://hoffmanlab.org/proj/genomedata"
 

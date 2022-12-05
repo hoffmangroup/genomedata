@@ -21,7 +21,7 @@ HDF5_ container.
 .. _HDF5: http://www.hdfgroup.org/
 
 Please see the following URL (and linked documentation) for information,
-installation, and support: http://pmgenomics.ca/hoffmanlab/proj/genomedata/
+installation, and support: https://hoffmanlab.org/proj/genomedata/
 
 Documentation
 =============
