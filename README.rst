@@ -9,13 +9,19 @@ by Michael Hoffman <michael.hoffman at utoronto dot ca>
 
 Description
 ===========
-The genomedata package provides access to genome-scale data, using an
+Genomedata is a format for efficient storage of multiple tracks of
+numeric data anchored to a genome. The format allows fast random
+access to hundreds of gigabytes of data, while retaining a small disk
+space footprint. We have also developed utilities to load data into
+this format.
+
+Specifically, the genomedata package provides access to genome-scale data, using an
 HDF5_ container.
 
 .. _HDF5: http://www.hdfgroup.org/
 
 Please see the following URL (and linked documentation) for information,
-installation, and support: http://pmgenomics.ca/hoffmanlab/proj/genomedata/
+installation, and support: https://hoffmanlab.org/proj/genomedata/
 
 Documentation
 =============

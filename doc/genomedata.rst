@@ -22,7 +22,7 @@ Please cite this paper if you use Genomedata.
 Installation
 ============
 
-Python (2.6 or 2.7) and the HDF5 libraries are required before you can install Genomedata.
+Python 3.7 (or later) and HDF5 are required before you can install Genomedata.
 
 
 Installing HDF5
@@ -30,38 +30,52 @@ Installing HDF5
 
 Ubuntu/Debian::
 
-    sudo apt-get install libhdf5-serial-dev hdf5-tools
+    sudo apt-get install hdf5-tools
 
 CentOS/RHEL/Fedora::
 
-    sudo yum -y install hdf5 hdf5-devel
+    sudo yum -y install hdf5
 
 OpenSUSE::
 
-    sudo zypper in hdf5 hdf5-devel libhdf5
+    sudo zypper in hdf5 libhdf5
     
 If HDF5 has been installed from source, set the HDF5_DIR environment variable to the
 directory where it was installed.
 
-Installing Numpy
+Installing from source
 -------------------
 
-With Python 2.6 or 2.7 installed::
+Additional packages are necessary when installing from source.
 
-    pip install numpy
+Ubuntu/Debian::
 
+    sudo apt-get install libhdf5-serial-dev
+
+CentOS/RHEL/Fedora::
+
+    sudo yum -y install hdf5-devel
+
+OpenSUSE::
+
+    sudo zypper in hdf5-devel
 
 
 Installing Genomedata
 ---------------------
+Genomedata can be installed through pip or Bioconda.
 
-With Python 2.6 or 2.7 installed::
+With Bioconda::
+
+    conda install genomedata
+
+With Python 3.7 or later installed::
 
     pip install genomedata
     
 .. note::
-    The latest version of genomedata may not will not install with older versions of pip (< 6.0)
-    due to some of the dependencies requiring a newer version. You can update your pip using the command::
+    The latest version of genomedata will not install with older versions of pip
+    due to updated build dependencies. You can update your pip using the command::
         
         pip install --upgrade pip
 

@@ -1,0 +1,69 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools", "setuptools-scm"]
+
+[project]
+authors = [{name = "Michael Hoffman", email = "michael.hoffman@utoronto.ca"}]
+classifiers = [
+  "Natural Language :: English",
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Operating System :: Unix",
+  "Programming Language :: Python :: 3",
+]
+# Exclude PyTables 3.4.1 - incorrect binary distribution causes core dumps
+# See:
+# https://bitbucket.org/hoffmanlab/genomedata/issues/38/pytables-341-causes-a-core-dump-when
+dependencies = [
+  "numpy",
+  "tables>=3.0,!=3.4.1",
+  "six",
+  "textinput>=0.2.0",
+  "path.py>=11",
+]
+description = "tools for accessing large amounts of genomic data"
+dynamic = ["version"]
+name = "genomedata"
+readme = "README.rst"
+requires-python = ">=3.7"
+
+[project.license]
+text = "GPL-2.0-only"
+
+[project.urls]
+"Bug Tracker" = "https://github.com/hoffmangroup/genomedata/issues"
+"Download" = "https://pypi.python.org/pypi/genomedata"
+"Homepage" = "https://hoffmanlab.org/proj/genomedata"
+
+[project.scripts]
+genomedata-close-data = "genomedata._close_data:main"
+genomedata-erase-data = "genomedata._erase_data:main"
+genomedata-hardmask = "genomedata._hardmask:main"
+genomedata-histogram = "genomedata._histogram:main"
+genomedata-info = "genomedata._info:main"
+genomedata-load = "genomedata.load_genomedata:main"
+genomedata-load-assembly = "genomedata._load_seq:main"
+genomedata-load-data = "genomedata._load_data:main"
+genomedata-load-seq = "genomedata._load_seq:main"
+genomedata-open-data = "genomedata._open_data:main"
+genomedata-query = "genomedata._query:main"
+genomedata-report = "genomedata._report:main"
+
+[tool.setuptools]
+# Override setuptools autodiscovery algorithm
+packages = ["genomedata"]
+
+# Enable version inference from scm
+[tool.setuptools_scm]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.cibuildwheel]
+# Only build on CPython 3.7 as minimum targeted abi
+build = "cp37-manylinux_x86_64"
+
+[tool.cibuildwheel.linux]
+before-all = "yum -y install hdf5-devel"
