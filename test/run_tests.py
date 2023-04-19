@@ -2,11 +2,13 @@
 
 from __future__ import absolute_import, division, print_function
 
+from math import isnan
 import os
 from os import chdir, remove
 import subprocess
 import unittest
 
+from numpy import nan
 from path import Path
 
 from genomedata._load_seq import load_seq
@@ -265,6 +267,94 @@ class TestChromosomeNameTranslation(unittest.TestCase):
 
     def tearDown(self):
         remove(self.genomedata_name)
+
+
+class GenomedataBigWigTester(unittest.TestCase):
+    def setUp(self):
+        self.bigwig_name = test_data_path("ENCFF324BPE.bigWig")
+
+    def test_interface(self):
+        with Genome(self.bigwig_name) as genome:
+            # TODO: Genome interface testing
+
+            # Test sorted order of chromosomes
+            chr_names = [chromosome.name for chromosome in genome]
+            self.assertListEqual(chr_names, sorted(chr_names))
+
+            # Test chromosome attrbutes
+            self.assertTrue("chr1" in genome)
+            self.assertFalse("chrY" in genome)
+
+            # Test for no format version
+            self.assertTrue(genome.format_version is None)
+
+            # Test genome is open
+            self.assertTrue(genome.isopen)
+
+            # Test failure for attempting to erase data
+            with self.assertRaises(NotImplementedError):
+                genome.erase_data(self.bigwig_name)
+
+            # Test for trackname "list"
+            self.assertListEqual(genome.tracknames_continuous,
+                                 [self.bigwig_name])
+
+            self.assertEqual(genome.num_datapoints, [3088137])
+            self.assertEqual(genome.mins, [0])
+            self.assertEqual(genome.maxs, [93473])
+            self.assertEqual(genome.sums, [32720078])
+            self.assertEqual(genome.sums_squares, [1280737190372])
+            self.assertAlmostEqual(genome.vars, 414615.8372, places=4)
+
+            # Test chromosome retrieval
+            chr1 = genome["chr1"]  # memoization
+
+            # Chromosome interface testing
+            # chr1	569800	569801	0.01108
+            # chr1	569801	569829	0.02215
+
+            self.assertAlmostEqualList(
+                chr1[569798:569802],
+                [nan, nan, 0.01108, 0.02215],
+                places=5  # NB: Number of original input decimal places
+            )
+
+            # Test the trackname is implictly the filename
+            self.assertEqual(self.bigwig_name, chr1.tracknames_continuous[0])
+
+            # Test chromosome attributes
+            self.assertEqual(chr1.start, 569800)
+            self.assertEqual(chr1.end, 249200695)
+
+            # Test sequence data should error
+            with self.assertRaises(NotImplementedError):
+                _ = chr1.seq[0:20]
+
+            # Test entire Supercontig interface
+            # Get first (and only) supercontig
+            for supercontig in chr1:
+                break
+
+            # Slice indexing
+            self.assertAlmostEqualList(supercontig.continuous[1:2],
+                                       [0.02215, 0.02215],
+                                       places=5)
+            # Single indexing
+            self.assertAlmostEqualList(supercontig.continuous[0], [0.01108],
+                                       places=5)
+
+    def assertAlmostEqualList(self, first, second, places=1):
+        """ Compares floating point numbers in a list based on decimal places.
+        Does not apply to nans """
+
+        for first_elem, second_elem in zip(first, second):
+            # NB: NaN values are never considered equal
+            is_first_nan = isnan(first_elem)
+            is_second_nan = isnan(second_elem)
+            if is_first_nan or is_second_nan:
+                self.assertTrue(is_first_nan and is_second_nan)
+            else:
+                self.assertAlmostEqual(first_elem, second_elem, places)
 
 
 def main():

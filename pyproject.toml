@@ -22,6 +22,7 @@ dependencies = [
   "six",
   "textinput>=0.2.0",
   "path.py>=11",
+  "pybigwig",
 ]
 description = "tools for accessing large amounts of genomic data"
 dynamic = ["version"]

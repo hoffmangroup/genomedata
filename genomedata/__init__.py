@@ -17,14 +17,14 @@ Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 """
 
 
-from functools import partial
 from pkg_resources import get_distribution
 import sys
 
-from numpy import add, amin, amax, square
+from numpy import square
 from path import Path
 
 from ._hdf5 import _HDF5DirectoryChromosomeList, _HDF5SingleFileChromosomeList
+from ._bigwig import _BigWigChromosomeList, is_big_wig
 
 # Allow raising a DistributionNotFound error if somehow genomedata was not
 # installed
@@ -100,10 +100,16 @@ class Genome(object):
         if not filepath.exists():
             raise IOError("Could not find Genomedata archive: %s" % filepath)
 
+        # If it's a file we are opening
         if filepath.isfile():
-            # Open the Genomedata file
-            self._chromosomes = _HDF5SingleFileChromosomeList(filepath, *args,
-                                                              **kwargs)
+            # Check if the file type is bigWig
+            # NB: Could consider checking by filename extension only
+            if is_big_wig(filepath):
+                self._chromosomes = _BigWigChromosomeList(filepath)
+            # Otherwise assume and attempt to open the Genomedata file
+            else:
+                self._chromosomes = _HDF5SingleFileChromosomeList(
+                    filepath, *args, **kwargs)
         elif filepath.isdir():
             # Genomedata directory
             self._chromosomes = _HDF5DirectoryChromosomeList(filepath, *args,
@@ -236,12 +242,6 @@ class Genome(object):
     def __str__(self):
         return repr(self)
 
-    def _accum_extrema(self, name, accumulator):
-        self.tracknames_continuous  # for assertion check
-
-        extrema = [getattr(chromosome, name) for chromosome in self]
-        return accumulator(extrema)
-
     def erase_data(self, trackname):
         """Erase all data for the given track across all chromosomes
 
@@ -323,33 +323,12 @@ for archives created with Genomedata version 1.2.0 or later.""")
     def format_version(self):
         """Genomedata format version
 
-        None means there are no chromosomes in it already.
+        None means there are no chromosomes in it already or there is no
+        information available.
         """
         assert self.isopen
-        # Get the Genomedata format version from the HDF5 file configurations
-        try:
-            return self._chromosomes._file_attrs.genomedata_format_version
-        except AttributeError:
-            pass
 
-        # else: assume self is a genomedata directory
-        chromosomes = iter(self)
-        try:
-            first_chromosome = next(chromosomes)
-        except StopIteration:
-            return None
-
-        # Try to get the format version from a chromsome file
-        try:
-            res = first_chromosome._format_version
-
-            assert all(res == chromosome._format_version
-                       for chromosome in chromosomes)
-        # Otherwise assume we have no format version information
-        except AttributeError:
-            return None
-
-        return res
+        return self._chromosomes._format_version()
 
     # XXX: should memoize these with an off-the-shelf decorator
     @property
@@ -359,7 +338,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
         :returns: numpy.array
 
         """
-        return self._accum_extrema("mins", partial(amin, axis=0))
+        return self._chromosomes.mins
 
     @property
     def maxs(self):
@@ -368,7 +347,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
         :returns: numpy.array
 
         """
-        return self._accum_extrema("maxs", partial(amax, axis=0))
+        return self._chromosomes.maxs
 
     @property
     def sums(self):
@@ -377,7 +356,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
         :returns: numpy.array
 
         """
-        return self._accum_extrema("sums", add.reduce)
+        return self._chromosomes.sums
 
     @property
     def sums_squares(self):
@@ -386,7 +365,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
         :returns: numpy.array
 
         """
-        return self._accum_extrema("sums_squares", add.reduce)
+        return self._chromosomes.sums_squares
 
     @property
     def num_datapoints(self):
@@ -395,7 +374,7 @@ for archives created with Genomedata version 1.2.0 or later.""")
         :returns: a numpy.array vector with an entry for each track.
 
         """
-        return self._accum_extrema("num_datapoints", add.reduce)
+        return self._chromosomes.num_datapoints
 
     @property
     def means(self):

@@ -7,18 +7,16 @@ _load_data.py: A python interface for both genomedata_load_data.c and
 load_genomedata.py
 """
 
-import struct
 import sys
 
 from argparse import ArgumentParser
 from subprocess import PIPE, Popen
 
 from . import __version__
+from ._bigwig import is_big_wig
 from ._c_load_data import load_data_from_stdin
 from ._util import SUFFIX_GZ, die
 
-BIG_WIG_SIGNATURE = 0x888FFC26
-BIG_WIG_SIGNATURE_BYTE_SIZE = 4
 BIG_WIG_READ_CMD = "bigWigToBedGraph"
 BEDTOOLS_CMD = "bedtools"
 BEDTOOLS_INTERSECT_CMD = "intersect"
@@ -122,24 +120,6 @@ def load_data(gdfilename, trackname, datafile, maskfile=None, verbose=False):
     retcodes.append(loader.poll())
     if any(retcodes):
         die(MSG_LOAD_ERROR % (datafile, retcodes))
-
-
-def is_big_wig(filename):
-    """ Checks that the given filename refers to a valid bigWig file """
-    with open(filename, "rb") as big_wig_file:
-        signature_string = big_wig_file.read(BIG_WIG_SIGNATURE_BYTE_SIZE)
-
-    # unpack returns a tuple regardless of length
-    # the kent reference checks both little endian and big endian packing
-    # of the 4 byte signature
-    little_endian_signature = struct.unpack("<L", signature_string)[0]
-    big_endian_signature = struct.unpack(">L", signature_string)[0]
-
-    if (little_endian_signature == BIG_WIG_SIGNATURE or
-       big_endian_signature == BIG_WIG_SIGNATURE):
-        return True
-
-    return False
 
 
 def parse_args(args):

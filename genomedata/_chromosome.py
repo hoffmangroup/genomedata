@@ -1,7 +1,9 @@
+from functools import partial
 from operator import attrgetter
 from warnings import warn
 
-from numpy import (array, empty, float32, nan, ndarray, uint8)
+from numpy import (add, amin, amax, array, empty, float32, nan, ndarray,
+                   uint8)
 from six.moves import range
 
 from ._util import OverlapWarning
@@ -487,6 +489,66 @@ class _ChromosomeList(object):
             return self.open_chromosomes[name]
 
         return None
+
+    def _format_version(self):
+        """Get version information metadata. None by default. Subclasses to
+        implement proper versioning if possible"""
+        return None
+
+    def _accum_extrema(self, name, accumulator):
+        self.tracknames_continuous  # for assertion check
+
+        extrema = [getattr(chromosome, name) for chromosome in self]
+        return accumulator(extrema)
+
+    def tracknames_continuous(self):
+        raise NotImplementedError
+
+    # XXX: should memoize these with an off-the-shelf decorator
+    @property
+    def mins(self):
+        """Return the minimum value for each track.
+
+        :returns: numpy.array
+
+        """
+        return self._accum_extrema("mins", partial(amin, axis=0))
+
+    @property
+    def maxs(self):
+        """Return a vector of the maximum value for each track.
+
+        :returns: numpy.array
+
+        """
+        return self._accum_extrema("maxs", partial(amax, axis=0))
+
+    @property
+    def sums(self):
+        """Return a vector of the sum of the values for each track.
+
+        :returns: numpy.array
+
+        """
+        return self._accum_extrema("sums", add.reduce)
+
+    @property
+    def sums_squares(self):
+        """Return a vector of the sum of squared values for each track's data.
+
+        :returns: numpy.array
+
+        """
+        return self._accum_extrema("sums_squares", add.reduce)
+
+    @property
+    def num_datapoints(self):
+        """Return the number of datapoints in each track.
+
+        :returns: a numpy.array vector with an entry for each track.
+
+        """
+        return self._accum_extrema("num_datapoints", add.reduce)
 
     def close(self):
         self.open_chromosomes = {}
