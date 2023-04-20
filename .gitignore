@@ -6,4 +6,3 @@ dist
 *.so
 *.egg-info
 *.egg
-doc/*
