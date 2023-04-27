@@ -100,16 +100,16 @@ With Python 3.7 or later installed::
 Overview
 ========
 
-Genomedata provides a way to store and access large-scale functional
-genomics data in a format which is both space-efficient and allows
-efficient random-access. Genomedata archives are currently write-once,
-although we are working to fix this.
+Genomedata is a file format and Python API for accessing  large-scale functional
+genomics data. The file format is both space-efficient and allows efficient random-access.
+The Python API works with Genomedata archives and bigWig files.
 
-Under the surface, Genomedata is :ref:`implemented <Implementation>`
+Under the surface, the Genomedata file format is :ref:`implemented <Implementation>`
 as one or more HDF5 files, but Genomedata provides a transparent
 interface to interact with your underlying data without having to
 worry about the mess of repeatedly parsing large data files or having
 to keep them in memory for random access.
+The Genomedata archives are currently write-once, although we are working to fix this.
 
 The Genomedata hierarchy:
 
@@ -313,7 +313,7 @@ also available.
     :_load_seq:`load_seq`.
 
 To appreciate the full benefit of Genomedata,
-it is most easily used as a contextmanager::
+it is most easily used as a context manager::
 
     from genomedata import Genome
     [...]

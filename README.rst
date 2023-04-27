@@ -9,16 +9,17 @@ by Michael Hoffman <michael.hoffman at utoronto dot ca>
 
 Description
 ===========
-Genomedata is a format for efficient storage of multiple tracks of
-numeric data anchored to a genome. The format allows fast random
-access to hundreds of gigabytes of data, while retaining a small disk
-space footprint. We have also developed utilities to load data into
-this format.
+Genomedata is both a format for efficient storage of multiple tracks of
+numeric data anchored to a genome and a python interface to genomic datasets.
+The file format allows fast random access to hundreds of gigabytes of data, 
+while retaining a small disk space footprint. We have also developed utilities
+to load data into this format.
 
-Specifically, the genomedata package provides access to genome-scale data, using an
-HDF5_ container.
+Specifically, the genomedata package provides access to genome-scale data,
+either using an HDF5_ container or a bigWig_ file.
 
 .. _HDF5: http://www.hdfgroup.org/
+.. _bigWig: http://www.genome.ucsc.edu/goldenPath/help/bigWig.html
 
 Please see the following URL (and linked documentation) for information,
 installation, and support: https://hoffmanlab.org/proj/genomedata/
