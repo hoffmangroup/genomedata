@@ -317,7 +317,7 @@ it is most easily used as a context manager::
 
     from genomedata import Genome
     [...]
-    gdfilename = "/path/to/genomedata/archive"
+    gdfilename = "/path/to/genomedata/archive" # or bigWig file
     with Genome(gdfilename) as genome:
         [...]
 
@@ -366,6 +366,17 @@ array([ 47.], dtype=float32)
 
           >>> col_index = chromosome.index_continuous("sample_track")
           >>> data = chromosome[0:5, col_index:col_index+1]
+
+BigWig differences
+------------------
+There are a number of minor differences between using the genomedata file
+format and the bigWig file format.
+- There is only one track per bigWig file and it is implicitly set to the
+  filename of the bigWig.
+- Summary statistics are taken from the bigWig file formation definition
+  and are stored as integers. There may be some loss in precision.
+- Each Chromosome is represented with 1 underlying Supercontig.
+
 
 Command-line interface
 ~~~~~~~~~~~~~~~~~~~~~~
