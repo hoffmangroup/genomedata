@@ -376,8 +376,8 @@ format and the bigWig file format:
   filename of the bigWig.
 - Summary statistics are taken from the bigWig file formation definition
   which are stored as integers. There may be some differences precision.
-- Each :class:`Chromosomes <Chromosome>` is represented with 1 underlying
-  :class:`Supercontigs <Supercontig>`.
+- Each :class:`Chromosome <Chromosome>` is represented with 1 underlying
+  :class:`Supercontig <Supercontig>`.
 
 
 Command-line interface
