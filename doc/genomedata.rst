@@ -370,12 +370,14 @@ array([ 47.], dtype=float32)
 BigWig differences
 ------------------
 There are a number of minor differences between using the genomedata file
-format and the bigWig file format.
+format and the bigWig file format:
+
 - There is only one track per bigWig file and it is implicitly set to the
   filename of the bigWig.
 - Summary statistics are taken from the bigWig file formation definition
-  and are stored as integers. There may be some loss in precision.
-- Each Chromosome is represented with 1 underlying Supercontig.
+  which are stored as integers. There may be some differences precision.
+- Each :class:`Chromosomes <Chromosome>` is represented with 1 underlying
+  :class:`Supercontigs <Supercontig>`.
 
 
 Command-line interface
