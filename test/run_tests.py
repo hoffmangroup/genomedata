@@ -304,7 +304,7 @@ class GenomedataBigWigTester(unittest.TestCase):
             self.assertEqual(genome.maxs, [93473])
             self.assertEqual(genome.sums, [32720078])
             self.assertEqual(genome.sums_squares, [1280737190372])
-            self.assertAlmostEqual(genome.vars, 414615.8372, places=4)
+            self.assertAlmostEqual(genome.vars[0], 414615.8372, places=4)
 
             # Test chromosome retrieval
             chr1 = genome["chr1"]  # memoization

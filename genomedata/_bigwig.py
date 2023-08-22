@@ -69,23 +69,23 @@ class _BigWigChromosomeList(_ChromosomeList):
     # NB: One implicit trackname across chromosomes for stat retrieval
     @property
     def mins(self):
-        return array(self.bw_file_header['minVal'])
+        return array([self.bw_file_header['minVal']])
 
     @property
     def maxs(self):
-        return array(self.bw_file_header['maxVal'])
+        return array([self.bw_file_header['maxVal']])
 
     @property
     def sums(self):
-        return array(self.bw_file_header['sumData'])
+        return array([self.bw_file_header['sumData']])
 
     @property
     def sums_squares(self):
-        return array(self.bw_file_header['sumSquared'])
+        return array([self.bw_file_header['sumSquared']])
 
     @property
     def num_datapoints(self):
-        return array(self.bw_file_header['nBasesCovered'])
+        return array([self.bw_file_header['nBasesCovered']])
 
     def tracknames_continuous(self):
         # Return filepath to bigWig as implicit trackname
