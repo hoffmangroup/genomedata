@@ -1,5 +1,6 @@
 1.7.1:
 * fix array dimensionality consistency for summary statistics on bigWig files
+* add debug representation for chromosomes for bigWig files
 
 1.7.0:
 * adapted existing python interface to open bigWig files
