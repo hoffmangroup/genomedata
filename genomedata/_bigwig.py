@@ -110,6 +110,9 @@ class _BigWigChromosome(Chromosome):
         self.bw_file = bw_file
         self.filepath = filepath
 
+        # For string representation in Chromosome
+        self.filename = str(self.filepath)
+
         # Check if the chromosome exists
         if name not in self.bw_file.chroms():
             raise ValueError

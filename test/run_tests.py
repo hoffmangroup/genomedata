@@ -275,7 +275,9 @@ class GenomedataBigWigTester(unittest.TestCase):
 
     def test_interface(self):
         with Genome(self.bigwig_name) as genome:
-            # TODO: Genome interface testing
+
+            self.assertEqual(repr(genome),
+                             "Genome('{}')".format(self.bigwig_name))
 
             # Test sorted order of chromosomes
             chr_names = [chromosome.name for chromosome in genome]
@@ -308,6 +310,11 @@ class GenomedataBigWigTester(unittest.TestCase):
 
             # Test chromosome retrieval
             chr1 = genome["chr1"]  # memoization
+
+            self.assertEqual(repr(chr1),
+                             "<Chromosome 'chr1', file='{}'>".format(
+                             self.bigwig_name))
+            self.assertEqual(str(chr1), "chr1")
 
             # Chromosome interface testing
             # chr1	569800	569801	0.01108
