@@ -1,5 +1,7 @@
-1.7.1:
+1.7.2:
 * required Python is now >=3.9
+
+1.7.1:
 * fix array dimensionality consistency for summary statistics on bigWig files
 * add debug representation for chromosomes for bigWig files
 
