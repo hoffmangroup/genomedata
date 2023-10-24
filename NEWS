@@ -1,5 +1,6 @@
 1.7.2:
 * required Python is now >=3.9
+* fixed consistency in array shape output when track indexing on bigWig files
 
 1.7.1:
 * fix array dimensionality consistency for summary statistics on bigWig files

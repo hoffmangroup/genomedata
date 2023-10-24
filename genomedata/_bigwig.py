@@ -1,6 +1,6 @@
 import struct
 
-from numpy import array
+from numpy import array, ndarray, reshape
 import pyBigWig
 
 from ._chromosome import (Chromosome, CONTINUOUS_DTYPE, _ChromosomeList,
@@ -141,8 +141,12 @@ class _BigWigChromosome(Chromosome):
         """Same functionality as parent Chromosome without second key
         specifying a track or track range"""
 
+        # Get the chromosomal base key and track key
+        # Effectively ignore any track key to maintain a consistent interface
+        base_key, track_key = self._get_base_and_track_key(key)
+
         # Convert key to valid chromosomal indexing coordinates
-        start, end = _key_to_tuple(key)
+        start, end = _key_to_tuple(base_key)
 
         range_length = end - start
 
@@ -151,8 +155,32 @@ class _BigWigChromosome(Chromosome):
             # Return an empty numpy array
             return array([], dtype=CONTINUOUS_DTYPE)
 
-        # Otherwise return the data in range
-        return self.bw_file.values(self.name, start, end, numpy=True)
+        # Get the data in range
+        data = self.bw_file.values(self.name, start, end, numpy=True)
+
+        # Expected shape output
+        # c[i, j] == data
+        # c[i] == [data] <-- current shape
+        # c[i:j, k] = [data] <-- current shape
+        # c[i:j, [k]] = [[data]]
+
+        # If directly indexing a base (no slice)
+        # and there is any track index specified
+        if (isinstance(base_key, int) and
+           track_key != slice(None)):
+            # Return a scalar value (no array)
+            data = data[0]
+        # If indexing based on track in an list-type
+        elif isinstance(track_key, (list, ndarray)):
+            # Shape the data depending on track indexing
+            # (compatability with PyTables/HDF5)
+            data = data.reshape((range_length, 1))
+            # NB: When track_key is a list that contains non-integers,
+            # there is no behaviour defined and is not numpy-like (will error)
+            # This is equivalent to the PyTables/HDF5 implementation
+            data = data[:, array(track_key)]
+
+        return data
 
     @property
     def seq(self):
