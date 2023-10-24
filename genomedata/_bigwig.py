@@ -1,6 +1,6 @@
 import struct
 
-from numpy import array, ndarray, reshape
+from numpy import array, ndarray
 import pyBigWig
 
 from ._chromosome import (Chromosome, CONTINUOUS_DTYPE, _ChromosomeList,
