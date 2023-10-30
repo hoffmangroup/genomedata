@@ -170,11 +170,12 @@ class _BigWigChromosome(Chromosome):
            track_key != slice(None)):
             # Return a scalar value (no array)
             data = data[0]
-        # If indexing based on track in an list-type
+        # If indexing based on track is a list-type
         elif isinstance(track_key, (list, ndarray)):
             # Shape the data depending on track indexing
             # (compatability with PyTables/HDF5)
             data = data.reshape((range_length, 1))
+
             # NB: When track_key is a list that contains non-integers,
             # there is no behaviour defined and is not numpy-like (will error)
             # This is equivalent to the PyTables/HDF5 implementation
