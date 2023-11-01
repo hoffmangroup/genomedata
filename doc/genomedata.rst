@@ -374,6 +374,7 @@ format and the bigWig file format:
 
 - There is only one track per bigWig file and it is implicitly set to the
   filename of the bigWig.
+- Track indexing is only used to shape dimensionality of output.
 - Summary statistics are taken from the bigWig file formation definition
   which are stored as integers. There may be some differences precision.
 - Each :class:`Chromosome <Chromosome>` is represented with 1 underlying

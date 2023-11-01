@@ -2,13 +2,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from math import isnan
 import os
 from os import chdir, remove
 import subprocess
 import unittest
 
-from numpy import nan
+import numpy as np
 from path import Path
 
 from genomedata._load_seq import load_seq
@@ -17,7 +16,6 @@ from genomedata.load_genomedata import load_genomedata
 from genomedata import Genome
 
 import test_genomedata
-from six.moves import range
 
 """
 DESCRIPTION
@@ -321,9 +319,32 @@ class GenomedataBigWigTester(unittest.TestCase):
             # chr1	569801	569829	0.02215
 
             self.assertAlmostEqualList(
-                chr1[569798:569802],
-                [nan, nan, 0.01108, 0.02215],
-                places=5  # NB: Number of original input decimal places
+                chr1[569798:569802, "foo.track"],  # should ignore tracknames
+                [np.nan, np.nan, 0.01108, 0.02215],
+            )
+
+            # Single element should result in a single value
+            # Expected shape output
+            # c[i, j] == data
+            # c[i] == [data]
+            # c[i:j, k] = [data]
+            # c[i:j, [k]] = [[data]]
+            single_val = chr1[569800, 0]
+            self.assertAlmostEqual(single_val, 0.01108, places=5)
+            self.assertFalse(isinstance(single_val, np.ndarray))
+
+            single_val_array = chr1[569800]
+            self.assertTrue(isinstance(single_val_array, np.ndarray))
+            self.assertTrue(single_val_array.shape == (1,))
+
+            single_val_array = chr1[569800:569801, 0]
+            self.assertTrue(isinstance(single_val_array, np.ndarray))
+            self.assertTrue(single_val_array.shape == (1,))
+
+            # Track index shape should shape data output
+            self.assertAlmostEqualList(
+                np.array([[np.nan], [0.01108], [0.02215]]),
+                chr1[569799:569802, [0]]
             )
 
             # Test the trackname is implictly the filename
@@ -344,24 +365,17 @@ class GenomedataBigWigTester(unittest.TestCase):
 
             # Slice indexing
             self.assertAlmostEqualList(supercontig.continuous[1:2],
-                                       [0.02215, 0.02215],
-                                       places=5)
+                                       [0.02215, 0.02215])
             # Single indexing
-            self.assertAlmostEqualList(supercontig.continuous[0], [0.01108],
-                                       places=5)
+            self.assertAlmostEqualList(supercontig.continuous[0], [0.01108])
 
     def assertAlmostEqualList(self, first, second, places=1):
-        """ Compares floating point numbers in a list based on decimal places.
+        """ Compares floating point numbers in a list if close enough.
         Does not apply to nans """
 
-        for first_elem, second_elem in zip(first, second):
-            # NB: NaN values are never considered equal
-            is_first_nan = isnan(first_elem)
-            is_second_nan = isnan(second_elem)
-            if is_first_nan or is_second_nan:
-                self.assertTrue(is_first_nan and is_second_nan)
-            else:
-                self.assertAlmostEqual(first_elem, second_elem, places)
+        self.assertTrue(
+            np.allclose(first, second, equal_nan=True)
+        )
 
 
 def main():
