@@ -1,3 +1,6 @@
+1.7.3:
+* replaced deprecated path API uses
+
 1.7.2:
 * required Python is now >=3.9
 * fixed consistency in array shape output when track indexing on bigWig files
@@ -129,7 +132,7 @@
 
 1.2.3:
 
-* DO NOT USE: genomedata-load-seq doesn't work 
+* DO NOT USE: genomedata-load-seq doesn't work
 * allow use with PyTables >=2.2
 * new command: genomedata-info: "genomedata-info tracknames ARCHIVE"
   prints the tracknames for ARCHIVE
@@ -188,7 +191,7 @@
   the handling of non-context-manager Genome objects by requiring a call
   to Genome.close() when finished.
 * Added an option to genomedata-load-seq and genomedata-load
-  to specify the Genomedata archive implementation (directory/file). 
+  to specify the Genomedata archive implementation (directory/file).
   Default is directory if number of sequences is at least 100.
 * Added support for replacing data in Genomedata tracks.
 * General documentation improvements
@@ -210,7 +213,7 @@
 * extend documentation, including examples
 * extended API with: chromosome[start:end], chromosome.seq[start:end],
   and chromosome.supercontigs[start:end]
-* added reasonable repr and str return values for Genome, Chromosome, 
+* added reasonable repr and str return values for Genome, Chromosome,
   and Supercontig
 
 0.1.5:

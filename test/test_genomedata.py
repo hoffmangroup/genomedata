@@ -297,10 +297,10 @@ class GenomedataTester(GenomedataTesterBase):
             for chrom in self.chroms:
                 filename = os.extsep.join([chrom, "genomedata"])
                 filepath = self.gdfilepath.joinpath(filename)
-                self.assertTrue(filepath.isfile(),
+                self.assertTrue(filepath.is_file(),
                                 "Chromosome file was not found: %s" % filepath)
         elif self.mode == "file":
-            self.assertTrue(self.gdfilepath.isfile(),
+            self.assertTrue(self.gdfilepath.is_file(),
                             "Genomedata archive was not created: %r" %
                             self.gdfilepath)
         else:
@@ -481,10 +481,10 @@ class GenomedataNoDataTester(unittest.TestCase):
             for chrom in self.chroms:
                 filename = os.extsep.join([chrom, "genomedata"])
                 filepath = self.gdfilepath.joinpath(filename)
-                self.assertTrue(filepath.isfile(),
+                self.assertTrue(filepath.is_file(),
                                 "Chromosome file was not found: %s" % filepath)
         elif self.mode == "file":
-            self.assertTrue(self.gdfilepath.isfile(),
+            self.assertTrue(self.gdfilepath.is_file(),
                             "Genomedata archive was not created: %r" %
                             self.gdfilepath)
         else:

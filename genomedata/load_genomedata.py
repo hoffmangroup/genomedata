@@ -95,7 +95,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             else:
                 seqfile_desc = "assembly"
 
-            if not Path(seqfilename).isfile():
+            if not Path(seqfilename).is_file():
                 die("Could not find %s file: %s" % (seqfile_desc, seqfilename))
 
         if verbose:
@@ -112,7 +112,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
             try:
                 track_names = []
                 for track_name, track_filename in tracks:
-                    if Path(track_filename).isfile():
+                    if Path(track_filename).is_file():
                         if track_name not in track_names:  # No duplicates
                             track_names.append(track_name)
                     else:
@@ -152,7 +152,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
         # Move/repack h5 files to output directory
         if isdir:  # Repack each h5 file separately
             if gdpath.exists():
-                assert gdpath.isdir()
+                assert gdpath.is_dir()
             else:
                 gdpath.makedirs()
 
@@ -173,7 +173,7 @@ def load_genomedata(gdfilename, tracks=None, seqfilenames=None, mode=None,
                 print(">> Cleaning up...", end=' ', file=sys.stderr)
 
             sys.stdout.flush()
-            if tempdatapath.isfile():
+            if tempdatapath.is_file():
                 tempdatapath.remove()
             else:
                 tempdatapath.rmtree()
