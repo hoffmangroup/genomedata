@@ -25,7 +25,7 @@ jobs:
           chown -R $(id -u):$(id -g) $PWD
       - name: Install test dependencies
         run: |
-          python3 -m pip install flake8 mypy types-six types-pkg_resources
+          python3 -m pip install flake8 mypy types-six types-setuptools
       - name: Lint with flake8
         run: |
           flake8 . --exclude 'doc/conf.py examples/*' --count --statistics
@@ -41,7 +41,7 @@ jobs:
           pip list
       - name: Run tests
         run: |
-          cd test && python3 run_tests.py 
+          cd test && python3 run_tests.py
       - uses: actions/upload-artifact@v3
         with:
           name: genomedata-source
@@ -60,7 +60,7 @@ jobs:
         python-version: '3.9'
     - name: Install cibuildwheel
       run: |
-        python -m pip install --upgrade cibuildwheel      
+        python -m pip install --upgrade cibuildwheel
     - name: Build wheel(s)
       run: |
         python -m cibuildwheel --output-dir wheelhouse
