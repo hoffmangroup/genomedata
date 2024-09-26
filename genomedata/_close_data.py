@@ -11,8 +11,8 @@ _close_data: DESCRIPTION
 from argparse import ArgumentParser
 import sys
 
-from numpy import (amin, amax, argmax, array, diff, hstack, isfinite, NINF,
-                   PINF, square)
+from numpy import (amin, amax, argmax, array, diff, hstack, isfinite, inf,
+                   square)
 from six.moves import zip
 from tables import NoSuchNodeError
 
@@ -192,8 +192,8 @@ def write_metadata(chromosome, verbose=False):
 
     num_obs = len(tracknames)
     row_shape = (num_obs,)
-    mins = fill_array(PINF, row_shape)
-    maxs = fill_array(NINF, row_shape)
+    mins = fill_array(inf, row_shape)
+    maxs = fill_array(-inf, row_shape)
     sums = fill_array(0.0, row_shape)
     sums_squares = fill_array(0.0, row_shape)
     num_datapoints = fill_array(0, row_shape)
