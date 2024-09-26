@@ -21,7 +21,7 @@ dependencies = [
   "tables>=3.0,!=3.4.1",
   "six",
   "textinput>=0.2.0",
-  "path.py>=16.12",
+  "path>=16.12",
   "pybigwig",
 ]
 description = "tools for accessing large amounts of genomic data"
