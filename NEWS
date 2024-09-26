@@ -1,5 +1,7 @@
 1.7.3:
-* replaced deprecated path API uses
+* replace deprecated .isdir and .isfile path API uses with is_dir and is_file
+  from version 16.12
+* add numpy 2.0 compatibilty
 
 1.7.2:
 * required Python is now >=3.9
