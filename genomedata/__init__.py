@@ -101,7 +101,7 @@ class Genome(object):
             raise IOError("Could not find Genomedata archive: %s" % filepath)
 
         # If it's a file we are opening
-        if filepath.isfile():
+        if filepath.is_file():
             # Check if the file type is bigWig
             # NB: Could consider checking by filename extension only
             if is_big_wig(filepath):
@@ -110,7 +110,7 @@ class Genome(object):
             else:
                 self._chromosomes = _HDF5SingleFileChromosomeList(
                     filepath, *args, **kwargs)
-        elif filepath.isdir():
+        elif filepath.is_dir():
             # Genomedata directory
             self._chromosomes = _HDF5DirectoryChromosomeList(filepath, *args,
                                                              **kwargs)

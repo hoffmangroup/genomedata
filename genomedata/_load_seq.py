@@ -358,7 +358,7 @@ def load_seq(gdfilename, filenames, verbose=False, mode=None,
             print(msg, file=sys.stderr)
     if mode == "dir":
         if gdpath.exists():
-            assert gdpath.isdir()
+            assert gdpath.is_dir()
         else:
             gdpath.makedirs()
     elif mode == "file":
