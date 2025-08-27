@@ -17,7 +17,7 @@ Copyright 2009-2014 Michael M. Hoffman <michael.hoffman@utoronto.ca>
 """
 
 
-from pkg_resources import get_distribution
+from importlib.metadata import version
 import sys
 
 from numpy import square
@@ -26,9 +26,9 @@ from path import Path
 from ._hdf5 import _HDF5DirectoryChromosomeList, _HDF5SingleFileChromosomeList
 from ._bigwig import _BigWigChromosomeList, is_big_wig
 
-# Allow raising a DistributionNotFound error if somehow genomedata was not
+# Allow raising a PackageNotFoundError if somehow genomedata was not
 # installed
-__version__ = get_distribution(__name__.split('.')[0]).version
+__version__ = version("genomedata")
 
 FORMAT_VERSION = 1
 
