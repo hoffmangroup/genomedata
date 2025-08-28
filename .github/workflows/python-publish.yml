@@ -11,7 +11,7 @@ jobs:
        # Run job for both python versions in the docker image
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
     # Fix ownership of the checkout dir
@@ -19,7 +19,7 @@ jobs:
       run: |
         chown -R $(id -u):$(id -g) $PWD
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
     - name: Install dependencies
@@ -28,7 +28,7 @@ jobs:
         python -m pip install --upgrade setuptools twine build
     - name: Install cibuildwheel
       run: |
-        python -m pip install --upgrade cibuildwheel      
+        python -m pip install --upgrade cibuildwheel
     - name: Build sdist
       run: |
         python -m build --sdist

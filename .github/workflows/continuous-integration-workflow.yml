@@ -16,7 +16,7 @@ jobs:
       image: hoffmanlab/genomedata-test:latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       # Fix ownership of the checkout dir
@@ -42,7 +42,7 @@ jobs:
       - name: Run tests
         run: |
           cd test && python3 run_tests.py
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: genomedata-source
           path: dist/genomedata*.tar.gz
@@ -51,11 +51,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
     - name: Install cibuildwheel
@@ -64,7 +64,7 @@ jobs:
     - name: Build wheel(s)
       run: |
         python -m cibuildwheel --output-dir wheelhouse
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: genomedata-build
         path: wheelhouse/*
