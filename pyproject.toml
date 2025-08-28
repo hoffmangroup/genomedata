@@ -28,7 +28,7 @@ description = "tools for accessing large amounts of genomic data"
 dynamic = ["version"]
 name = "genomedata"
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.license]
 text = "GPL-2.0-only"
