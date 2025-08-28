@@ -63,8 +63,8 @@ packages = ["genomedata"]
 ignore_missing_imports = true
 
 [tool.cibuildwheel]
-# Only build on CPython 3.9 as minimum targeted abi
-build = "cp39-manylinux_x86_64"
+# Only build on CPython 3.10 as minimum targeted abi
+build = "cp310-manylinux_x86_64"
 
 [tool.cibuildwheel.linux]
 before-all = "yum -y install hdf5-devel"
