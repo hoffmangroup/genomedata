@@ -27,7 +27,7 @@ include_dirnames = [
 ]
 
 # Build against the stable ABI to support 3.9 onwards
-c_define_macros = [("Py_LIMITED_API", "0x03090000")]
+c_define_macros = [("Py_LIMITED_API", "0x030A0000")]
 
 # If possible, use HDF5_DIR environment variable as preferred library source
 if "HDF5_DIR" in os.environ:
