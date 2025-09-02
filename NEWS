@@ -1,3 +1,7 @@
+1.7.4:
+* required python is now >=3.10 for PyTables compatibility
+* replace deprecated pkg_resources
+
 1.7.3:
 * replace deprecated .isdir and .isfile path API uses with is_dir and is_file
   from version 16.12
