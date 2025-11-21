@@ -237,8 +237,9 @@ def parse_cmdline(cmdline):
                             help="Add data from FILE as the track NAME,"
                             " such as: -t signal=signal.wig")
     input_data.add_argument("-m", "--maskfile",
-                            help='A BED file containing regions to mask out'
-                            ' from tracks before loading')
+                            help='A BED file designating regions for '
+                            'exclusive data retention across all tracks '
+                            'before loading.')
 
     input_data_ex = input_data.add_mutually_exclusive_group()
     input_data_ex.add_argument("--assembly", action="store_const",
